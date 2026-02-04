@@ -1,0 +1,136 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+% Formatting
+\setlist[itemize]{noitemsep, topsep=0pt, leftmargin=1.2em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+% Colors
+\definecolor{primary}{RGB}{0, 0, 0}
+\definecolor{accent}{RGB}{44, 62, 80}
+
+% Section formatting
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{accent}}{\thesection}{0em}{}[\titlerule]
+\titlespacing{\section}{0pt}{12pt}{8pt}
+
+% Links
+\hypersetup{
+  colorlinks=true,
+  linkcolor=accent,
+  urlcolor=accent,
+  pdftitle={ {{ contact.name }} - Resume },
+  pdfauthor={ {{ contact.name }} }
+}
+
+\begin{document}
+
+% Header
+\begin{center}
+{\huge\bfseries {{ contact.name }}{% if contact.credentials %}, {% for cred in contact.credentials %}{{ cred }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %} \\[6pt]}
+{{ contact.location.city }}, {{ contact.location.state }} {{ contact.location.zip }} \\
+{{ contact.email }} | {{ contact.phone }} |
+{% if contact.urls.github %}
+\href{ {{ contact.urls.github }} }{ {{ contact.urls.github|replace('https://github.com/', 'github.com/') }} } |
+{% endif %}
+{% if contact.urls.linkedin %}
+\href{ {{ contact.urls.linkedin }} }{ {{ contact.urls.linkedin|replace('https://linkedin.com/in/', 'linkedin.com/in/') }} }
+{% endif %}
+\end{center}
+
+% Summary
+\section*{PROFESSIONAL SUMMARY}
+{{ summary }}
+
+{% if projects %}
+% Projects
+\section*{PROJECTS}
+
+{% for category, project_list in projects.items() %}
+\textbf{ {{ category|replace('_', ' ')|title }} }:
+
+\begin{itemize}
+{% for project in project_list %}
+  \item{ \textbf{ {{ project.name|latex_escape }} }{% if project.description %}: {{ project.description|latex_escape }}{% endif %}{% if project.url %} \href{ {{ project.url }} }{ {{ project.url }} }{% endif %} }
+{% endfor %}
+\end{itemize}
+
+{% endfor %}
+{% endif %}
+
+% Experience
+\section*{PROFESSIONAL EXPERIENCE}
+
+{% for job in experience %}
+\textbf{ {{- job.title -}} }\\
+\textit{ {{- job.company -}} }{% if job.location %}, {{ job.location }}{% endif %}\\
+\small{ {{- job.start_date|replace('-', '/') -}} }{% if job.end_date %} -- {{ job.end_date|replace('-', '/') }}{% else %} -- Present{% endif %} \normalsize
+
+\begin{itemize}
+{% for bullet in job.bullets %}
+  \item{ {{ bullet.text|latex_escape }} }
+{% endfor %}
+\end{itemize}
+
+{% endfor %}
+
+% Education
+\section*{EDUCATION}
+
+{% for edu in education %}
+\textbf{ {{- edu.institution -}} }{% if edu.location %}, {{ edu.location }}{% endif %} \\[2pt]
+{% if edu.degree %}
+{{ edu.degree }}{% if edu.field %}, \textit{ {{- edu.field -}} }{% endif %} \hfill \small{ {{- edu.graduation_date|replace('-', '/') -}} } \normalsize
+{% endif %}
+
+{% endfor %}
+
+% Skills
+\section*{SKILLS}
+
+{% for section_name, skills in skills.items() %}
+\textbf{ {{- section_name|replace('_', ' ')|title -}} }: {% for skill in skills %}{% if skill.name %}{{ skill.name }}{% else %}{{ skill }}{% endif %}{% if skill.level %} ({{ skill.level }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %} \\[3pt]
+{% endfor %}
+
+{% if publications %}
+% Publications
+\section*{PUBLICATIONS}
+
+\begin{itemize}
+{% for pub in publications %}
+  \item{ {{ pub.title|latex_escape }}{% if pub.authors %} ({{ pub.authors|latex_escape }}){% endif %}{% if pub.conference %}. In \textit{ {{ pub.conference|latex_escape }} }{% endif %}{% if pub.location %}, {{ pub.location|latex_escape }}{% endif %}{% if pub.date %}, {{ pub.date }}{% endif %} }
+{% endfor %}
+\end{itemize}
+
+{% endif %}
+
+{% if certifications %}
+% Certifications
+\section*{CERTIFICATIONS}
+
+\begin{itemize}
+{% for cert in certifications %}
+  \item{ {{ cert.name }}{% if cert.issuer %} -- {{ cert.issuer }}{% endif %}{% if cert.license_number %} (License: {{ cert.license_number }}){% endif %} }
+{% endfor %}
+\end{itemize}
+
+{% endif %}
+
+{% if affiliations %}
+% Affiliations
+\section*{AFFILIATIONS}
+
+\begin{itemize}
+{% for aff in affiliations %}
+  \item{ {{ aff.organization }}{% if aff.role %} -- {{ aff.role }}{% endif %} }
+{% endfor %}
+\end{itemize}
+
+{% endif %}
+
+\end{document}

@@ -1,0 +1,46 @@
+{# Cover Letter Template - Markdown Format #}
+{% set today = now() %}
+{{ contact.name }}{% if contact.credentials %}{% for cred in contact.credentials %}, {{ cred }}{% endfor %}{% endif %}
+{% if contact.location %}{{ contact.location.city }}, {{ contact.location.state }} {{ contact.location.zip }}{% endif %}
+{{ contact.email }}{% if contact.phone %} | {{ contact.phone }}{% endif %}{% if contact.urls.linkedin %} | {{ contact.urls.linkedin }}{% endif %}{% if contact.urls.github %} | {{ contact.urls.github }}{% endif %}
+
+{{ today.strftime("%B %d, %Y") }}
+
+{% if hiring_manager_name %}{{ hiring_manager_name }}{% else %}Hiring Manager{% endif %}{% if company_name %}, {{ company_name }}{% endif %}{% if company_address %}, {{ company_address }}{% endif %}
+
+
+Dear {% if hiring_manager_name %}{{ hiring_manager_name }}{% else %}Hiring Manager{% endif %},
+
+{{ opening_hook }}
+
+{% if professional_summary %}
+{{ professional_summary }}
+{% endif %}
+
+{% if key_achievements %}
+Here are some relevant achievements I would bring to {{ company_name|default('your team') }}:
+{% for achievement in key_achievements %}
+* {{ achievement }}
+{% endfor %}
+{% endif %}
+
+{% if skills_highlight %}
+I am particularly excited about this opportunity because it aligns with my expertise in:
+{% for skill_area in skills_highlight %}
+* {{ skill_area }}
+{% endfor %}
+{% endif %}
+
+{% if company_alignment %}
+{{ company_alignment }}
+{% endif %}
+
+{% if connection %}
+{% if connection|lower == 'yes' or connection|lower != 'no' %}{{ connection }}{% endif %}
+{% endif %}
+
+I would welcome the opportunity to discuss how my background and skills would be a great fit for {{ company_name|default('your team') }}. Thank you for your time and consideration.
+
+Best regards,
+
+{{ contact.name }}{% if contact.credentials %}{% for cred in contact.credentials %}, {{ cred }}{% endfor %}{% endif %}

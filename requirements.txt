@@ -1,0 +1,30 @@
+# Resume CLI System Requirements
+
+# CLI Framework
+click>=8.1.0
+
+# YAML/Data
+pyyaml>=6.0
+
+# Template Engine
+jinja2>=3.1.0
+
+# Terminal Output
+rich>=13.0.0
+
+# AI APIs (optional - install extras)
+anthropic>=0.18.0
+openai>=1.0.0
+
+# Analytics
+pandas>=2.0.0
+
+# Date Parsing
+python-dateutil>=2.8.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# Testing (dev)
+pytest>=7.0.0
+pytest-cov>=4.0.0

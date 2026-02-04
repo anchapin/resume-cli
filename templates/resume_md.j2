@@ -1,0 +1,100 @@
+{# Resume Markdown Template #}
+{{ contact.name }}{% if contact.credentials %}{% for cred in contact.credentials %}, {{ cred }}{% endfor %}{% endif %}
+
+{{ contact.location.city }}, {{ contact.location.state }} {{ contact.location.zip }}
+{{ contact.email }} | {{ contact.phone }}
+{% if contact.urls.github %}{{ contact.urls.github }}{% endif %}{% if contact.urls.linkedin %} | {{ contact.urls.linkedin }}{% endif %}
+
+---
+
+## PROFESSIONAL SUMMARY
+
+{{ summary }}
+
+---
+
+{% if projects %}
+## PROJECTS
+
+{% for category, project_list in projects.items() %}
+### {{ category|replace('_',' ')|title }}
+{% for project in project_list %}
+• **{{ project.name }}**{% if project.description %}: {{ project.description }}{% endif %}{% if project.url %} [{{ project.url }}]({{ project.url }}){% endif %}
+
+{% endfor %}
+{% endfor %}
+---
+{% endif %}
+
+## PROFESSIONAL EXPERIENCE
+
+{% for job in experience %}
+### {{ job.title }}
+{{ job.company }}{% if job.location %} | {{ job.location }}{% endif %}
+
+{% if job.end_date %}{{ job.start_date|replace('-','–') }} – {{ job.end_date|replace('-','–') }}{% else %}{{ job.start_date|replace('-','–') }} – Present{% endif %}
+{% for bullet in job.bullets %}
+• {{ bullet.text }}
+{% endfor %}
+
+{% endfor %}
+
+---
+
+## EDUCATION
+
+{% for edu in education %}
+### {{ edu.institution }}{% if edu.location %} | {{ edu.location }}{% endif %}
+**{{ edu.degree }}**{% if edu.field %}*, {{ edu.field }}*{% endif %} | Graduated {{ edu.graduation_date|replace('-','–') }}
+
+{% endfor %}
+
+---
+
+## SKILLS
+
+{% for section_name, skills in skills.items() %}
+### {{ section_name|replace('_',' ')|proper_title }}
+{% for skill in skills %}
+{% if skill.name %}{{ skill.name }}{% else %}{{ skill }}{% endif %}{% if skill.level %} ({{ skill.level }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+
+{% endfor %}
+
+{% if publications %}
+---
+
+## PUBLICATIONS
+
+{% for pub in publications %}
+{% if pub.type == 'journal' %}
+• {{ pub.authors }} ({{ pub.year }}). "{{ pub.title }}." {{ pub.journal }}{% if pub.volume %}, {{ pub.volume }}{% endif %}{% if pub.pages %}, {{ pub.pages }}{% endif %}{% if pub.doi %}. https://doi.org/{{ pub.doi }}{% endif %}
+{% elif pub.type == 'conference' %}
+• {{ pub.authors }} ({{ pub.year }}). "{{ pub.title }}." In {{ pub.conference }}{% if pub.location %}, {{ pub.location }}{% endif %}.
+{% else %}
+• {{ pub.title }}{% if pub.authors %} ({{ pub.authors }}){% endif %}{% if pub.conference %}. In {{ pub.conference }}{% endif %}{% if pub.location %}, {{ pub.location }}{% endif %}{% if pub.date %}, {{ pub.date }}{% endif %}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+{% if certifications %}
+---
+
+## CERTIFICATIONS
+
+{% for cert in certifications %}
+• {{ cert.name }}{% if cert.issuer %} - {{ cert.issuer }}{% endif %}{% if cert.license_number %} (License: {{ cert.license_number }}){% endif %}
+
+{% endfor %}
+{% endif %}
+
+{% if affiliations %}
+---
+
+## AFFILIATIONS
+
+{% for aff in affiliations %}
+• {{ aff.organization }}{% if aff.role %} - {{ aff.role }}{% endif %}
+
+{% endfor %}
+{% endif %}

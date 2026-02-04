@@ -1,0 +1,36 @@
+{# Email/Cover Letter Template #}
+Subject: Application for {{ position_name }} - {{ contact.name }}
+
+Dear {{ hiring_manager_name|default('Hiring Manager') }},
+
+I am writing to express my interest in the {{ position_name }} position at {{ company_name }}. With over 18 years of experience bridging domain expertise with modern software development, I believe I would be a valuable addition to your team.
+
+{% if highlight_summary %}
+{{ highlight_summary }}
+{% else %}
+As a Research Engineer and Licensed Professional Engineer, I bring a unique combination of technical depth and practical experience. Recently, I've developed and deployed 39+ software projects spanning AI/ML, full-stack development, and DevOps automation. My background includes leading DevOps transformations, deploying scalable AWS infrastructure that achieved 50x performance improvements, and managing systems processing 1M+ simulations.
+{% endif %}
+
+{% if key_achievements %}
+Key achievements I can bring to {{ company_name }}:
+{% for achievement in key_achievements %}
+• {{ achievement }}
+{% endfor %}
+{% endif %}
+
+{% if skills_highlight %}
+I am particularly excited about this opportunity because it aligns with my expertise in:
+{% for skill in skills_highlight %}
+• {{ skill }}
+{% endfor %}
+{% endif %}
+
+I would welcome the opportunity to discuss how my background and skills would be a great fit for {{ company_name }}. Thank you for your time and consideration.
+
+Best regards,
+
+{{ contact.name }}
+{{ contact.email }}
+{{ contact.phone }}
+{% if contact.urls.linkedin %}{{ contact.urls.linkedin }}{% endif %}
+{% if contact.urls.github %}{{ contact.urls.github }}{% endif %}

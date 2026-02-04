@@ -1,0 +1,95 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.75in,top=0.6in,bottom=0.6in]{geometry}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{datetime}
+
+% Formatting
+\setlist[itemize]{noitemsep, topsep=0pt, leftmargin=1.2em, itemsep=0pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt}
+
+% Colors
+\definecolor{primary}{RGB}{0, 0, 0}
+\definecolor{accent}{RGB}{44, 62, 80}
+
+% Links
+\hypersetup{
+  colorlinks=true,
+  linkcolor=accent,
+  urlcolor=accent,
+  pdftitle={ {{ contact.name }} - Cover Letter - {{ company_name|default('Application') }} },
+  pdfauthor={ {{ contact.name }} }
+}
+
+\begin{document}
+
+% Sender Information
+{\bfseries {{ contact.name }}{% if contact.credentials %}{% for cred in contact.credentials %}, {{ cred }}{% endfor %}{% endif %} \\}
+{% if contact.location %}{{ contact.location.city }}, {{ contact.location.state }} {{ contact.location.zip }} \\{% endif %}
+{{ contact.email }}{% if contact.phone %} | {{ contact.phone }}{% endif %} \\
+{% if contact.urls.linkedin %}\href{ {{ contact.urls.linkedin }} }{ {{ contact.urls.linkedin|replace('https://linkedin.com/in/', 'linkedin.com/in/') }} }{% endif %}{% if contact.urls.github %}{% if contact.urls.linkedin %} | {% endif %}\href{ {{ contact.urls.github }} }{ {{ contact.urls.github|replace('https://github.com/', 'github.com/') }} }{% endif %}
+
+\vspace{3pt}
+
+{% set today = now() %}
+{{ today.strftime("%B %d, %Y") }}
+
+\vspace{3pt}
+
+% Recipient Information
+{% if hiring_manager_name %}{{ hiring_manager_name }}{% else %}Hiring Manager{% endif %} \\
+{% if company_name %}{{ company_name }} \\{% endif %}
+{% if company_address %}{{ company_address }} \\{% endif %}
+
+\vspace{3pt}
+
+Dear {% if hiring_manager_name %}{{ hiring_manager_name }}{% else %}Hiring Manager{% endif %},
+
+{{ opening_hook|latex_escape }}
+
+{% if professional_summary %}
+{{ professional_summary|latex_escape }}
+{% endif %}
+
+{% if key_achievements %}
+Here are some relevant achievements I would bring to {{ company_name|default('your team') }}:
+
+\begin{itemize}
+{% for achievement in key_achievements %}
+  \item {{ achievement|latex_escape }}
+{% endfor %}
+\end{itemize}
+
+{% endif %}
+
+{% if skills_highlight %}
+I am particularly excited about this opportunity because it aligns with my expertise in:
+
+\begin{itemize}
+{% for skill_area in skills_highlight %}
+  \item {{ skill_area|latex_escape }}
+{% endfor %}
+\end{itemize}
+
+{% endif %}
+
+{% if company_alignment %}
+{{ company_alignment|latex_escape }}
+{% endif %}
+
+{% if connection %}
+{% if connection|lower == 'yes' or connection|lower != 'no' %}{{ connection|latex_escape }}{% endif %}
+{% endif %}
+
+I would welcome the opportunity to discuss how my background and skills would be a great fit for {{ company_name|default('your team')|latex_escape }}. Thank you for your time and consideration.
+
+\vspace{3pt}
+
+Best regards,
+
+{\bfseries {{ contact.name }}{% if contact.credentials %}{% for cred in contact.credentials %}, {{ cred }}{% endfor %}{% endif %} \\}
+
+\end{document}

@@ -1,0 +1,82 @@
+# Archive directory - old files and documentation
+archive/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+resume_cli.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Output files (generated resumes)
+output/
+
+
+# Tracking data (personal)
+tracking/*.csv
+
+# Quint database (if contains personal notes)
+.quint/quint.db
+
+# Environment variables
+.env
+.env.local
+
+# LaTeX compilation artifacts
+*.aux
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+
+# Personal resume data (use example files instead)
+resume.yaml
+resume.*.yaml
+resumes/
+
+# Job postings and personal notes
+job-posting*.txt
+job*.txt
+
+# Quint - Personal knowledge management system
+.quint/
+
+# Screenshots and images
+*.png
+*.jpg
+*.jpeg
+*.gif
+!screenshot*.png  # Allow generic screenshot examples if needed

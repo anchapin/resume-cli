@@ -1,0 +1,60 @@
+# Resume CLI Default Configuration
+
+output:
+  directory: output
+  naming_scheme: "resume-{variant}-{date}.{ext}"
+  date_format: "%Y-%m-%d"
+
+generation:
+  default_variant: v1.0.0-base
+  default_format: md
+  max_bullets: 4
+
+ai:
+  provider: anthropic  # anthropic or openai
+  model: claude-3-5-sonnet-20241022
+  temperature: 0.7
+  max_tokens: 4000
+  fallback_to_template: true
+  # Multi-generation with AI Judge
+  judge_enabled: true  # Use AI judge to select best of N generations
+  num_generations: 3   # Number of versions to generate for judge evaluation
+  # Optional: Custom API base URLs (leave empty to use default)
+  anthropic_base_url: ""  # e.g., "https://api.z.ai/api/anthropic"
+  openai_base_url: ""     # e.g., "https://api.example.com/v1"
+
+tracking:
+  enabled: true
+  csv_path: tracking/resume_experiment.csv
+
+cover_letter:
+  enabled: true
+  template: cover_letter_md.j2
+  output_directory: output
+  formats: [md, pdf]
+  default_questions:
+    - motivation
+    - connection
+  optional_questions:
+    - company_alignment
+    - relocation
+    - salary
+  smart_guesses: true
+  tone: professional
+  max_length: 400
+
+github:
+  username: anchapin
+  sync_months: 3
+  # Auto-projects feature for generate-package
+  auto_projects_enabled: false  # Opt-in for safety
+  max_projects: 3               # Maximum number of projects to auto-select
+  match_threshold: 1            # Minimum score threshold for project selection
+
+variants:
+  base: v1.0.0-base
+  backend: v1.1.0-backend
+  ml_ai: v1.2.0-ml_ai
+  fullstack: v1.3.0-fullstack
+  devops: v1.4.0-devops
+  leadership: v1.5.0-leadership

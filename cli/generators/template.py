@@ -1,0 +1,317 @@
+"""Template-based resume generator."""
+
+from pathlib import Path
+from typing import Any, Dict, Optional
+from datetime import datetime
+import subprocess
+import sys
+
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+from ..utils.yaml_parser import ResumeYAML
+from ..utils.config import Config
+
+
+class TemplateGenerator:
+    """Generate resumes from Jinja2 templates."""
+
+    def __init__(
+        self,
+        yaml_path: Optional[Path] = None,
+        template_dir: Optional[Path] = None,
+        config: Optional[Config] = None
+    ):
+        """
+        Initialize template generator.
+
+        Args:
+            yaml_path: Path to resume.yaml
+            template_dir: Path to templates directory
+            config: Configuration object
+        """
+        self.yaml_handler = ResumeYAML(yaml_path)
+        self.config = config or Config()
+
+        # Set up template directory
+        if template_dir is None:
+            # Default to templates/ in parent directory
+            template_dir = Path(__file__).parent.parent.parent / "templates"
+
+        self.template_dir = Path(template_dir)
+
+        # Set up Jinja2 environment
+        self.env = Environment(
+            loader=FileSystemLoader(self.template_dir),
+            autoescape=select_autoescape(),
+            trim_blocks=True,
+            lstrip_blocks=True
+        )
+
+        # Add LaTeX escape filter
+        def latex_escape(text):
+            """Escape special LaTeX characters."""
+            if not text:
+                return text
+            replacements = {
+                '&': r'\&',
+                '%': r'\%',
+                '$': r'\$',
+                '#': r'\#',
+                '_': r'\_',
+                '{': r'\{',
+                '}': r'\}',
+                '~': r'\textasciitilde{}',
+                '^': r'\^{}',
+                '™': r'\textsuperscript{TM}',
+                '®': r'\textsuperscript{R}',
+                '©': r'\textcopyright{}',
+                '°': r'\textsuperscript{\textdegree}{}',
+                '±': r'$\pm$',
+                '≥': r'$\ge$',
+                '≤': r'$\le$',
+                '→': r'$\rightarrow$',
+                '—': r'---',  # em dash
+                '–': r'--',   # en dash
+            }
+            for old, new in replacements.items():
+                text = text.replace(old, new)
+            return text
+
+        self.env.filters['latex_escape'] = latex_escape
+
+        # Add proper title case filter (lowercase for small words)
+        def proper_title(text):
+            """Convert to title case with lowercase for small words (except first word)."""
+            if not text:
+                return text
+            # Words to keep lowercase unless they're the first word
+            small_words = {'a', 'an', 'the', 'and', 'or', 'but', 'for', 'nor', 'so', 'yet',
+                          'at', 'by', 'in', 'of', 'on', 'to', 'up', 'as', 'with'}
+            words = text.replace('_', ' ').split()
+            if not words:
+                return text
+            # Capitalize first word always
+            result = [words[0].capitalize()]
+            # Capitalize rest, except small words
+            for word in words[1:]:
+                if word.lower() in small_words:
+                    result.append(word.lower())
+                else:
+                    result.append(word.capitalize())
+            return ' '.join(result)
+
+        self.env.filters['proper_title'] = proper_title
+
+    def generate(
+        self,
+        variant: str,
+        output_format: str = "md",
+        output_path: Optional[Path] = None,
+        **kwargs
+    ) -> str:
+        """
+        Generate resume from template.
+
+        Args:
+            variant: Variant name (e.g., "v1.0.0-base")
+            output_format: Output format (md, tex, pdf)
+            output_path: Optional output file path
+            **kwargs: Additional template variables
+
+        Returns:
+            Generated content as string
+        """
+        # Load resume data
+        variant_key = variant.replace("v1.", "").replace("v2.", "").split("-")[0]
+        if variant_key.endswith(".0"):
+            variant_key = variant_key.split(".")[0] + "." + variant_key.split(".")[1] + ".0"
+
+        # Get variant config to determine summary key
+        variant_config = self.yaml_handler.get_variant(variant)
+        if not variant_config:
+            # Try to extract the variant key from version
+            if "backend" in variant:
+                summary_key = "backend"
+            elif "ml" in variant or "ai" in variant:
+                summary_key = "ml_ai"
+            elif "fullstack" in variant or "full" in variant:
+                summary_key = "fullstack"
+            elif "devops" in variant:
+                summary_key = "devops"
+            elif "leadership" in variant:
+                summary_key = "leadership"
+            else:
+                summary_key = "base"
+        else:
+            summary_key = variant_config.get("summary_key", "base")
+
+        # Prepare template context
+        context = {
+            "contact": self.yaml_handler.get_contact(),
+            "summary": self.yaml_handler.get_summary(summary_key),
+            "skills": self.yaml_handler.get_skills(variant),
+            "experience": self.yaml_handler.get_experience(variant),
+            "education": self.yaml_handler.get_education(variant),
+            "publications": self.yaml_handler.data.get("publications", []),
+            "certifications": self.yaml_handler.data.get("certifications", []),
+            "affiliations": self.yaml_handler.data.get("affiliations", []),
+            "projects": self.yaml_handler.get_projects(variant),
+            "variant": variant,
+            "generated_date": datetime.now().strftime("%Y-%m-%d"),
+            **kwargs
+        }
+
+        # Select template (PDF uses TEX template)
+        template_format = "tex" if output_format == "pdf" else output_format
+        template_name = f"resume_{template_format}.j2"
+        try:
+            template = self.env.get_template(template_name)
+        except Exception:
+            raise ValueError(f"Template not found: {template_name}")
+
+        # Render
+        content = template.render(**context)
+
+        # Save to file if path provided
+        if output_path:
+            output_path = Path(output_path)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # If PDF requested, compile from TEX (don't write LaTeX to PDF path)
+            if output_format == "pdf" or output_path.suffix == ".pdf":
+                self._compile_pdf(output_path, content)
+            else:
+                with open(output_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+
+        return content
+
+    def _compile_pdf(self, output_path: Path, tex_content: str) -> None:
+        """
+        Compile LaTeX to PDF.
+
+        Args:
+            output_path: Output PDF path
+            tex_content: LaTeX content
+        """
+        # Create temporary .tex file
+        tex_path = output_path.with_suffix(".tex")
+
+        with open(tex_path, "w", encoding="utf-8") as f:
+            f.write(tex_content)
+
+        # Try pdflatex first
+        pdf_created = False
+        try:
+            subprocess.run(
+                ["pdflatex", "-interaction=nonstopmode", tex_path.name],
+                check=True,
+                capture_output=True,
+                cwd=tex_path.parent
+            )
+            pdf_created = True
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            # Check if PDF was created anyway (pdflatex returns non-zero for warnings)
+            if output_path.exists():
+                pdf_created = True
+            else:
+                # Fallback to pandoc
+                try:
+                    subprocess.run(
+                        [
+                            "pandoc",
+                            str(tex_path),
+                            "-o", str(output_path),
+                            "--pdf-engine=xelatex"
+                        ],
+                        check=True,
+                        capture_output=True
+                    )
+                    pdf_created = True
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    pass
+
+        if not pdf_created or not output_path.exists():
+            raise RuntimeError(
+                "PDF compilation failed. Please install pdflatex or pandoc.\n"
+                "  Ubuntu/Debian: sudo apt-get install texlive-full\n"
+                "  macOS: brew install mactex\n"
+                "  Or export as Markdown instead."
+            )
+
+    def generate_email(
+        self,
+        company_name: str,
+        position_name: str,
+        hiring_manager_name: Optional[str] = None,
+        output_path: Optional[Path] = None
+    ) -> str:
+        """
+        Generate cover letter/email.
+
+        Args:
+            company_name: Name of company
+            position_name: Name of position
+            hiring_manager_name: Optional hiring manager name
+            output_path: Optional output file path
+
+        Returns:
+            Generated email content
+        """
+        template = self.env.get_template("email_md.j2")
+
+        context = {
+            "contact": self.yaml_handler.get_contact(),
+            "company_name": company_name,
+            "position_name": position_name,
+            "hiring_manager_name": hiring_manager_name,
+            "generated_date": datetime.now().strftime("%Y-%m-%d")
+        }
+
+        content = template.render(**context)
+
+        if output_path:
+            output_path = Path(output_path)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+        return content
+
+    def get_output_path(
+        self,
+        variant: str,
+        output_format: str,
+        output_dir: Optional[Path] = None
+    ) -> Path:
+        """
+        Generate output file path based on config.
+
+        Args:
+            variant: Variant name
+            output_format: Output format (md, tex, pdf)
+            output_dir: Optional output directory override
+
+        Returns:
+            Output file path
+        """
+        if output_dir is None:
+            output_dir = self.config.output_dir
+
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate filename
+        date_str = datetime.now().strftime(self.config.get("output.date_format", "%Y-%m-%d"))
+        variant_clean = variant.replace(".", "-").replace("_", "-")
+        filename = f"resume-{variant_clean}-{date_str}.{output_format}"
+
+        return output_dir / filename
+
+    def list_templates(self) -> list:
+        """List available templates."""
+        templates = []
+        for template_file in self.template_dir.glob("*.j2"):
+            templates.append(template_file.stem)
+        return templates

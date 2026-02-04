@@ -1,0 +1,151 @@
+# Variant Strategy Configurations
+# These define how different resume variants are generated
+
+v1.0.0-base:
+  description: General software engineering
+  summary_key: base
+  skill_sections:
+    - programming_languages
+    - frontend
+    - backend
+    - cloud_devops
+    - databases
+  skill_order:
+    - programming_languages
+    - cloud_devops
+    - backend
+    - databases
+  project_categories:
+    - fullstack
+    - backend
+  max_bullets_per_job: 4
+  emphasize_keywords: []
+
+v1.1.0-backend:
+  description: Backend & DevOps specialization
+  summary_key: backend
+  skill_sections:
+    - programming_languages
+    - backend
+    - cloud_devops
+    - databases
+    - ai_ml
+  skill_order:
+    - programming_languages
+    - cloud_devops
+    - backend
+    - databases
+  project_categories:
+    - backend
+    - devops
+  max_bullets_per_job: 5
+  emphasize_keywords:
+    - backend
+    - api
+    - scalability
+    - infrastructure
+    - server
+
+v1.2.0-ml_ai:
+  description: ML/AI specialization
+  summary_key: ml_ai
+  skill_sections:
+    - programming_languages
+    - ai_ml
+    - cloud_devops
+    - databases
+  skill_order:
+    - programming_languages
+    - ai_ml
+    - cloud_devops
+    - databases
+  project_categories:
+    - ai_ml
+    - backend
+  max_bullets_per_job: 5
+  emphasize_keywords:
+    - ai
+    - ml
+    - machine learning
+    - llm
+    - pytorch
+    - neural
+    - model
+
+v1.3.0-fullstack:
+  description: Full-stack specialization
+  summary_key: fullstack
+  skill_sections:
+    - programming_languages
+    - frontend
+    - backend
+    - cloud_devops
+    - databases
+  skill_order:
+    - programming_languages
+    - frontend
+    - backend
+    - cloud_devops
+  project_categories:
+    - fullstack
+    - backend
+  max_bullets_per_job: 4
+  emphasize_keywords:
+    - fullstack
+    - react
+    - frontend
+    - web
+    - application
+    - ui
+
+v1.4.0-devops:
+  description: DevOps & Infrastructure specialization
+  summary_key: devops
+  skill_sections:
+    - cloud_devops
+    - programming_languages
+    - backend
+    - development_tools
+  skill_order:
+    - cloud_devops
+    - programming_languages
+    - backend
+    - development_tools
+  project_categories:
+    - devops
+    - backend
+  max_bullets_per_job: 5
+  emphasize_keywords:
+    - devops
+    - infrastructure
+    - aws
+    - kubernetes
+    - cicd
+    - deployment
+    - scalable
+
+v1.5.0-leadership:
+  description: Leadership & Technical Staff
+  summary_key: leadership
+  skill_sections:
+    - programming_languages
+    - cloud_devops
+    - backend
+    - development_tools
+  skill_order:
+    - cloud_devops
+    - programming_languages
+    - backend
+    - development_tools
+  project_categories:
+    - backend
+    - devops
+  max_bullets_per_job: 5
+  emphasize_keywords:
+    - led
+    - orchestrated
+    - spearheaded
+    - mentored
+    - architected
+    - managed
+    - principal

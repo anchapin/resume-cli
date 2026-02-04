@@ -1,0 +1,504 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Repository Overview
+
+This is a **Resume CLI System** - a unified command-line interface for generating job-specific resumes from a single YAML source. The system supports fast template-based generation (Jinja2) and optional AI-powered customization (Claude/OpenAI), with built-in application tracking.
+
+**Key principle**: `resume.yaml` is the single source of truth. All resume variants are generated from this file.
+
+## Development Commands
+
+### Installation
+
+```bash
+# Standard installation
+pip install -e .
+
+# With AI support (adds anthropic/openai packages)
+pip install -e ".[ai]"
+
+# Development dependencies (includes pytest)
+pip install -e ".[dev]"
+
+# Set AI API key (if using AI features)
+cp .env.template .env
+# Edit .env to add your keys
+# or set directly:
+export ANTHROPIC_API_KEY=your_key_here
+# or
+export OPENAI_API_KEY=your_key_here
+```
+
+### Common Operations
+
+```bash
+# Validate resume.yaml schema
+resume-cli validate
+
+# Generate resume (template-based, <1 second)
+resume-cli generate -v v1.0.0-base -f md
+resume-cli generate -v v1.1.0-backend -f pdf
+
+# List all variants
+resume-cli variants
+
+# Generate complete application package (resume + cover letter)
+resume-cli generate-package --job-desc job-posting.txt --variant v1.1.0-backend
+resume-cli generate-package --job-desc job.txt --company "Acme Corp" --non-interactive
+resume-cli generate-package --job-desc job.txt -f pdf --variant v1.2.0-ml_ai
+
+# Track job application
+resume-cli apply Company applied -r "Job Title"
+
+# View application analytics
+resume-cli analyze
+
+# Sync GitHub projects to resume.yaml
+resume-cli sync-github --months 3
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=cli --cov-report=html
+
+# Run specific test file
+pytest tests/test_yaml_parser.py
+```
+
+**Note**: As of the current version, the test suite is not yet implemented. The package is configured for pytest with the `dev` extra.
+
+## Development Notes
+
+### Adding New Commands
+
+1. Create command function in `cli/main.py` or new file in `cli/commands/`
+2. Use `@click.pass_context` decorator to access `ctx.obj` (contains `yaml_path`, `config`, `yaml_handler`)
+3. Register with `@cli.command()` decorator
+4. Example pattern:
+```python
+@cli.command()
+@click.option("--example", type=str, help="Example option")
+@click.pass_context
+def my_command(ctx, example):
+    """Command description."""
+    yaml_handler = ctx.obj['yaml_handler']
+    config = ctx.obj['config']
+    # Your logic here
+```
+
+**Important**: The Click context object (`ctx.obj`) is initialized in the `@click.group()` decorator function `cli()` at the top of `cli/main.py`. All subcommands must use `@click.pass_context` to access this context.
+
+### Adding New Template Formats
+
+1. Create new Jinja2 template in `templates/` (e.g., `resume_html.j2`)
+2. Add format to choice list in `generate` command in `cli/main.py`
+3. Update `TemplateGenerator._get_template_extension()` if needed
+4. Handle any special compilation in `TemplateGenerator.generate()`
+
+### Modifying AI Prompts
+
+AI prompts are defined in `cli/generators/ai_generator.py`. The system uses:
+- Keyword extraction from job descriptions
+- Bullet reordering based on relevance
+- Skill highlighting
+- **Important**: AI is configured to maintain truthfulness - no fake experience generated
+
+## Architecture
+
+### Data Flow
+
+```
+resume.yaml (single source)
+    ↓
+ResumeYAML parser (cli/utils/yaml_parser.py)
+    ↓
+TemplateGenerator (cli/generators/template.py)
+    ↓
+Jinja2 templates (templates/*.j2)
+    ↓
+Output files (output/)
+```
+
+For AI generation:
+```
+resume.yaml → TemplateGenerator → Base resume
+                                    ↓
+                            Job description
+                                    ↓
+                            AIGenerator → Customized resume
+```
+
+For cover letters with AI Judge:
+```
+Job description + resume.yaml → CoverLetterGenerator
+                                    ↓
+                            Generate N versions (configurable)
+                                    ↓
+                            AIJudge evaluates all versions
+                                    ↓
+                            Select and return best version
+```
+
+### Architectural Patterns
+
+**Generator Pattern**: Both `TemplateGenerator`, `AIGenerator`, and `CoverLetterGenerator` implement a similar interface:
+- Accept `yaml_path` and optional `config` in `__init__`
+- Use `ResumeYAML` for data access
+- Generate output in specified format (md/tex/pdf)
+- Return generated content as string
+
+**Context Object Pattern**: The Click CLI uses `ctx.obj` to share state across commands:
+- Initialized in the `@click.group()` decorator function
+- Contains `yaml_path` (Path), `config` (Config), `yaml_handler` (ResumeYAML)
+- Accessed via `@click.pass_context` decorator in subcommands
+
+**Config Layer Pattern**: Configuration is loaded with precedence:
+1. Environment variables (.env file)
+2. config/default.yaml
+3. Code defaults
+This allows flexible customization without code changes.
+
+### Key Components
+
+**cli/utils/yaml_parser.py** (`ResumeYAML` class):
+- Central data access layer for `resume.yaml`
+- Methods: `get_contact()`, `get_summary(variant)`, `get_skills(variant)`, `get_experience(variant)`
+- Variant-specific filtering uses `emphasize_for` lists in bullet items
+- All variant data lives in `resume.yaml` under `variants:` key
+
+**cli/generators/template.py** (`TemplateGenerator` class):
+- Fast Jinja2-based rendering (<1 second)
+- Supports MD, TEX formats (PDF via pdflatex/pandoc)
+- Template context includes filtered data based on variant
+
+**cli/generators/ai_generator.py** (`AIGenerator` class):
+- Wraps `TemplateGenerator` for base resume
+- Calls Claude/OpenAI API with job description
+- Extracts keywords, reorders bullets, emphasizes matching experience
+- Automatic fallback to template on API failure
+- Supports AI Judge for multi-generation quality selection (configurable)
+
+**cli/generators/cover_letter_generator.py** (`CoverLetterGenerator` class):
+- Generates personalized cover letters using AI
+- Interactive mode: asks questions (motivation, connections, etc.)
+- Non-interactive mode: uses AI smart guesses
+- Supports both Markdown and PDF output
+- Extracts job details (company, position, requirements) from job description
+- Uses AI Judge for multi-generation quality selection (configurable)
+
+**cli/generators/ai_judge.py** (`AIJudge` class):
+- Evaluates and selects best version from multiple AI generations
+- Used by both resume and cover letter generators
+- Configurable via `ai.judge_enabled` and `ai.num_generations` in config
+
+**cli/main.py** (Click CLI):
+- Entry point with `@click.group()` decorator
+- Context object `ctx.obj` stores `yaml_path`, `config`, `yaml_handler`
+- All commands receive context via `@click.pass_context`
+- Pattern for accessing context:
+```python
+@click.pass_context
+def my_command(ctx):
+    yaml_handler = ctx.obj['yaml_handler']
+    config = ctx.obj['config']
+    yaml_path = ctx.obj['yaml_path']
+```
+
+**cli/integrations/tracking.py** (`TrackingIntegration` class):
+- CSV-based tracking at `tracking/resume_experiment.csv`
+- Methods: `log_application()`, `get_statistics()`, `update_status()`
+- Status values: applied, interview, offer, rejected, withdrawn
+
+### Variant System
+
+Variants are defined in `resume.yaml` under `variants:`. Each variant has:
+- `description`: Human-readable description
+- `summary_key`: Which professional_summary to use (base or variant name)
+- `skill_sections`: Which skill sections to include
+- `max_bullets_per_job`: Bullet limit per experience entry
+- `emphasize_keywords`: Keywords to match in bullet text
+
+**Bullet emphasis logic**: In `get_experience(variant)` (cli/utils/yaml_parser.py), bullets are filtered by:
+1. `bullet.emphasize_for` list contains variant name (e.g., "backend", "ml_ai")
+2. OR `bullet.text` matches any keyword in variant's `emphasize_keywords` list
+3. Fallback to first `max_bullets_per_job` bullets if none match
+
+**Important**: When adding new experience bullets, use the `emphasize_for` field to specify which variants should include that bullet. This is the primary mechanism for variant-specific content.
+
+### Template System
+
+Jinja2 templates in `templates/` directory:
+- `resume_md.j2`: Markdown output
+- `resume_tex.j2`: LaTeX output (for PDF compilation)
+- `email_md.j2`: Simple email/cover letter template
+- `cover_letter_md.j2`: Full cover letter template (Markdown)
+- `cover_letter_tex.j2`: Full cover letter template (LaTeX/PDF)
+
+**Template context** includes:
+- `contact`: Dict from `get_contact()`
+- `summary`: String from `get_summary(variant)`
+- `skills`: Dict from `get_skills(variant)`
+- `experience`: List from `get_experience(variant)`
+- `education`, `publications`, `certifications`, `affiliations`, `projects`
+
+**Custom Jinja2 Filters** (defined in cli/generators/template.py):
+- `latex_escape`: Escapes special LaTeX characters (&, %, $, #, _, etc.)
+- `proper_title`: Title case with lowercase for small words (a, an, the, and, or, etc.)
+
+**Important**: Jinja2 `replace()` filter takes exactly 2 args: `replace('old','new')` (no spaces around comma).
+
+**Template Syntax Notes**:
+- Use `{{ variable|latex_escape }}` for LaTeX templates to escape special characters
+- Use `{% if %}` conditionals for optional content
+- Access nested data with dot notation: `{{ contact.email }}`
+
+### Configuration
+
+`config/default.yaml` contains:
+- AI provider/model settings
+- Output directory and naming scheme
+- Tracking CSV path
+- GitHub username for sync
+- Custom API base URLs for AI providers
+- **Cover letter settings** (enabled, formats, smart_guesses, tone, max_length)
+- **AI Judge settings** (judge_enabled, num_generations)
+
+`Config` class (`cli/utils/config.py`) loads this with deep merge of defaults.
+
+**Environment Variables**: The system supports `.env` files via `python-dotenv` for API keys:
+- `ANTHROPIC_API_KEY`: For Claude API access
+- `ANTHROPIC_BASE_URL`: Optional custom API base URL for Anthropic
+- `OPENAI_API_KEY`: For OpenAI GPT API access
+- `OPENAI_BASE_URL`: Optional custom API base URL for OpenAI
+
+Copy `.env.template` to `.env` and configure your keys.
+
+### Schema Validation
+
+`cli/utils/schema.py` (`ResumeValidator` class):
+- Validates `resume.yaml` structure
+- Checks required fields, types, date formats, email format
+- Validates variant skill_sections exist in skills
+- Returns `ValidationError` objects with path/message/level
+
+### GitHub Integration
+
+`cli/integrations/github_sync.py` (`GitHubSync` class):
+- Fetches repositories via GitHub CLI (`gh` command)
+- Categorizes projects by keywords (AI/ML, fullstack, backend, devops, energy, tools)
+- Filters by date range using `--months` parameter
+- Outputs structured data for inclusion in resume.yaml
+
+### Initialization Command
+
+`cli/commands/init.py` (`init_command`):
+- Parses existing resume files from `resumes/` directory
+- Creates structured `resume.yaml` from flat text resumes
+- Interactive prompts for missing information
+
+## Working with Resume Data
+
+### Adding a New Job/Experience
+
+Edit `resume.yaml`:
+
+```yaml
+experience:
+  - company: "Company Name"
+    title: "Job Title"
+    start_date: "2024-01"  # YYYY-MM format
+    end_date: null  # null for current position
+    location: "City, ST"
+    bullets:
+      - text: "What you accomplished..."
+        skills: ["Python", "Kubernetes"]
+        emphasize_for: ["backend", "devops"]  # Variants to emphasize
+```
+
+### Adding a New Variant
+
+1. Add summary to `professional_summary.variants:` in `resume.yaml`
+2. Add variant config to `variants:` in `resume.yaml`
+3. Optionally add `emphasize_for` hints to relevant bullets
+4. Test with `resume-cli generate -v vX.Y.Z-NAME -f md`
+
+### Modifying Templates
+
+Edit files in `templates/` directory:
+- Templates use Jinja2 syntax
+- Context variables passed from `TemplateGenerator.generate()`
+- Test changes with `resume-cli generate --no-save` to preview
+
+### Adding AI Customization
+
+1. Install AI dependencies: `pip install -e ".[ai]"`
+2. Set API key environment variable or add to `.env` file
+3. Run: `resume-cli generate --ai --job-desc job-posting.txt`
+
+AI generator will:
+- Extract keywords from job description
+- Reorder bullets to emphasize relevant experience
+- Highlight matching skills
+- Keep all content truthful (no fake experience)
+- Optionally use AI Judge to select best of N generations (configurable)
+
+**AI Configuration**:
+- Provider and model are set in `config/default.yaml` under `ai:` section
+- Default: `provider: anthropic`, `model: claude-3-5-sonnet-20241022`
+- AI Judge: Enable with `ai.judge_enabled: true` and set `ai.num_generations: 3`
+- Custom API base URLs supported (e.g., for OpenRouter, z.ai, or other proxies)
+
+### Generating Application Packages (Resume + Cover Letter)
+
+The `generate-package` command creates a complete application package:
+
+```bash
+# Interactive mode (AI asks questions for cover letter)
+resume-cli generate-package --job-desc job-posting.txt --variant v1.1.0-backend
+
+# Non-interactive mode (uses smart guesses)
+resume-cli generate-package --job-desc job.txt --company "Acme Corp" --non-interactive
+
+# Generate PDF resume and cover letter
+resume-cli generate-package --job-desc job.txt -f pdf --variant v1.2.0-ml_ai
+```
+
+**Output Structure:**
+```
+output/
+└── {company}-{date}/
+    ├── resume.md         # AI-customized resume (Markdown)
+    ├── resume.pdf        # AI-customized resume (PDF)
+    ├── cover-letter.md   # Cover letter (Markdown)
+    └── cover-letter.pdf  # Cover letter (PDF)
+```
+
+**Note**: The `generate-package` command always produces both MD and PDF formats for both resume and cover letter. The `-f/--format` option is deprecated and ignored.
+
+**Interactive Mode Questions:**
+1. What excites you about this role? (required)
+2. What aspects of the company's mission resonate with you? (optional)
+3. Do you have any connections at the company? (optional)
+
+**Non-Interactive Mode:**
+- AI generates smart guesses for cover letter content
+- Analyzes job requirements vs. resume experience
+- Creates appropriate motivation and alignment statements
+- Skips optional sections (connections) unless clear from context
+
+## File Structure Notes
+
+- `resume.yaml`: Edit this to update resume content
+- `cli/`: Package containing all CLI code
+  - `cli/main.py`: Click CLI entry point with `@click.group()` decorator
+  - `cli/commands/`: Command implementations (`init.py`)
+  - `cli/generators/`: Template and AI generators
+  - `cli/integrations/`: External service integrations (tracking, GitHub)
+  - `cli/utils/`: Core utilities (YAML parser, config, schema validation)
+- `templates/`: Jinja2 templates (add new formats here)
+- `config/`: Configuration files
+- `output/`: Generated resumes (auto-created, dates in filenames)
+- `tracking/`: Application tracking CSV (auto-created)
+
+**Package Entry Point**: The `resume-cli` command is registered in `setup.py` as:
+```python
+entry_points={
+    "console_scripts": [
+        "resume-cli=cli.main:main",
+    ],
+}
+```
+
+This allows invocation via `resume-cli` after installation.
+
+## PDF Generation
+
+Requires LaTeX tools:
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install texlive-full
+```
+
+**Fedora/RPM-based (Fedora, RHEL, CentOS):**
+```bash
+sudo dnf install texlive-scheme-full
+```
+
+**macOS:**
+```bash
+brew install mactex
+```
+
+**Or use Pandoc (smaller footprint):**
+```bash
+# Ubuntu/Debian
+sudo apt-get install pandoc texlive-xetex
+
+# Fedora/RPM-based
+sudo dnf install pandoc texlive-xetex
+```
+
+PDF compilation happens in `TemplateGenerator._compile_pdf()` (cli/generators/template.py) via:
+1. First attempts: `pdflatex` (full LaTeX distribution)
+2. Fallback: `pandoc` (if pdflatex unavailable)
+
+**Note**: PDF generation is significantly slower than Markdown/TEX due to compilation.
+
+## Error Handling and Troubleshooting
+
+### Common Issues
+
+**"resume.yaml not found"**
+- Run `resume-cli init --from-existing` to create from existing files
+- Or ensure you're in the correct directory
+
+**"anthropic package not installed"**
+- Install AI dependencies: `pip install -e ".[ai]"`
+- The base install doesn't include AI packages
+
+**"ANTHROPIC_API_KEY not set"**
+- Set environment variable: `export ANTHROPIC_API_KEY=your_key`
+- Or create `.env` file from `.env.template`
+
+**"PDF compilation failed"**
+- Install LaTeX tools (see PDF Generation section above)
+- Check that `pdflatex` or `pandoc` is in your PATH
+
+**"gh command not found"**
+- Install GitHub CLI: https://cli.github.com/
+- Required for `resume-cli sync-github` command
+
+**"ModuleNotFoundError: No module named 'cli'"**
+- Ensure you installed with `pip install -e .` in the project root
+- The editable install is required for the `resume-cli` command to work
+
+### Validation Errors
+
+Run `resume-cli validate` to check for:
+- Missing required fields in resume.yaml
+- Invalid date formats (use YYYY-MM format)
+- Invalid email addresses
+- Mismatched skill sections in variants
+
+### AI Generation Issues
+
+**API errors**: Check your API key and network connection
+**Rate limiting**: The system will automatically retry with exponential backoff
+**Fallback**: If AI generation fails completely, it falls back to template-based generation (configurable via `ai.fallback_to_template`)
+
+## Development Workflow
+
+1. Edit `resume.yaml` to add/update content
+2. Run `resume-cli validate` to check for errors
+3. Run `resume-cli generate -v v1.0.0-base --no-save` to preview changes
+4. When satisfied, generate specific variant: `resume-cli generate -v v1.1.0-backend -f md`
+5. For job applications: `resume-cli generate-package --job-desc job.txt --variant v1.1.0-backend`
+6. Track applications: `resume-cli apply Company applied -r "Job Title"`

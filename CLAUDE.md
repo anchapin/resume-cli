@@ -49,6 +49,9 @@ resume-cli generate-package --job-desc job-posting.txt --variant v1.1.0-backend
 resume-cli generate-package --job-desc job.txt --company "Acme Corp" --non-interactive
 resume-cli generate-package --job-desc job.txt -f pdf --variant v1.2.0-ml_ai
 
+# Generate package with auto-selected GitHub projects matching job technologies
+resume-cli generate-package --job-desc job-posting.txt --variant v1.1.0-backend --include-github-projects
+
 # Track job application
 resume-cli apply Company applied -r "Job Title"
 
@@ -146,6 +149,17 @@ Job description + resume.yaml → CoverLetterGenerator
                             Select and return best version
 ```
 
+For generate-package with GitHub projects:
+```
+Job description → Extract technologies (AI)
+                        ↓
+                GitHubSync.select_matching_projects()
+                        ↓
+                Update resume.yaml with selected projects
+                        ↓
+                Generate AI-customized resume + cover letter
+```
+
 ### Architectural Patterns
 
 **Generator Pattern**: Both `TemplateGenerator`, `AIGenerator`, and `CoverLetterGenerator` implement a similar interface:
@@ -160,10 +174,16 @@ Job description + resume.yaml → CoverLetterGenerator
 - Accessed via `@click.pass_context` decorator in subcommands
 
 **Config Layer Pattern**: Configuration is loaded with precedence:
-1. Environment variables (.env file)
+1. Environment variables (.env file) - highest priority
 2. config/default.yaml
-3. Code defaults
+3. Code defaults (`Config.DEFAULT_CONFIG` in cli/utils/config.py) - fallback
 This allows flexible customization without code changes.
+
+**Important env var overrides** (from .env file):
+- `ANTHROPIC_API_KEY`: Required for Claude API access
+- `ANTHROPIC_BASE_URL`: Optional custom API base URL (e.g., for z.ai or OpenRouter)
+- `OPENAI_API_KEY`: Required for OpenAI GPT API access
+- `OPENAI_BASE_URL`: Optional custom API base URL
 
 ### Key Components
 
@@ -295,6 +315,91 @@ Copy `.env.template` to `.env` and configure your keys.
 - Categorizes projects by keywords (AI/ML, fullstack, backend, devops, energy, tools)
 - Filters by date range using `--months` parameter
 - Outputs structured data for inclusion in resume.yaml
+- **Project Selection**: `select_matching_projects()` method uses AI to match job technologies with repository topics/languages/descriptions, returning scored matches for auto-inclusion in resumes
+- **Resume Update**: `update_resume_projects()` method inserts selected projects into the `projects.featured` section of resume.yaml
+
+### AI-Enhanced GitHub Projects (Ephemeral Enhancement)
+
+When using `--include-github-projects` with `generate-package`, the system now applies AI enhancements to make GitHub projects more compelling and job-relevant:
+
+**Design Principle: Ephemeral Enhancement, Persistent Base**
+- AI enhancements exist only in-memory during generation
+- Base `resume.yaml` remains unchanged (no permanent modifications)
+- Each job application gets customized project highlighting
+- Reversible and safe - no git cleanup needed
+
+**Enhancement Features:**
+
+1. **Enhanced Project Descriptions** (`AIGenerator.enhance_project_descriptions()`)
+   - Generates 2-3 sentence descriptions emphasizing job-relevant technologies
+   - Extracts 3-5 highlighted technologies matching job requirements
+   - Creates 2-4 achievement highlights (action-oriented bullets)
+   - Assigns relevance score (0-10) for project ranking
+
+2. **Professional Summary Integration** (`AIGenerator.generate_project_summary()`)
+   - Seamlessly integrates 2-3 most relevant projects into summary
+   - Maintains original tone and structure
+   - Keeps first sentence unchanged (preserves voice)
+   - Length controlled to ±20% of original
+
+3. **Skills Prioritization** (`ResumeYAML._prioritize_skills()`)
+   - Moves matching technologies to front of skill lists
+   - Applied across all skill categories
+   - Helps recruiters see relevant skills first
+
+**Enhanced Project Data Structure:**
+```python
+{
+    # Base fields from GitHub
+    "name": "project-name",
+    "description": "Basic description",
+    "url": "https://github.com/user/project",
+    "language": "Python",
+
+    # AI-generated fields (ephemeral)
+    "enhanced_description": "Built scalable Python microservice...",
+    "highlighted_technologies": ["Python", "FastAPI", "Kubernetes"],
+    "achievement_highlights": [
+        "Reduced API latency by 40% through async optimization",
+        "Implemented automated testing achieving 95% coverage"
+    ],
+    "relevance_score": 8.5
+}
+```
+
+**Configuration Options** (`config/default.yaml`):
+```yaml
+github:
+  enhance_descriptions: true    # Use AI to enhance project descriptions
+  enhance_summary: true         # Integrate projects into professional summary
+  emphasize_skills: true        # Prioritize project technologies in skills section
+  emphasize_experience: false   # Future: emphasize relevant experience bullets
+```
+
+**Usage:**
+```bash
+resume-cli generate-package \
+  --job-desc job-posting.txt \
+  --include-github-projects \
+  --variant v1.1.0-backend
+```
+
+**Output Differences:**
+- Projects section includes enhanced descriptions, technology lists, achievement highlights
+- Professional summary mentions relevant projects
+- Skills section prioritizes project technologies
+- All enhancements are ephemeral (resume.yaml unchanged)
+
+**Error Handling:**
+- Graceful degradation if AI fails (uses original descriptions)
+- User warnings for partial failures
+- Configurable feature flags (can disable specific enhancements)
+
+**Important:**
+- Enhancements do NOT modify `resume.yaml` permanently
+- Each job application gets fresh, tailored enhancements
+- Truthfulness enforced: AI prompts emphasize "do NOT invent features"
+- Achievements extracted from project metadata, not hallucinated
 
 ### Initialization Command
 
@@ -382,6 +487,15 @@ output/
 
 **Note**: The `generate-package` command always produces both MD and PDF formats for both resume and cover letter. The `-f/--format` option is deprecated and ignored.
 
+**Important**: When using `--include-github-projects`:
+- **Previous behavior**: Modified `resume.yaml` permanently with selected projects
+- **New behavior**: Applies AI enhancements **ephemerally** (in-memory only)
+  - Enhanced project descriptions, technology highlights, achievement bullets
+  - Professional summary integrates relevant projects
+  - Skills section prioritizes project technologies
+  - **resume.yaml remains unchanged** - no git cleanup needed!
+- Recommended: Commit changes before running for peace of mind, but no longer required
+
 **Interactive Mode Questions:**
 1. What excites you about this role? (required)
 2. What aspects of the company's mission resonate with you? (optional)
@@ -392,6 +506,16 @@ output/
 - Analyzes job requirements vs. resume experience
 - Creates appropriate motivation and alignment statements
 - Skips optional sections (connections) unless clear from context
+
+**Auto-Selecting GitHub Projects** (`--include-github-projects` flag):
+- Extracts top technologies from job description using AI
+- Searches GitHub repos (including organization code) for matching projects
+- Selects up to `github.max_projects` best matches based on topic/language/description relevance
+- **NEW**: Applies AI enhancements to selected projects (ephemeral - in-memory only)
+  - Enhanced descriptions emphasizing job-relevant technologies
+  - Highlighted technologies and achievement highlights
+  - Integrated into professional summary and prioritized in skills section
+- Useful for showcasing relevant work for each application
 
 ## File Structure Notes
 
@@ -493,6 +617,19 @@ Run `resume-cli validate` to check for:
 **API errors**: Check your API key and network connection
 **Rate limiting**: The system will automatically retry with exponential backoff
 **Fallback**: If AI generation fails completely, it falls back to template-based generation (configurable via `ai.fallback_to_template`)
+**Custom API providers**: Set `ANTHROPIC_BASE_URL` or `OPENAI_BASE_URL` in `.env` to use alternative API endpoints (e.g., OpenRouter, z.ai)
+
+**Project enhancement failures**:
+- If `enhance_project_descriptions()` fails, uses original GitHub descriptions
+- If `generate_project_summary()` fails, uses base professional summary
+- Check console warnings for specific error messages
+- Disable specific enhancements in `config/default.yaml`:
+  ```yaml
+  github:
+    enhance_descriptions: false
+    enhance_summary: false
+    emphasize_skills: false
+  ```
 
 ## Development Workflow
 
@@ -502,3 +639,24 @@ Run `resume-cli validate` to check for:
 4. When satisfied, generate specific variant: `resume-cli generate -v v1.1.0-backend -f md`
 5. For job applications: `resume-cli generate-package --job-desc job.txt --variant v1.1.0-backend`
 6. Track applications: `resume-cli apply Company applied -r "Job Title"`
+
+## Key Concepts
+
+### Emphasis System for Variants
+
+The emphasis system controls which bullets appear in which variants. Bullets are filtered by two mechanisms in `get_experience(variant)`:
+
+1. **Direct variant targeting**: Set `emphasize_for: ["backend", "devops"]` on a bullet to include it in specific variants
+2. **Keyword matching**: Variant configs define `emphasize_keywords` list; bullets matching these keywords are included
+
+**Best practice**: Use `emphasize_for` for explicit targeting. Keyword matching is a fallback for when you don't control the bullet content.
+
+### AI Judge Pattern
+
+The AI Judge (`cli/generators/ai_judge.py`) implements quality control:
+1. Generate N versions of content (resume or cover letter)
+2. Judge evaluates each version against job requirements
+3. Returns best version OR combines elements from multiple versions
+4. Configurable via `ai.judge_enabled` and `ai.num_generations`
+
+This pattern improves output quality by reducing randomness in AI generation.

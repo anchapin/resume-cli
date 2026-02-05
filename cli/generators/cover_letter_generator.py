@@ -787,13 +787,16 @@ Return ONLY valid JSON, nothing else."""
         import subprocess
         pdf_created = False
         try:
-            subprocess.run(
+            # Use Popen with explicit cleanup to avoid double-free issues
+            process = subprocess.Popen(
                 ["pdflatex", "-interaction=nonstopmode", tex_path.name],
-                check=True,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 cwd=tex_path.parent
             )
-            pdf_created = True
+            stdout, stderr = process.communicate()
+            if process.returncode == 0 or output_path.exists():
+                pdf_created = True
         except (subprocess.CalledProcessError, FileNotFoundError):
             # Check if PDF was created anyway
             if output_path.exists():
@@ -801,17 +804,19 @@ Return ONLY valid JSON, nothing else."""
             else:
                 # Fallback to pandoc
                 try:
-                    subprocess.run(
+                    process = subprocess.Popen(
                         [
                             "pandoc",
                             str(tex_path),
                             "-o", str(output_path),
                             "--pdf-engine=xelatex"
                         ],
-                        check=True,
-                        capture_output=True
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE
                     )
-                    pdf_created = True
+                    stdout, stderr = process.communicate()
+                    if process.returncode == 0 or output_path.exists():
+                        pdf_created = True
                 except (subprocess.CalledProcessError, FileNotFoundError):
                     pass
 

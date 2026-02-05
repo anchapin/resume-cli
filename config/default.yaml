@@ -50,6 +50,12 @@ github:
   auto_projects_enabled: false  # Opt-in for safety
   max_projects: 3               # Maximum number of projects to auto-select
   match_threshold: 1            # Minimum score threshold for project selection
+  # AI enhancement options for GitHub projects
+  enhance_descriptions: true    # Use AI to enhance project descriptions
+  enhance_summary: true         # Integrate projects into professional summary
+  emphasize_skills: true        # Prioritize project technologies in skills section
+  emphasize_experience: false   # Future: emphasize relevant experience bullets
+  enhancement_cache_ttl: 3600   # Cache TTL for enhancement results (seconds)
 
 variants:
   base: v1.0.0-base

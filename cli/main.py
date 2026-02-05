@@ -346,6 +346,7 @@ def generate_package(ctx, variant: str, format: str, job_desc: str, company: Opt
         package_dir.mkdir(parents=True, exist_ok=True)
 
         # Step 1.5: Auto-select GitHub projects if requested
+        enhanced_context = {}
         if include_github_projects:
             console.print("\n[cyan]Step 1.5: Selecting GitHub projects matching job technologies...[/cyan]")
             try:
@@ -378,23 +379,32 @@ def generate_package(ctx, variant: str, format: str, job_desc: str, company: Opt
                         console.print(f"[yellow]Warning:[/yellow] No matching GitHub projects found for: {', '.join(top_techs)}")
                         console.print("  Continuing without GitHub projects.")
                     else:
-                        # Update resume.yaml with selected projects
-                        github_sync.update_resume_projects(
-                            projects=selected_projects,
-                            yaml_path=yaml_path,
-                            category="featured"
-                        )
-
-                        console.print(f"[green]✓[/green] Added {len(selected_projects)} GitHub projects to resume:")
+                        console.print(f"[green]✓[/green] Selected {len(selected_projects)} GitHub projects:")
                         for proj in selected_projects:
                             console.print(f"    • {proj['name']} ({proj['language']}) - score: {proj['match_score']}")
 
-                        # Reload YAML handler and AI generator with updated projects
-                        from .utils.yaml_parser import ResumeYAML
-                        yaml_handler = ResumeYAML(yaml_path)
-                        ctx.obj["yaml_handler"] = yaml_handler
-                        resume_gen = AIGenerator(yaml_path, config=config)
-                        cl_gen_temp = CoverLetterGenerator(yaml_path, config=config)
+                        # Enhance project descriptions with AI (ephemeral - doesn't modify resume.yaml)
+                        enhanced_projects = resume_gen.enhance_project_descriptions(
+                            projects=selected_projects,
+                            job_description=job_description,
+                            technologies=technologies
+                        )
+
+                        # Generate enhanced professional summary integrating projects
+                        base_summary = ctx.obj["yaml_handler"].get_summary(variant)
+                        enhanced_summary = resume_gen.generate_project_summary(
+                            enhanced_projects=enhanced_projects,
+                            base_summary=base_summary,
+                            variant=variant
+                        )
+
+                        # Build enhanced context for template rendering
+                        enhanced_context = {
+                            "projects": {"featured": enhanced_projects},
+                            "summary": enhanced_summary,
+                        }
+
+                        console.print("[dim]AI enhancements applied (ephemeral - resume.yaml unchanged)[/dim]")
 
             except RuntimeError as e:
                 console.print(f"[yellow]Warning:[/yellow] GitHub CLI error: {e}")
@@ -411,7 +421,8 @@ def generate_package(ctx, variant: str, format: str, job_desc: str, company: Opt
                 variant=variant,
                 job_description=job_description,
                 output_format=resume_format,
-                output_path=resume_path
+                output_path=resume_path,
+                enhanced_context=enhanced_context if enhanced_context else None
             )
             all_saved_paths[f"resume_{resume_format}"] = resume_path
             console.print(f"[green]✓[/green] Resume ({resume_format.upper()}): {resume_path}")

@@ -381,6 +381,9 @@ class GitHubSync:
         - Name/description/topics match: 2 points each
         - README match: 1 point
 
+        IMPORTANT: Only ONE technology needs to match for a repo to be included.
+        Multi-word technologies are split into individual words for flexible matching.
+
         Args:
             repo: Repository dictionary
             technologies: List of technology keywords (lowercased)
@@ -390,7 +393,28 @@ class GitHubSync:
             Match score (higher is better)
         """
         score = 0
-        tech_lower = [t.lower() for t in technologies]
+
+        # Split multi-word technologies into individual words for better matching
+        # e.g., "langchain expression language" -> ["langchain", "expression", "language"]
+        tech_words = []
+        for tech in technologies:
+            tech_lower = tech.lower()
+            # Keep the full phrase for exact matches
+            tech_words.append(tech_lower)
+            # Also add individual words for flexible matching
+            words = tech_lower.split()
+            if len(words) > 1:
+                tech_words.extend(words)
+
+        # Deduplicate while preserving order
+        seen = set()
+        unique_tech_words = []
+        for word in tech_words:
+            if word not in seen and word not in ('and', 'or', 'the', 'for', 'with', 'from'):
+                seen.add(word)
+                unique_tech_words.append(word)
+
+        tech_lower = unique_tech_words
 
         # Check code matches (5 points - strongest signal of actual usage)
         if code_matches:
@@ -406,19 +430,19 @@ class GitHubSync:
         if language and language in tech_lower:
             score += 3
 
-        # Check repository name (2 points)
+        # Check repository name (2 points per matching technology word)
         name = repo.get("name", "").lower()
         for tech in tech_lower:
             if tech in name:
                 score += 2
-                break
+                # Don't break - accumulate score for all matching technologies
 
-        # Check description (2 points)
+        # Check description (2 points per matching technology word)
         description = repo.get("description", "").lower()
         for tech in tech_lower:
             if tech in description:
                 score += 2
-                break
+                # Don't break - accumulate score for all matching technologies
 
         # Check topics (2 points each, max 6 points)
         topics = repo.get("topics", [])
@@ -448,14 +472,16 @@ class GitHubSync:
     ) -> List[Dict[str, Any]]:
         """
         Select top GitHub projects that match the target technologies.
-        Only uses the top 3 most important technologies for matching to avoid
-        over-matching.
+
+        IMPORTANT: Only ONE technology needs to match for a repo to be included.
+        Multi-word technologies (e.g., "langchain expression language") are split
+        into individual words for flexible matching.
 
         Selection criteria:
         1. Best tech stack match (highest score)
         2. Most recently updated (within same score tier)
 
-        Scoring now includes code search results from the organization:
+        Scoring includes code search results from the organization:
         - Code matches (org code search): 5 points per match (max 15)
         - Primary language match: 3 points
         - Name/description/topics match: 2 points each

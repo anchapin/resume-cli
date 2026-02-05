@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 from datetime import datetime
 import subprocess
 import sys
+import re
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -49,9 +50,14 @@ class TemplateGenerator:
 
         # Add LaTeX escape filter
         def latex_escape(text):
-            """Escape special LaTeX characters."""
+            """Escape special LaTeX characters and convert Markdown bold to LaTeX."""
             if not text:
                 return text
+
+            # First, convert Markdown bold (**text**) to LaTeX \textbf{text}
+            # This must happen before character escaping
+            text = re.sub(r'\*\*([^*]+)\*\*', r'\\textbf{\1}', text)
+
             replacements = {
                 '&': r'\&',
                 '%': r'\%',
@@ -107,6 +113,7 @@ class TemplateGenerator:
         variant: str,
         output_format: str = "md",
         output_path: Optional[Path] = None,
+        enhanced_context: Optional[Dict[str, Any]] = None,
         **kwargs
     ) -> str:
         """
@@ -116,6 +123,8 @@ class TemplateGenerator:
             variant: Variant name (e.g., "v1.0.0-base")
             output_format: Output format (md, tex, pdf)
             output_path: Optional output file path
+            enhanced_context: Optional dict with AI-enhanced data to merge into context
+                            (e.g., {"projects": {...}, "summary": "...", "skills": {...}})
             **kwargs: Additional template variables
 
         Returns:
@@ -145,11 +154,24 @@ class TemplateGenerator:
         else:
             summary_key = variant_config.get("summary_key", "base")
 
+        # Extract technologies from enhanced_context for skills prioritization
+        prioritize_technologies = None
+        if enhanced_context:
+            # Extract technologies from enhanced projects if available
+            enhanced_projects = enhanced_context.get("projects", {}).get("featured", [])
+            if enhanced_projects:
+                all_techs = set()
+                for proj in enhanced_projects:
+                    if proj.get("highlighted_technologies"):
+                        all_techs.update(proj["highlighted_technologies"])
+                if all_techs:
+                    prioritize_technologies = list(all_techs)
+
         # Prepare template context
         context = {
             "contact": self.yaml_handler.get_contact(),
             "summary": self.yaml_handler.get_summary(summary_key),
-            "skills": self.yaml_handler.get_skills(variant),
+            "skills": self.yaml_handler.get_skills(variant, prioritize_technologies=prioritize_technologies),
             "experience": self.yaml_handler.get_experience(variant),
             "education": self.yaml_handler.get_education(variant),
             "publications": self.yaml_handler.data.get("publications", []),
@@ -160,6 +182,17 @@ class TemplateGenerator:
             "generated_date": datetime.now().strftime("%Y-%m-%d"),
             **kwargs
         }
+
+        # Merge enhanced_context if provided (AI enhancements override base data)
+        if enhanced_context:
+            # Deep merge to preserve nested structure
+            for key, value in enhanced_context.items():
+                if key in context and isinstance(context[key], dict) and isinstance(value, dict):
+                    # Merge dicts (e.g., projects, skills)
+                    context[key].update(value)
+                else:
+                    # Replace non-dict values (e.g., summary)
+                    context[key] = value
 
         # Select template (PDF uses TEX template)
         template_format = "tex" if output_format == "pdf" else output_format
@@ -203,13 +236,16 @@ class TemplateGenerator:
         # Try pdflatex first
         pdf_created = False
         try:
-            subprocess.run(
+            # Use Popen with explicit cleanup to avoid double-free issues
+            process = subprocess.Popen(
                 ["pdflatex", "-interaction=nonstopmode", tex_path.name],
-                check=True,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 cwd=tex_path.parent
             )
-            pdf_created = True
+            stdout, stderr = process.communicate()
+            if process.returncode == 0 or output_path.exists():
+                pdf_created = True
         except (subprocess.CalledProcessError, FileNotFoundError):
             # Check if PDF was created anyway (pdflatex returns non-zero for warnings)
             if output_path.exists():
@@ -217,17 +253,19 @@ class TemplateGenerator:
             else:
                 # Fallback to pandoc
                 try:
-                    subprocess.run(
+                    process = subprocess.Popen(
                         [
                             "pandoc",
                             str(tex_path),
                             "-o", str(output_path),
                             "--pdf-engine=xelatex"
                         ],
-                        check=True,
-                        capture_output=True
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE
                     )
-                    pdf_created = True
+                    stdout, stderr = process.communicate()
+                    if process.returncode == 0 or output_path.exists():
+                        pdf_created = True
                 except (subprocess.CalledProcessError, FileNotFoundError):
                     pass
 

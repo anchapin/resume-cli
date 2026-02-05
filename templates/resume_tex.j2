@@ -1,14 +1,15 @@
-\documentclass[11pt]{article}
-\usepackage[margin=0.75in]{geometry}
+\documentclass[10pt]{article}
+\usepackage[margin=0.65in,top=0.7in,bottom=0.7in]{geometry}
 \usepackage{enumitem}
 \usepackage{titlesec}
 \usepackage{hyperref}
 \usepackage{xcolor}
+\usepackage[none]{hyphenat}  % Disable hyphenation
 
 % Formatting
-\setlist[itemize]{noitemsep, topsep=0pt, leftmargin=1.2em}
+\setlist[itemize]{noitemsep, topsep=0pt, leftmargin=1.0em}
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{6pt}
+\setlength{\parskip}{4pt}
 
 % Colors
 \definecolor{primary}{RGB}{0, 0, 0}
@@ -16,8 +17,8 @@
 
 % Section formatting
 \titleformat{\section}
-  {\normalfont\Large\bfseries\color{accent}}{\thesection}{0em}{}[\titlerule]
-\titlespacing{\section}{0pt}{12pt}{8pt}
+  {\normalfont\large\bfseries\color{accent}}{\thesection}{0em}{}[\titlerule]
+\titlespacing{\section}{0pt}{10pt}{6pt}
 
 % Links
 \hypersetup{
@@ -45,7 +46,7 @@
 
 % Summary
 \section*{PROFESSIONAL SUMMARY}
-{{ summary }}
+{{ summary|latex_escape }}
 
 {% if projects %}
 % Projects
@@ -56,7 +57,15 @@
 
 \begin{itemize}
 {% for project in project_list %}
-  \item{ \textbf{ {{ project.name|latex_escape }} }{% if project.description %}: {{ project.description|latex_escape }}{% endif %}{% if project.url %} \href{ {{ project.url }} }{ {{ project.url }} }{% endif %} }
+  \item{ \textbf{ {{ project.name|latex_escape }} }{% if project.enhanced_description %}: {{ project.enhanced_description|latex_escape }}{% elif project.description %}: {{ project.description|latex_escape }}{% endif %}{% if project.url %} \href{ {{ project.url }} }{ {{ project.url }} }{% endif %} }
+{% if project.highlighted_technologies %}
+  \subitem{ \textit{Technologies:} {{ project.highlighted_technologies|join(', ')|latex_escape }} }
+{% endif %}
+{% if project.achievement_highlights %}
+{% for achievement in project.achievement_highlights %}
+  \subitem{ {{ achievement|latex_escape }} }
+{% endfor %}
+{% endif %}
 {% endfor %}
 \end{itemize}
 

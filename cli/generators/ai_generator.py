@@ -111,6 +111,232 @@ class AIGenerator:
         """Clear the content cache. Useful when generating for different jobs."""
         self._content_cache.clear()
 
+    def enhance_project_descriptions(
+        self,
+        projects: List[Dict[str, Any]],
+        job_description: str,
+        technologies: List[str]
+    ) -> List[Dict[str, Any]]:
+        """
+        Generate job-tailored project descriptions with technology highlights.
+
+        This method enhances GitHub projects with AI-generated contextual descriptions
+        that highlight relevant technologies and achievements. Enhancements are ephemeral
+        (in-memory only) and do not modify the base resume.yaml.
+
+        Args:
+            projects: List of project dicts from GitHub (with name, description, url, language)
+            job_description: Job description text
+            technologies: List of relevant technologies extracted from job description
+
+        Returns:
+            Enhanced project list with added fields:
+            - enhanced_description: 2-3 sentences emphasizing relevant tech
+            - highlighted_technologies: List of tech names to highlight
+            - achievement_highlights: List of specific achievements
+            - relevance_score: Float 0-10 indicating job relevance
+            Returns original projects on error (graceful degradation).
+        """
+        if not projects or not job_description:
+            return projects
+
+        # Check if enhancement is disabled in config
+        if not self.config.get("github.enhance_descriptions", True):
+            console.print("[dim]Project description enhancement disabled in config.[/dim]")
+            return projects
+
+        console.print("[dim]Enhancing project descriptions with AI...[/dim]")
+
+        # Build prompt for batch enhancement
+        projects_json = self._projects_to_json(projects)
+
+        prompt = f"""You are an expert resume writer. I need you to enhance project descriptions to highlight relevant experience for a job application.
+
+**Job Description:**
+{job_description}
+
+**Key Technologies to Highlight:**
+{', '.join(technologies[:10]) if technologies else 'Various technologies'}
+
+**Projects to Enhance:**
+{projects_json}
+
+**Instructions:**
+1. For EACH project, generate an enhanced description (2-3 sentences) that emphasizes relevant technologies and achievements
+2. Extract 3-5 highlighted technologies that match the job requirements (prioritize from the job description list)
+3. Extract 2-4 achievement highlights as concise bullet points (start with action verbs: "Built", "Implemented", "Developed", etc.)
+4. Assign a relevance score (0-10) based on how well the project matches the job requirements
+5. **CRITICAL:** Do NOT invent features or achievements not implied by the project description/language
+6. Focus on technologies and use cases that match the job description
+7. Keep descriptions concise and professional
+
+**Output Format:**
+Return ONLY valid JSON as a list of objects with this exact structure:
+[
+  {{
+    "name": "exact project name from input",
+    "enhanced_description": "2-3 professional sentences emphasizing relevant tech...",
+    "highlighted_technologies": ["Tech1", "Tech2", "Tech3"],
+    "achievement_highlights": ["Built X using Y", "Implemented Z..."],
+    "relevance_score": 8.5
+  }}
+]
+
+**Requirements:**
+- Return ONLY the JSON array, no introductory text
+- Use exact project names from input
+- All fields required for each project
+- highlighted_technologies should prioritize job reqs, but can include other relevant tech
+- achievement_highlights must be truthful based on project description/language
+- relevance_score: 0-10 float (10 = perfect match, 5+ = good match)
+
+Please generate the enhanced project descriptions:"""
+
+        try:
+            # Call AI API
+            if self.provider == "anthropic":
+                response = self._call_anthropic(prompt)
+            else:
+                response = self._call_openai(prompt)
+
+            # Parse JSON response
+            import json
+            extracted = self._extract_json(response)
+            if not extracted:
+                raise ValueError("No valid JSON found in AI response")
+            enhanced_data = json.loads(extracted)
+
+            if not isinstance(enhanced_data, list):
+                raise ValueError("Response is not a list")
+
+            # Merge enhanced data with original projects
+            enhanced_projects = []
+            enhancement_map = {ep["name"]: ep for ep in enhanced_data}
+
+            for project in projects:
+                project_copy = project.copy()
+                project_name = project.get("name", "")
+
+                if project_name in enhancement_map:
+                    enhancement = enhancement_map[project_name]
+                    project_copy.update({
+                        "enhanced_description": enhancement.get("enhanced_description", ""),
+                        "highlighted_technologies": enhancement.get("highlighted_technologies", []),
+                        "achievement_highlights": enhancement.get("achievement_highlights", []),
+                        "relevance_score": enhancement.get("relevance_score", 0.0)
+                    })
+
+                enhanced_projects.append(project_copy)
+
+            console.print(f"[green]✓[/green] Enhanced {len(enhanced_projects)} project descriptions")
+            return enhanced_projects
+
+        except Exception as e:
+            console.print(f"[yellow]Warning:[/yellow] Project enhancement failed: {str(e)}")
+            console.print("[dim]Using original project descriptions.[/dim]")
+            return projects
+
+    def generate_project_summary(
+        self,
+        enhanced_projects: List[Dict[str, Any]],
+        base_summary: str,
+        variant: str
+    ) -> str:
+        """
+        Seamlessly integrate relevant projects into professional summary.
+
+        This method generates an enhanced professional summary that incorporates
+        2-3 most relevant projects while maintaining the original tone and structure.
+
+        Args:
+            enhanced_projects: List of enhanced project dicts (with relevance scores)
+            base_summary: Original professional summary text
+            variant: Variant name for context
+
+        Returns:
+            Enhanced summary text with integrated project mentions
+            Returns base_summary on error (graceful degradation).
+        """
+        if not enhanced_projects or not base_summary:
+            return base_summary
+
+        # Check if summary enhancement is disabled in config
+        if not self.config.get("github.enhance_summary", True):
+            return base_summary
+
+        console.print("[dim]Integrating projects into professional summary...[/dim]")
+
+        # Sort by relevance and take top 3
+        top_projects = sorted(
+            enhanced_projects,
+            key=lambda p: p.get("relevance_score", 0),
+            reverse=True
+        )[:3]
+
+        projects_summary = "\n".join([
+            f"- {p.get('name', 'Project')}: {p.get('enhanced_description', p.get('description', ''))}"
+            for p in top_projects
+        ])
+
+        prompt = f"""You are an expert resume writer. I need you to seamlessly integrate relevant project experience into a professional summary.
+
+**Original Professional Summary:**
+{base_summary}
+
+**Relevant Projects to Integrate:**
+{projects_summary}
+
+**Instructions:**
+1. Keep the FIRST sentence of the original summary unchanged (it sets the tone)
+2. Seamlessly integrate 2-3 of the most relevant projects into the narrative
+3. Maintain the original summary's voice, style, and structure
+4. Keep total length within ±20% of original summary
+5. Focus on projects that demonstrate skills relevant to the job
+6. Do NOT invent new experience or achievements
+7. Make it flow naturally - project mentions should feel organic, not forced
+
+**Output Format:**
+- Return ONLY the enhanced summary text
+- No introductory or concluding remarks
+- Start directly with the first sentence (same as original)
+
+Please generate the enhanced professional summary:"""
+
+        try:
+            # Call AI API
+            if self.provider == "anthropic":
+                response = self._call_anthropic(prompt)
+            else:
+                response = self._call_openai(prompt)
+
+            enhanced_summary = self._extract_from_code_block(response).strip()
+
+            if enhanced_summary and len(enhanced_summary) > 50:
+                console.print("[green]✓[/green] Professional summary enhanced with project experience")
+                return enhanced_summary
+            else:
+                return base_summary
+
+        except Exception as e:
+            console.print(f"[yellow]Warning:[/yellow] Summary enhancement failed: {str(e)}")
+            console.print("[dim]Using original professional summary.[/dim]")
+            return base_summary
+
+    def _projects_to_json(self, projects: List[Dict[str, Any]]) -> str:
+        """Convert projects list to JSON string for AI prompt."""
+        import json
+        # Extract only relevant fields for the prompt
+        simplified = []
+        for p in projects:
+            simplified.append({
+                "name": p.get("name", ""),
+                "description": p.get("description", ""),
+                "language": p.get("language", ""),
+                "url": p.get("url", ""),
+                "stars": p.get("stars", 0)
+            })
+        return json.dumps(simplified, indent=2)
+
     def extract_technologies(self, job_description: str) -> List[str]:
         """
         Extract technologies from job description using AI.
@@ -165,7 +391,8 @@ Return ONLY valid JSON, nothing else."""
         job_description: Optional[str] = None,
         output_format: str = "md",
         output_path: Optional[Path] = None,
-        fallback: bool = True
+        fallback: bool = True,
+        enhanced_context: Optional[Dict[str, Any]] = None
     ) -> str:
         """
         Generate AI-customized resume.
@@ -176,16 +403,18 @@ Return ONLY valid JSON, nothing else."""
             output_format: Output format (md, tex, pdf)
             output_path: Optional output file path
             fallback: Whether to fallback to template on AI failure
+            enhanced_context: Optional dict with AI-enhanced data (e.g., from GitHub projects)
 
         Returns:
             Generated resume content
         """
         try:
-            # Generate base resume from template
+            # Generate base resume from template with enhanced_context if provided
             base_resume = self.template_generator.generate(
                 variant=variant,
                 output_format=output_format,
-                output_path=None
+                output_path=None,
+                enhanced_context=enhanced_context
             )
 
             if job_description:
@@ -221,7 +450,8 @@ Return ONLY valid JSON, nothing else."""
                 return self.template_generator.generate(
                     variant=variant,
                     output_format=output_format,
-                    output_path=output_path
+                    output_path=output_path,
+                    enhanced_context=enhanced_context
                 )
             else:
                 raise
@@ -419,6 +649,49 @@ Please return the customized resume in the same format as the base resume:"""
             cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
 
         return cleaned.strip() if cleaned.strip() else response
+
+    def _extract_json(self, response: str) -> str:
+        """
+        Extract JSON from AI response, handling multiple formats.
+
+        Args:
+            response: AI response that should contain JSON
+
+        Returns:
+            Extracted JSON string, or empty string if not found
+        """
+        import re
+
+        if not response:
+            return ""
+
+        # First, try to extract from code blocks
+        code_block_content = self._extract_from_code_block(response)
+        if code_block_content and code_block_content != response:
+            # If we successfully extracted from code blocks, validate it's JSON-like
+            stripped = code_block_content.strip()
+            if stripped.startswith('[') or stripped.startswith('{'):
+                return stripped
+
+        # If code block extraction didn't work or returned same response,
+        # try to find JSON array/object directly
+        # Look for content between [ and ] or { and } at the top level
+        json_match = re.search(r'\[\s*\{.*\}\s*\]', response, re.DOTALL)
+        if json_match:
+            return json_match.group(0).strip()
+
+        # Look for JSON object
+        obj_match = re.search(r'\{[^{}]*\{[^{}]*\}[^{}]*\}', response, re.DOTALL)
+        if obj_match:
+            return obj_match.group(0).strip()
+
+        # Fallback: return the original response stripped
+        stripped = response.strip()
+        if stripped.startswith('[') or stripped.startswith('{'):
+            return stripped
+
+        # No valid JSON found
+        return ""
 
     def _call_anthropic(self, prompt: str) -> str:
         """Call Anthropic Claude API."""

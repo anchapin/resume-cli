@@ -31,6 +31,7 @@ pip install -e ".[ai]"
 This installs the required AI API packages:
 - `anthropic` for Claude
 - `openai` for GPT models
+- `python-dotenv` for environment variable management
 
 ## Quick Start
 
@@ -88,25 +89,27 @@ Options:
   -f, --format CHOICE     Output format: md, tex, pdf (default: md)
   -o, --output PATH       Output file path
   --no-save              Print to stdout without saving
-  --ai                   Use AI-powered generation
-  --job-desc PATH        Path to job description file
+  --ai                   Use AI-powered generation (requires --job-desc)
+  --job-desc PATH        Path to job description file (required for --ai)
 ```
 
 **Examples:**
 
 ```bash
-# Generate Markdown resume
+# Generate Markdown resume (template-based)
 resume-cli generate -v v1.0.0-base -f md
 
 # Generate PDF with custom output path
 resume-cli generate -v v1.1.0-backend -f pdf -o my-resume.pdf
 
 # AI-customized for specific job
-resume-cli generate --ai --job-desc job-posting.txt -v v1.1.0-backend
+resume-cli generate --ai --job-desc job-posting.txt
 
 # Preview without saving
 resume-cli generate -v v1.2.0-ml_ai --no-save
 ```
+
+**Note:** The `--ai` flag requires `--job-desc`. Without `--ai`, generation uses fast templates (<1 second).
 
 ### variants
 
@@ -116,29 +119,56 @@ List all available resume variants.
 resume-cli variants
 ```
 
-Output:
-
-```
-┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Variant           ┃ Description          ┃
-┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
-│ v1.0.0-base       │ General software     │
-│                   │ engineering          │
-│ v1.1.0-backend    │ Backend & DevOps     │
-│ v1.2.0-ml_ai      │ ML/AI specialization │
-│ v1.3.0-fullstack  │ Full-stack           │
-│ v1.4.0-devops     │ DevOps &             │
-│                   │ Infrastructure       │
-│ v1.5.0-leadership │ Leadership & Staff   │
-└───────────────────┴──────────────────────┘
-```
-
 ### validate
 
 Validate `resume.yaml` schema and data.
 
 ```bash
 resume-cli validate
+```
+
+### generate-package
+
+Generate a complete application package: AI-customized resume + cover letter.
+
+**Note:** This command **automatically uses AI customization** when a job description is provided. No `--ai` flag is needed or available.
+
+```bash
+resume-cli generate-package [OPTIONS]
+
+Options:
+  --job-desc PATH        Path to job description file (required)
+  -v, --variant TEXT     Resume variant (default: v1.0.0-base)
+  --company TEXT         Company name (overrides extraction from job description)
+  --non-interactive      Skip questions, use smart defaults
+  --no-cover-letter      Skip cover letter generation
+  --output-dir PATH      Output directory (default: config setting)
+  --include-github-projects  Auto-select GitHub projects matching job technologies
+```
+
+**Output Structure:**
+
+```
+output/{company}-{date}/
+├── resume.md
+├── resume.pdf
+├── cover-letter.md
+└── cover-letter.pdf
+```
+
+**Examples:**
+
+```bash
+# Interactive mode (asks questions for cover letter)
+resume-cli generate-package --job-desc job-posting.txt --variant v1.1.0-backend
+
+# Non-interactive mode (uses smart guesses)
+resume-cli generate-package --job-desc job.txt --company "Acme Corp" --non-interactive
+
+# With GitHub projects auto-selected based on job technologies (AI is automatic)
+resume-cli generate-package --job-desc job-posting.txt --variant v1.2.0-ml_ai --include-github-projects
+
+# Note: No --ai flag needed - AI customization is automatic with --job-desc
 ```
 
 ### apply
@@ -178,7 +208,7 @@ resume-cli apply Stripe offer -r "Staff Engineer" -s "Referral" -u "https://stri
 - `interview` - Interview scheduled
 - `offer` - Offer received
 - `rejected` - Application rejected
-- `withdrawn` - Withrew application
+- `withdrawn` - Withdrew application
 
 ### analyze
 
@@ -186,22 +216,6 @@ Show application tracking analytics.
 
 ```bash
 resume-cli analyze
-```
-
-Output:
-
-```
-Application Statistics
-
-┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
-┃ Metric             ┃ Value     ┃
-┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
-│ Total Applications │ 25        │
-│ Applied            │ 20        │
-│ Interviews         │ 8         │
-│ Offers             │ 3         │
-│ Response Rate      │ 32.0%     │
-└────────────────────┴───────────┘
 ```
 
 ### sync-github
@@ -288,38 +302,19 @@ variants:
 General software engineering with balanced focus on all skills.
 
 ### v1.1.0-backend
-Backend & DevOps specialization. Emphasizes:
-- Backend technologies
-- Cloud infrastructure
-- Databases
-- APIs and scalability
+Backend & DevOps specialization. Emphasizes backend technologies, cloud infrastructure, databases, and APIs.
 
 ### v1.2.0-ml_ai
-ML/AI specialization. Emphasizes:
-- AI/ML frameworks
-- Data engineering
-- Model deployment
-- Python and PyTorch
+ML/AI specialization. Emphasizes AI/ML frameworks, data engineering, model deployment, and Python/PyTorch.
 
 ### v1.3.0-fullstack
-Full-stack specialization. Emphasizes:
-- Frontend and backend balance
-- Modern web frameworks
-- End-to-end development
+Full-stack specialization. Emphasizes frontend and backend balance and modern web frameworks.
 
 ### v1.4.0-devops
-DevOps & Infrastructure specialization. Emphasizes:
-- Kubernetes and Docker
-- CI/CD pipelines
-- AWS/cloud platforms
-- Infrastructure as code
+DevOps & Infrastructure specialization. Emphasizes Kubernetes, Docker, CI/CD, and cloud platforms.
 
 ### v1.5.0-leadership
-Leadership & Technical Staff. Emphasizes:
-- Architecture and design
-- Mentoring and team leadership
-- Technical strategy
-- High-impact projects
+Leadership & Technical Staff. Emphasizes architecture, mentoring, and technical strategy.
 
 ## AI-Powered Generation
 
@@ -330,19 +325,31 @@ Leadership & Technical Staff. Emphasizes:
    pip install -e ".[ai]"
    ```
 
-2. Set API key:
+2. Create `.env` file with API keys:
+   ```bash
+   cp .env.template .env
+   # Edit .env to add your keys
+   ```
+
+3. Configure API keys in `.env`:
 
    **For Claude (Anthropic):**
-   ```bash
-   export ANTHROPIC_API_KEY=your_key_here
+   ```
+   ANTHROPIC_API_KEY=your_key_here
    ```
 
    **For OpenAI:**
-   ```bash
-   export OPENAI_API_KEY=your_key_here
+   ```
+   OPENAI_API_KEY=your_key_here
    ```
 
-3. Configure provider in `config/default.yaml`:
+   **Optional: Custom API endpoints** (e.g., for z.ai, OpenRouter, or other proxies):
+   ```
+   ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic
+   OPENAI_BASE_URL=https://your-custom-endpoint.com/v1
+   ```
+
+4. Configure provider in `config/default.yaml`:
    ```yaml
    ai:
      provider: anthropic  # or openai
@@ -351,8 +358,9 @@ Leadership & Technical Staff. Emphasizes:
 
 ### Usage
 
+**For resume generation with AI:**
 ```bash
-# Generate with AI customization
+# Use --ai flag with generate command
 resume-cli generate --ai --job-desc job-posting.txt
 
 # AI will:
@@ -362,9 +370,46 @@ resume-cli generate --ai --job-desc job-posting.txt
 # 4. Keep all content truthful (no fake experience)
 ```
 
-### Fallback
+**For complete application packages (resume + cover letter):**
+```bash
+# generate-package automatically uses AI - no --ai flag needed!
+resume-cli generate-package --job-desc job-posting.txt --variant v1.1.0-backend
 
-If AI generation fails, the system automatically falls back to template-based generation (configurable).
+# This generates both AI-customized resume AND cover letter
+```
+
+### Troubleshooting AI Errors
+
+**"anthropic package not installed"**
+```bash
+# Install AI dependencies
+pip install -e ".[ai]"
+```
+
+**"ANTHROPIC_API_KEY not set"**
+- Make sure you created a `.env` file from `.env.template`
+- Verify the API key is set correctly in `.env`
+- `python-dotenv` loads environment variables from `.env` automatically
+
+**"OPENAI_API_KEY not set"**
+- Same troubleshooting steps as ANTHROPIC_API_KEY above
+
+**API connection errors**
+- Check your network connection
+- Verify API key is valid
+- If using custom `BASE_URL`, verify the endpoint is correct
+
+**"AI generation failed, falling back to template"**
+- This is expected behavior when AI API fails
+- The system automatically falls back to fast template generation
+- Check API key validity and network connection to use AI features
+- Set `ai.fallback_to_template: false` in config to fail instead of falling back
+
+**"No such option: --ai" with generate-package**
+- The `generate-package` command **does not have an `--ai` flag**
+- AI customization is automatic when you provide `--job-desc`
+- Simply run: `resume-cli generate-package --job-desc job-posting.txt`
+- Use `resume-cli generate --ai --job-desc ...` if you only want an AI-customized resume without cover letter
 
 ## Configuration
 
@@ -385,14 +430,29 @@ ai:
   provider: anthropic
   model: claude-3-5-sonnet-20241022
   fallback_to_template: true
+  # Multi-generation with AI Judge
+  judge_enabled: true  # Use AI judge to select best of N generations
+  num_generations: 3   # Number of versions to generate for judge evaluation
+  # Optional: Custom API base URLs (can also be set in .env)
+  anthropic_base_url: ""
+  openai_base_url: ""
 
 tracking:
   enabled: true
   csv_path: tracking/resume_experiment.csv
 
+cover_letter:
+  enabled: true
+  formats: [md, pdf]
+  smart_guesses: true
+  tone: professional
+  max_length: 400
+
 github:
   username: your_username
   sync_months: 3
+  # Auto-projects feature for generate-package
+  max_projects: 3
 ```
 
 ## PDF Generation
@@ -437,42 +497,39 @@ job_hunt/
 ├── templates/               # Jinja2 templates
 │   ├── resume_md.j2
 │   ├── resume_tex.j2
-│   └── email_md.j2
+│   └── cover_letter_md.j2
 ├── config/                  # Configuration files
 │   ├── default.yaml
 │   └── variants.yaml
 ├── output/                  # Generated resumes
 ├── tracking/                # Application tracking CSV
 ├── requirements.txt         # Python dependencies
-└── setup.py                # Package installation
+└── setup.py                 # Package installation
 ```
-
-## Migration from Old System
-
-The new CLI consolidates:
-- Old resume files → `resume.yaml`
-- `resume_generator/` → `cli/generators/`
-- `tracking/` → Integrated into `cli/integrations/`
-- `gh-resume-sync.sh` → `resume-cli sync-github`
-
-**Backward compatibility:** Old files are preserved. Run both systems in parallel during transition.
 
 ## Troubleshooting
 
 ### "resume.yaml not found"
-Run `resume-cli init --from-existing` to create from existing files.
+- Run `resume-cli init --from-existing` to create from existing files
+- Or copy `resume.example.yaml` to `resume.yaml` and customize
 
 ### "anthropic package not installed"
-Install AI dependencies: `pip install -e ".[ai]"`
+```bash
+pip install -e ".[ai]"
+```
 
 ### "ANTHROPIC_API_KEY not set"
-Set environment variable: `export ANTHROPIC_API_KEY=your_key`
+- Create `.env` file from `.env.template`
+- Add your API key to `.env`
+- The system automatically loads variables from `.env`
 
 ### "PDF compilation failed"
-Install LaTeX tools (see PDF Generation section above).
+- Install LaTeX tools (see PDF Generation section above)
+- Ensure `pdflatex` or `pandoc` is in your PATH
 
 ### "gh command not found"
-Install GitHub CLI: https://cli.github.com/
+- Install GitHub CLI: https://cli.github.com/
+- Required for `resume-cli sync-github` command
 
 ## Development
 
@@ -508,6 +565,6 @@ Contributions welcome! Please:
 ## Support
 
 For issues or questions:
-- Check existing documentation in `docs/`
-- Review `tracking/` for application history
 - Run `resume-cli validate` to check for errors
+- Check documentation in `docs/`
+- Review `tracking/` for application history

@@ -19,7 +19,16 @@
 {% for category, project_list in projects.items() %}
 ### {{ category|replace('_',' ')|title }}
 {% for project in project_list %}
-• **{{ project.name }}**{% if project.description %}: {{ project.description }}{% endif %}{% if project.url %} [{{ project.url }}]({{ project.url }}){% endif %}
+• **{{ project.name }}**
+{% if project.enhanced_description %}: {{ project.enhanced_description }}{% elif project.description %}: {{ project.description }}{% endif %}{% if project.url %} [{{ project.url }}]({{ project.url }}){% endif %}
+{% if project.highlighted_technologies %}
+  *Technologies:* {{ project.highlighted_technologies|join(', ') }}
+{% endif %}
+{% if project.achievement_highlights %}
+{% for achievement in project.achievement_highlights %}
+  - {{ achievement }}
+{% endfor %}
+{% endif %}
 
 {% endfor %}
 {% endfor %}

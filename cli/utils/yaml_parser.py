@@ -90,12 +90,13 @@ class ResumeYAML:
             return summaries.get("base", "")
         return summaries.get("variants", {}).get(variant, summaries.get("base", ""))
 
-    def get_skills(self, variant: Optional[str] = None) -> Dict[str, list]:
+    def get_skills(self, variant: Optional[str] = None, prioritize_technologies: Optional[list] = None) -> Dict[str, list]:
         """
         Get skills, optionally filtered by variant.
 
         Args:
             variant: Variant name to filter skills. Returns all if None.
+            prioritize_technologies: Optional list of technologies to prioritize (move to front of lists)
 
         Returns:
             Dictionary of skill categories
@@ -103,28 +104,69 @@ class ResumeYAML:
         all_skills = self.data.get("skills", {})
 
         if variant is None:
-            return all_skills
+            filtered_skills = all_skills
+        else:
+            # Get variant config
+            variant_config = self.data.get("variants", {}).get(variant, {})
+            skill_sections = variant_config.get("skill_sections", list(all_skills.keys()))
 
-        # Get variant config
-        variant_config = self.data.get("variants", {}).get(variant, {})
-        skill_sections = variant_config.get("skill_sections", list(all_skills.keys()))
+            # Filter and reorder skills
+            filtered_skills = {}
+            for section in skill_sections:
+                if section in all_skills:
+                    # Filter skills by emphasize_for
+                    section_skills = all_skills[section]
+                    if isinstance(section_skills, list):
+                        filtered_skills[section] = [
+                            s for s in section_skills
+                            if (isinstance(s, dict) and variant in s.get("emphasize_for", [variant])) or
+                               (isinstance(s, str))
+                        ]
+                    else:
+                        filtered_skills[section] = section_skills
 
-        # Filter and reorder skills
-        filtered_skills = {}
-        for section in skill_sections:
-            if section in all_skills:
-                # Filter skills by emphasize_for
-                section_skills = all_skills[section]
-                if isinstance(section_skills, list):
-                    filtered_skills[section] = [
-                        s for s in section_skills
-                        if (isinstance(s, dict) and variant in s.get("emphasize_for", [variant])) or
-                           (isinstance(s, str))
-                    ]
-                else:
-                    filtered_skills[section] = section_skills
+        # Apply technology prioritization if specified
+        if prioritize_technologies and filtered_skills:
+            filtered_skills = self._prioritize_skills(filtered_skills, prioritize_technologies)
 
         return filtered_skills
+
+    def _prioritize_skills(self, skills: Dict[str, list], technologies: list) -> Dict[str, list]:
+        """
+        Reorder skills within categories to prioritize highlighted technologies.
+
+        Args:
+            skills: Dictionary of skill categories
+            technologies: List of technology names to prioritize (case-insensitive)
+
+        Returns:
+            Dictionary with same structure, but matching skills moved to front of each list
+        """
+        prioritized = {}
+        tech_lower = [t.lower() for t in technologies]
+
+        for section, section_skills in skills.items():
+            if not isinstance(section_skills, list):
+                prioritized[section] = section_skills
+                continue
+
+            # Separate skills into matching and non-matching
+            matching = []
+            non_matching = []
+
+            for skill in section_skills:
+                skill_name = skill if isinstance(skill, str) else skill.get("name", "")
+
+                # Check if skill matches any of the technologies
+                if any(tech in skill_name.lower() for tech in tech_lower):
+                    matching.append(skill)
+                else:
+                    non_matching.append(skill)
+
+            # Combine with matching skills first
+            prioritized[section] = matching + non_matching
+
+        return prioritized
 
     def get_experience(self, variant: Optional[str] = None) -> list:
         """

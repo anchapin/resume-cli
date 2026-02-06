@@ -25,8 +25,8 @@ RUN pip install --no-cache-dir -r api/requirements.txt
 # Copy source code
 COPY . .
 
-# Install the package
-RUN pip install -e .
+# Install the package (standard install for production)
+RUN pip install --no-cache-dir .
 
 # Expose port
 EXPOSE 8000

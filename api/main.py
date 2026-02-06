@@ -4,6 +4,7 @@ import tempfile
 import shutil
 import os
 import json
+import logging
 import yaml
 from pathlib import Path
 
@@ -12,6 +13,9 @@ from api.auth import get_api_key
 from cli.generators.template import TemplateGenerator
 from cli.generators.ai_generator import AIGenerator
 from cli.utils.config import Config
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Resume API", version="1.0.0")
 
@@ -57,8 +61,10 @@ async def render_pdf(request: ResumeRequest):
             )
 
         except Exception as e:
-            # Clean up handled by TemporaryDirectory, but catching to return error
-            raise HTTPException(status_code=500, detail=str(e))
+            # Log the full exception for debugging
+            logger.exception("Error during PDF generation", exc_info=e)
+            # Return generic error message to client
+            raise HTTPException(status_code=500, detail="PDF generation failed")
 
 @app.post("/v1/tailor", dependencies=[Security(get_api_key)])
 async def tailor_resume(request: TailorRequest):
@@ -77,7 +83,10 @@ async def tailor_resume(request: TailorRequest):
         return tailored_data
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Log the full exception for debugging
+        logger.exception("Error during resume tailoring", exc_info=e)
+        # Return generic error message to client
+        raise HTTPException(status_code=500, detail="Resume tailoring failed")
 
 if __name__ == "__main__":
     import uvicorn

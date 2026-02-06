@@ -491,13 +491,31 @@ Return ONLY valid JSON, nothing else."""
                 response = self._call_openai(prompt)
 
             # Parse JSON from response
-            # Try to extract JSON from response (in case of markdown wrappers)
-            json_match = re.search(r'(\{.*\})', response, re.DOTALL)
-            if json_match:
-                return json.loads(json_match.group(0))
+            # 1. Prefer JSON inside ```json ... ``` fences
+            # 2. Try parsing the whole response as JSON directly (for plain JSON responses)
+            # 3. Fall back to non-greedy regex match (for responses with extra text)
+            fenced_json_match = re.search(r"```json\s*(\{.*\})\s*```", response, re.DOTALL)
+            if fenced_json_match:
+                return json.loads(fenced_json_match.group(1))
 
-            # Fallback if no match (maybe full response is JSON)
-            return json.loads(response)
+            # Try to parse the whole response as JSON directly
+            # This handles plain JSON responses without markdown
+            try:
+                return json.loads(response)
+            except json.JSONDecodeError:
+                pass
+
+            # Try to extract JSON from response (in case of markdown or other wrappers)
+            # Non-greedy match for simple JSON extraction
+            json_match = re.search(r'(\{.*?\})', response, re.DOTALL)
+            if json_match:
+                try:
+                    return json.loads(json_match.group(1))
+                except json.JSONDecodeError:
+                    pass
+
+            # If all attempts fail, raise exception to trigger fallback
+            raise ValueError("Could not extract valid JSON from response")
 
         except Exception as e:
             console.print(f"[yellow]Warning:[/yellow] Data tailoring failed: {str(e)}")

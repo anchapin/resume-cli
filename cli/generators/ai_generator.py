@@ -2,6 +2,7 @@
 
 import os
 import re
+import json
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime
@@ -722,6 +723,76 @@ Please return the customized resume in the same format as the base resume:"""
         )
 
         return response.choices[0].message.content
+
+    def tailor_data(
+        self,
+        resume_data: Dict[str, Any],
+        job_description: str
+    ) -> Dict[str, Any]:
+        """
+        Tailor resume data (dict) to job description.
+
+        Args:
+            resume_data: Dictionary containing resume data
+            job_description: Job description text
+
+        Returns:
+            Modified resume data dictionary
+        """
+        prompt = f"""You are an expert resume writer. I need you to tailor my resume data for a specific job description.
+
+**Job Description:**
+{job_description}
+
+**Resume Data (JSON):**
+{json.dumps(resume_data, indent=2)}
+
+**Instructions:**
+1. Analyze the job description and the resume data.
+2. Modify the "professional_summary" to be more relevant to the job.
+3. Reorder or select the most relevant "bullets" in the "experience" section.
+4. Ensure the JSON structure remains EXACTLY the same.
+5. Do NOT add fake experience.
+6. Return ONLY the valid JSON of the modified resume data.
+
+Return ONLY valid JSON, nothing else."""
+
+        try:
+            if self.provider == "anthropic":
+                response = self._call_anthropic(prompt)
+            else:
+                response = self._call_openai(prompt)
+
+            # Parse JSON from response
+            # 1. Prefer JSON inside ```json ... ``` fences
+            # 2. Try parsing the whole response as JSON directly (for plain JSON responses)
+            # 3. Fall back to non-greedy regex match (for responses with extra text)
+            fenced_json_match = re.search(r"```json\s*(\{.*\})\s*```", response, re.DOTALL)
+            if fenced_json_match:
+                return json.loads(fenced_json_match.group(1))
+
+            # Try to parse the whole response as JSON directly
+            # This handles plain JSON responses without markdown
+            try:
+                return json.loads(response)
+            except json.JSONDecodeError:
+                pass
+
+            # Try to extract JSON from response (in case of markdown or other wrappers)
+            # Non-greedy match for simple JSON extraction
+            json_match = re.search(r'(\{.*?\})', response, re.DOTALL)
+            if json_match:
+                try:
+                    return json.loads(json_match.group(1))
+                except json.JSONDecodeError:
+                    pass
+
+            # If all attempts fail, raise exception to trigger fallback
+            raise ValueError("Could not extract valid JSON from response")
+
+        except Exception as e:
+            console.print(f"[yellow]Warning:[/yellow] Data tailoring failed: {str(e)}")
+            return resume_data
 
 
 def generate_with_ai(

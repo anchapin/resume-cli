@@ -2,6 +2,7 @@
 
 import os
 import re
+import json
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime
@@ -449,6 +450,68 @@ Please return the customized resume in the same format as the base resume:"""
         )
 
         return response.choices[0].message.content
+
+    def tailor_data(
+        self,
+        resume_data: Dict[str, Any],
+        job_description: str
+    ) -> Dict[str, Any]:
+        """
+        Tailor resume data (dict) to job description.
+
+        Args:
+            resume_data: Dictionary containing resume data
+            job_description: Job description text
+
+        Returns:
+            Modified resume data dictionary
+        """
+        prompt = f"""You are an expert resume writer. I need you to tailor my resume data for a specific job description.
+
+**Job Description:**
+{job_description}
+
+**Resume Data (JSON):**
+{json.dumps(resume_data, indent=2)}
+
+**Instructions:**
+1. Analyze the job description and the resume data.
+2. Modify the "professional_summary" to be more relevant to the job.
+3. Reorder or select the most relevant "bullets" in the "experience" section.
+4. Ensure the JSON structure remains EXACTLY the same.
+5. Do NOT add fake experience.
+6. Return ONLY the valid JSON of the modified resume data.
+
+Return ONLY valid JSON, nothing else."""
+
+        try:
+            if self.provider == "anthropic":
+                response = self._call_anthropic(prompt)
+            else:
+                response = self._call_openai(prompt)
+
+            # Parse JSON from response
+            # 1. Prefer JSON inside ```json ... ``` fences
+            fenced_json_match = re.search(r"```json\s*(\{.*?\})\s*```", response, re.DOTALL)
+            if fenced_json_match:
+                return json.loads(fenced_json_match.group(1))
+
+            # 2. Search for first '{' and try raw_decode (handles nested JSON correctly)
+            start_idx = response.find('{')
+            if start_idx != -1:
+                try:
+                    obj, _ = json.JSONDecoder().raw_decode(response[start_idx:])
+                    return obj
+                except json.JSONDecodeError:
+                    pass
+
+            # 3. Fallback: try to load the whole response as JSON
+            return json.loads(response)
+
+        except Exception as e:
+            console.print(f"[yellow]Warning:[/yellow] Data tailoring failed: {str(e)}")
+            # Re-raise exception so API can handle it properly instead of silently failing
+            raise RuntimeError(f"Failed to parse AI response: {str(e)}")
 
 
 def generate_with_ai(

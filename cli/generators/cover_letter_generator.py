@@ -10,9 +10,9 @@ from typing import Any, Dict, List, Optional, Tuple
 from rich.console import Console
 
 # Import hashlib before kubernetes_asyncio can patch it
+# Use sha256 instead of md5 to avoid kubernetes_asyncio patching
 import hashlib
-# Store reference to md5 function before any monkeypatching
-_md5 = hashlib.md5
+_sha256 = hashlib.sha256
 
 # Load environment variables from .env file if present
 try:
@@ -528,7 +528,7 @@ Return ONLY valid JSON, nothing else."""
         # Create cache key from inputs
         qa = job_details.get("question_answers", {})
         cache_key_input = f"{job_description[:500]}{str(qa)}{variant}"
-        cache_key = _md5(cache_key_input.encode(), usedforsecurity=False).hexdigest()
+        cache_key = _sha256(cache_key_input.encode(), usedforsecurity=False).hexdigest()
 
         # Check cache
         if cache_key in self._content_cache:

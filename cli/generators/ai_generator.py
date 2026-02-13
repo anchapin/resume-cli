@@ -11,9 +11,9 @@ from typing import Any, Dict, List, Optional
 from rich.console import Console
 
 # Import hashlib before kubernetes_asyncio can patch it
+# Use sha256 instead of md5 to avoid kubernetes_asyncio patching
 import hashlib
-# Store reference to md5 function before any monkeypatching
-_md5 = hashlib.md5
+_sha256 = hashlib.sha256
 
 # Load environment variables from .env file if present
 try:
@@ -486,7 +486,7 @@ Return ONLY valid JSON, nothing else."""
             Customized resume content
         """
         # Create cache key from inputs (include output_format since content differs)
-        cache_key = _md5(
+        cache_key = _sha256(
             f"{job_description[:1000]}{variant}{output_format}".encode(),
             usedforsecurity=False,
         ).hexdigest()

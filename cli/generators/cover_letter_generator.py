@@ -1,5 +1,6 @@
 """AI-powered cover letter generator using Claude or OpenAI."""
 
+import hashlib
 import os
 import re
 from datetime import datetime
@@ -520,8 +521,6 @@ Return ONLY valid JSON, nothing else."""
             Dict with cover letter sections
         """
         # Create cache key from inputs
-        import hashlib
-
         qa = job_details.get("question_answers", {})
         cache_key_input = f"{job_description[:500]}{str(qa)}{variant}"
         cache_key = hashlib.md5(cache_key_input.encode(), usedforsecurity=False).hexdigest()

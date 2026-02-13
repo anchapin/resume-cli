@@ -1,5 +1,6 @@
 """AI-powered resume generator using Claude or OpenAI."""
 
+import hashlib
 import json
 import os
 import re
@@ -480,8 +481,6 @@ Return ONLY valid JSON, nothing else."""
             Customized resume content
         """
         # Create cache key from inputs (include output_format since content differs)
-        import hashlib
-
         cache_key = hashlib.md5(
             f"{job_description[:1000]}{variant}{output_format}".encode(),
             usedforsecurity=False,

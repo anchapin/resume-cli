@@ -147,15 +147,7 @@ class GitHubSync:
             ):
                 categories["devops"].append(self._format_repo(repo))
             elif any(
-                kw in search_text
-                for kw in [
-                    "react",
-                    "vue",
-                    "angular",
-                    "frontend",
-                    "web",
-                    "ui"
-                ]
+                kw in search_text for kw in ["react", "vue", "angular", "frontend", "web", "ui"]
             ):
                 categories["fullstack"].append(self._format_repo(repo))
             elif any(
@@ -200,7 +192,9 @@ class GitHubSync:
             "updated": repo.get("updatedAt", "")[:10],  # YYYY-MM-DD
         }
 
-    def _fetch_readme(self, repo_owner: str, repo_name: str, repos: Optional[Dict[str, Any]] = None) -> str:
+    def _fetch_readme(
+        self, repo_owner: str, repo_name: str, repos: Optional[Dict[str, Any]] = None
+    ) -> str:
         """
         Fetch README content for a repository.
 

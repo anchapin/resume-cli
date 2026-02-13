@@ -11,6 +11,7 @@ import pytest
 from cli.integrations.github_sync import GitHubSync
 from cli.utils.config import Config
 
+
 @pytest.mark.skip(reason="Mock patching scope issues - needs refactoring")
 class TestGitHubSyncInitialization:
     """Test GitHubSync initialization."""
@@ -542,7 +543,9 @@ class TestFetchReposWithDetails:
         """Test fetching handles subprocess error."""
         sync = GitHubSync(mock_config)
 
-        mock_run.side_effect = subprocess.CalledProcessError("Command failed", cmd=["gh", "repo", "list"])
+        mock_run.side_effect = subprocess.CalledProcessError(
+            "Command failed", cmd=["gh", "repo", "list"]
+        )
 
         with pytest.raises(RuntimeError) as exc_info:
             sync._fetch_repos_with_details(date_threshold="2023-01-01")
@@ -554,7 +557,9 @@ class TestFetchReposWithDetails:
         """Test fetching handles JSON decode error."""
         sync = GitHubSync(mock_config)
 
-        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="invalid json", stderr="")
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="invalid json", stderr=""
+        )
 
         with pytest.raises(RuntimeError) as exc_info:
             sync._fetch_repos_with_details(date_threshold="2023-01-01")
@@ -584,7 +589,9 @@ class TestFetchReadme:
         """Test fetching README returns empty string on error."""
         sync = GitHubSync(mock_config)
 
-        mock_run.side_effect = subprocess.CalledProcessError("Command failed", cmd=["gh", "repo", "list"])
+        mock_run.side_effect = subprocess.CalledProcessError(
+            "Command failed", cmd=["gh", "repo", "list"]
+        )
 
         readme = sync._fetch_readme("user", "repo")
 
@@ -597,7 +604,9 @@ class TestFetchReadme:
 
         # Create a very long README
         long_readme = "A" * 3000
-        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout=long_readme, stderr="")
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout=long_readme, stderr=""
+        )
 
         readme = sync._fetch_readme("user", "repo")
 
@@ -629,7 +638,9 @@ class TestFetchRepoTopics:
         """Test fetching topics returns empty list on error."""
         sync = GitHubSync(mock_config)
 
-        mock_run.side_effect = subprocess.CalledProcessError("Command failed", cmd=["gh", "repo", "list"])
+        mock_run.side_effect = subprocess.CalledProcessError(
+            "Command failed", cmd=["gh", "repo", "list"]
+        )
 
         topics = sync._fetch_repo_topics("user", "repo")
 
@@ -646,7 +657,8 @@ class TestSearchCodeInOrg:
 
         # Mock JSONL output (one JSON per line)
         mock_run.return_value = subprocess.CompletedProcess(
-            args=[], returncode=0,
+            args=[],
+            returncode=0,
             stdout='{"repository": {"name": "repo1", "url": "url1", "owner": {"login": "user"}}}\n{"repository": {"name": "repo2", "url": "url2", "owner": {"login": "user"}}}',
             stderr="",
         )

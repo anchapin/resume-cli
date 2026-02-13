@@ -251,7 +251,7 @@ class GitHubSync:
                 if len(readme_text) > 2000:
                     readme_text = readme_text[:2000]
                 return readme_text
-            return ""
+            return readme
 
         except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError):
             return ""

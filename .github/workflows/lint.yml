@@ -52,7 +52,13 @@ jobs:
 
     - name: Type check with mypy (non-blocking)
       run: |
-        mypy cli/ --ignore-missing-imports --no-error-summary --no-error-summary || echo "⚠️ Type check found issues (non-blocking)"
+        mypy cli/ --ignore-missing-imports --no-error-summary --no-error-summary || true
+        mypy_exit_code=$?
+        if [ $mypypy_exit_code -ne 0 ]; then
+          echo "⚠️ Type check found issues (non-blocking)"
+        else
+          echo "✅ No type errors found"
+        fi
 
     - name: Security check with bandit
       run: |

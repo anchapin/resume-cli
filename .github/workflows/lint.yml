@@ -65,7 +65,7 @@ jobs:
           echo "✅ No security issues found"
         fi
 
-  yaml-lint:
+  yaml-linting:
     name: YAML Linting
     runs-on: ubuntu-latest
 

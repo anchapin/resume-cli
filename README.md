@@ -1,5 +1,9 @@
 # Resume CLI System
 
+[![CI](https://github.com/anchapin/job-hunt/actions/workflows/ci.yml/badge.svg)](https://github.com/anchapin/job-hunt/actions/workflows/ci.yml)
+[![Lint](https://github.com/anchapin/job-hunt/actions/workflows/lint.yml/badge.svg)](https://github.com/anchapin/job-hunt/actions/workflows/lint.yml)
+[![Security](https://github.com/anchapin/job-hunt/actions/workflows/security.yml/badge.svg)](https://github.com/anchapin/job-hunt/actions/workflows/security.yml)
+
 A unified command-line interface for generating job-specific resumes from a single YAML source. Supports fast template-based generation and AI-powered customization with full integration into application tracking.
 
 ## Features

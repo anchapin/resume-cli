@@ -54,6 +54,16 @@ class Config:
             "fullstack": "v1.3.0-fullstack",
             "devops": "v1.4.0-devops",
             "leadership": "v1.5.0-leadership"
+        },
+        "ats": {
+            "enabled": True,
+            "scoring": {
+                "format_parsing": 20,
+                "keywords": 30,
+                "section_structure": 20,
+                "contact_info": 15,
+                "readability": 15
+            }
         }
     }
 
@@ -226,3 +236,8 @@ class Config:
     def cover_letter_max_length(self) -> int:
         """Get cover letter max length in words."""
         return self.get("cover_letter.max_length", 400)
+
+    @property
+    def ats_enabled(self) -> bool:
+        """Whether ATS checking is enabled."""
+        return self.get("ats.enabled", True)

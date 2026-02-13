@@ -57,6 +57,17 @@ github:
   emphasize_experience: false   # Future: emphasize relevant experience bullets
   enhancement_cache_ttl: 3600   # Cache TTL for enhancement results (seconds)
 
+ats:
+  # ATS (Applicant Tracking System) checker settings
+  enabled: true
+  # Scoring weights (total 100 points)
+  scoring:
+    format_parsing: 20
+    keywords: 30
+    section_structure: 20
+    contact_info: 15
+    readability: 15
+
 variants:
   base: v1.0.0-base
   backend: v1.1.0-backend

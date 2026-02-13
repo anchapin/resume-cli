@@ -644,6 +644,74 @@ def analyze(ctx):
         sys.exit(1)
 
 
+@cli.command("ats-check")
+@click.option(
+    "-v", "--variant",
+    default="v1.0.0-base",
+    help="Resume variant to check"
+)
+@click.option(
+    "--job-desc",
+    type=click.Path(exists=True),
+    required=True,
+    help="Path to job description file"
+)
+@click.option(
+    "--output",
+    type=click.Path(),
+    help="Save report as JSON file"
+)
+@click.pass_context
+def ats_check(ctx, variant: str, job_desc: str, output: Optional[str]):
+    """
+    Check ATS (Applicant Tracking System) compatibility score.
+
+    Analyzes resume against job description and provides an ATS score with
+    actionable feedback for optimization.
+
+    Examples:
+        resume-cli ats-check -v v1.1.0-backend --job-desc job-posting.txt
+        resume-cli ats-check --job-desc job.txt --output ats-report.json
+    """
+    yaml_path = ctx.obj["yaml_path"]
+    config = ctx.obj["config"]
+
+    console.print(f"[bold blue]Checking ATS Compatibility[/bold blue]")
+    console.print(f"  Variant: {variant}")
+
+    # Check if yaml exists
+    if not yaml_path.exists():
+        console.print(f"[bold red]Error:[/bold red] resume.yaml not found at {yaml_path}")
+        console.print("  Run 'resume-cli init' to create it first.")
+        sys.exit(1)
+
+    # Read job description
+    job_description = Path(job_desc).read_text()
+    console.print(f"  Job description: {job_desc}")
+
+    try:
+        from .generators.ats_generator import ATSGenerator
+
+        # Generate ATS report
+        generator = ATSGenerator(yaml_path, config=config)
+        report = generator.generate_report(job_description, variant)
+
+        # Print report
+        generator.print_report(report)
+
+        # Export to JSON if requested
+        if output:
+            output_path = Path(output)
+            generator.export_json(report, output_path)
+            console.print(f"\n[green]✓[/green] Report saved to: {output_path}")
+
+    except Exception as e:
+        console.print(f"[bold red]Error checking ATS score:[/bold red] {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
 def main():
     """Main entry point."""
     cli(obj={})

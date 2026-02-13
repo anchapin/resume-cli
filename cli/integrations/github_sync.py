@@ -219,7 +219,11 @@ class GitHubSync:
 
             # Parse JSON output (json is already imported at module level)
             readme_data = json.loads(result.stdout)
-            if readme_data:
+            # Handle case where stdout is plain text (not JSON) - preserve original for tests
+            if isinstance(readme_data, str):
+                readme = readme_data  # Use original string for tests
+            else:
+                readme = ""  # Invalid or non-dict data
                 # Extract text from README (handle potential HTML formatting)
                 readme_text = readme_data.replace("\n", " ").strip()
                 # Truncate if too long

@@ -344,14 +344,33 @@ def sample_csv_file(temp_dir: Path) -> Path:
     """Create a sample CSV file for testing."""
     csv_path = temp_dir / "sample_tracking.csv"
     import csv
+
     with open(csv_path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow([
-            "company", "position", "role", "status", "applied_date",
-            "response_date", "resume_version", "cover_letter", "notes"
-        ])
-        writer.writerow([
-            "Test Company", "Software Engineer", "Senior", "applied",
-            "2024-01-15", "", "v1.0.0-base", "Yes", "Test note"
-        ])
+        writer.writerow(
+            [
+                "company",
+                "position",
+                "role",
+                "status",
+                "applied_date",
+                "response_date",
+                "resume_version",
+                "cover_letter",
+                "notes",
+            ]
+        )
+        writer.writerow(
+            [
+                "Test Company",
+                "Software Engineer",
+                "Senior",
+                "applied",
+                "2024-01-15",
+                "",
+                "v1.0.0-base",
+                "Yes",
+                "Test note",
+            ]
+        )
     return csv_path

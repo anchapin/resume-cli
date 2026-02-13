@@ -196,9 +196,7 @@ class TestGenerateMethod:
         mock_compile_pdf.assert_not_called()
 
     @patch("subprocess.Popen")
-    def test_generate_pdf_calls_compile(
-        self, mock_popen, sample_yaml_file: Path, temp_dir: Path
-    ):
+    def test_generate_pdf_calls_compile(self, mock_popen, sample_yaml_file: Path, temp_dir: Path):
         """Test generate with pdf format calls _compile_pdf."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
         output_path = temp_dir / "test.pdf"
@@ -208,6 +206,7 @@ class TestGenerateMethod:
 
         # Suppress the RuntimeError that would normally be raised
         import cli.generators.template as template_module
+
         original_compile_pdf = template_module.TemplateGenerator._compile_pdf
 
         def mock_compile_pdf(self, output_path, tex_content):
@@ -232,9 +231,7 @@ class TestGenerateMethod:
         assert isinstance(content, str)
         assert len(content) > 0
 
-    def test_generate_with_enhanced_context(
-        self, sample_yaml_file: Path, temp_dir: Path
-    ):
+    def test_generate_with_enhanced_context(self, sample_yaml_file: Path, temp_dir: Path):
         """Test generate with enhanced_context merges context."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
         output_path = temp_dir / "test.md"
@@ -253,9 +250,7 @@ class TestGenerateMethod:
         assert enhanced_summary in content
         assert "Test project" in content
 
-    def test_generate_with_template_prioritization(
-        self, sample_yaml_file: Path, temp_dir: Path
-    ):
+    def test_generate_with_template_prioritization(self, sample_yaml_file: Path, temp_dir: Path):
         """Test generate prioritizes skills from enhanced context."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
 
@@ -274,9 +269,7 @@ class TestGenerateMethod:
         # Just verify it runs without error
         assert isinstance(content, str)
 
-    def test_generate_creates_parent_directories(
-        self, sample_yaml_file: Path, temp_dir: Path
-    ):
+    def test_generate_creates_parent_directories(self, sample_yaml_file: Path, temp_dir: Path):
         """Test generate creates parent directories."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
         nested_path = temp_dir / "nested" / "dir" / "test.md"

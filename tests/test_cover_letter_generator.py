@@ -42,6 +42,7 @@ class TestCoverLetterGeneratorInitialization:
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         # Create config with openai provider
         from cli.utils.config import Config
+
         config = Config()
         config.set("ai.provider", "openai")
 
@@ -56,6 +57,7 @@ class TestCoverLetterGeneratorInitialization:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
         # Create fresh config (default is anthropic)
         from cli.utils.config import Config
+
         config = Config()
 
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file, config=config)
@@ -67,6 +69,7 @@ class TestCoverLetterGeneratorInitialization:
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Create config with openai provider
         from cli.utils.config import Config
+
         config = Config()
         config.set("ai.provider", "openai")
 
@@ -277,6 +280,7 @@ class TestGenerateSingleVersion:
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Create config with openai provider
         from cli.utils.config import Config
+
         config = Config()
         config.set("ai.provider", "openai")
 

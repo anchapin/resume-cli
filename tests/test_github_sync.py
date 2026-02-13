@@ -457,7 +457,7 @@ class TestSelectMatchingProjects:
 class TestUpdateResumeProjects:
     """Test update_resume_projects method."""
 
-    @patch("cli.integrations.github_sync.ResumeYAML")
+    @patch("cli.integrations.github_sync.GitHubSync")
     def test_update_resume_projects(self, mock_resume_class, mock_config: Config, temp_dir: Path):
         """Test update_resume_projects writes to YAML."""
         sync = GitHubSync(mock_config)

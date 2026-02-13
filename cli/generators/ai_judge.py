@@ -5,6 +5,11 @@ import re
 from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 
+from rich.console import Console
+
+# Initialize console for output
+console = Console()
+
 
 class AIJudge:
     """AI-powered judge for evaluating generated resumes and cover letters."""
@@ -190,6 +195,57 @@ class AIJudge:
         # Fallback to first version
         return versions[0], "Judge unable to decide. Using first version."
 
+    def judge_interview_questions(
+        self,
+        versions: List[Dict[str, Any]],
+        job_description: str,
+        resume_context: str
+    ) -> Dict[str, Any]:
+        """
+        Evaluate and select best interview questions generation.
+
+        Args:
+            versions: List of 3 interview questions outputs (structured)
+            job_description: Original job description
+            resume_context: Candidate's resume context
+
+        Returns:
+            (selected_questions_data, justification_text)
+        """
+        if len(versions) == 0:
+            raise ValueError("No versions to judge")
+
+        if len(versions) == 1:
+            return versions[0]
+
+        # Create comparison prompt
+        prompt = self._create_interview_questions_judge_prompt(
+            versions, job_description, resume_context
+        )
+
+        try:
+            # Call AI to judge
+            if self.provider == "anthropic":
+                response = self._call_anthropic(prompt)
+            else:
+                response = self._call_openai(prompt)
+
+            # Parse judge's decision
+            decision = self._parse_judge_response(response)
+
+            # Judge selected a specific version
+            selected_idx = decision.get("selected", 0)
+            if 0 <= selected_idx < len(versions):
+                return versions[selected_idx]
+
+        except Exception as e:
+            # On judge failure, return first version
+            console.print(f"[yellow]Judge evaluation failed: {str(e)}. Using first version.[/yellow]")
+            return versions[0]
+
+        # Fallback to first version
+        return versions[0]
+
     def _create_cover_letter_judge_prompt(
         self,
         versions: List[Dict[str, Any]],
@@ -351,6 +407,71 @@ Return ONLY a JSON object with these exact keys:
   "justification": "2-3 sentences explaining your choice",
   "scores": {
     "version1": {"polish": 1-10, "alignment": 1-10, "authenticity": 1-10, "impact": 1-10},
+    "version2": {...},
+    "version3": {...}
+  }
+}
+
+Return ONLY valid JSON, nothing else."""
+
+        return prompt
+
+    def _create_interview_questions_judge_prompt(
+        self,
+        versions: List[Dict[str, Any]],
+        job_description: str,
+        resume_context: str
+    ) -> str:
+        """Create prompt for judging interview questions generation versions."""
+        prompt = f"""You are an expert technical interviewer and career coach. Your task is to judge which of 3 AI-generated interview question sets is best.
+
+**Job Description:**
+{job_description[:1000]}
+
+**Candidate's Resume Context:**
+{resume_context[:500]}
+
+**Instructions:**
+Evaluate each version on these FOUR criteria (weighted equally):
+1. **Relevance**: Questions align with job requirements and candidate's experience
+2. **Quality**: Questions are well-formulated, clear, and appropriate for the role
+3. **Coverage**: Good mix of technical, behavioral, and system design questions
+4. **Answer Quality**: Provided answers are helpful, accurate, and actionable
+
+**Interview Questions Versions:**
+"""
+
+        for i, version in enumerate(versions, 1):
+            prompt += f"\n--- Version {i} ---\n"
+
+            job_analysis = version.get("job_analysis", {})
+            prompt += f"Role Type: {job_analysis.get('role_type', 'Unknown')}\n"
+            prompt += f"Key Technologies: {job_analysis.get('key_technologies', [])}\n"
+
+            tech_questions = version.get("technical_questions", [])
+            prompt += f"Technical Questions: {len(tech_questions)}\n"
+            for q in tech_questions[:2]:
+                prompt += f"  - [{q.get('priority', 'medium')}] {q.get('question', '')[:80]}...\n"
+
+            behavioral_questions = version.get("behavioral_questions", [])
+            prompt += f"Behavioral Questions: {len(behavioral_questions)}\n"
+            for q in behavioral_questions[:2]:
+                prompt += f"  - [{q.get('priority', 'medium')}] {q.get('question', '')[:80]}...\n"
+
+            sys_design = version.get("system_design_questions")
+            if sys_design:
+                prompt += f"System Design Questions: {len(sys_design)}\n"
+            else:
+                prompt += "System Design Questions: None\n"
+
+        prompt += """
+**Decision Format:**
+Return ONLY a JSON object with these exact keys:
+{
+  "selected": 0, 1, or 2 (which version is best - use 0, 1, or 2),
+  "justification": "2-3 sentences explaining your choice",
+  "scores": {
+    "version1": {"relevance": 1-10, "quality": 1-10, "coverage": 1-10, "answer_quality": 1-10},
     "version2": {...},
     "version3": {...}
   }

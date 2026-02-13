@@ -233,6 +233,48 @@ Options:
 - GitHub CLI (`gh`) installed and authenticated
 - Run `gh auth login` first if needed
 
+### interview-prep
+
+Generate interview questions based on job description and resume.
+
+```bash
+resume-cli interview-prep [OPTIONS]
+
+Options:
+  -v, --variant TEXT        Resume variant (default: v1.0.0-base)
+  --job-desc PATH           Path to job description file [required]
+  --num-technical INTEGER   Number of technical questions (default: 10)
+  --num-behavioral INTEGER  Number of behavioral questions (default: 5)
+  --no-system-design        Skip system design questions
+  --flashcard-mode          Generate flashcard format for studying
+  -o, --output PATH         Output file path
+```
+
+**Examples:**
+
+```bash
+# Basic interview preparation
+resume-cli interview-prep --job-desc job-posting.txt
+
+# Generate more questions
+resume-cli interview-prep --job-desc job.txt --num-technical 15 --num-behavioral 8
+
+# Flashcard mode for studying
+resume-cli interview-prep --job-desc job.txt --flashcard-mode
+
+# Specify output file
+resume-cli interview-prep --job-desc job.txt -o interview-prep.md
+```
+
+**Output includes:**
+- Technical questions with domain-specific focus
+- Behavioral questions with STAR framework
+- System design questions (for engineering roles)
+- Job analysis with key technologies and focus areas
+- Answers and tips for each question
+
+See `docs/INTERVIEW_PREP_GUIDE.md` for detailed usage.
+
 ### init
 
 Initialize resume.yaml from existing resume files.

@@ -644,6 +644,149 @@ def analyze(ctx):
         sys.exit(1)
 
 
+@cli.command("interview-prep")
+@click.option(
+    "-v", "--variant",
+    default="v1.0.0-base",
+    help="Resume variant to use for context"
+)
+@click.option(
+    "--job-desc",
+    type=click.Path(exists=True),
+    required=True,
+    help="Path to job description file"
+)
+@click.option(
+    "--num-technical",
+    type=int,
+    default=10,
+    help="Number of technical questions to generate (default: 10)"
+)
+@click.option(
+    "--num-behavioral",
+    type=int,
+    default=5,
+    help="Number of behavioral questions to generate (default: 5)"
+)
+@click.option(
+    "--no-system-design",
+    is_flag=True,
+    help="Skip system design questions"
+)
+@click.option(
+    "--flashcard-mode",
+    is_flag=True,
+    help="Generate flashcard format (optimized for studying)"
+)
+@click.option(
+    "-o", "--output",
+    type=click.Path(),
+    help="Output file path (default: auto-generated)"
+)
+@click.pass_context
+def interview_prep(ctx, variant: str, job_desc: str, num_technical: int,
+                  num_behavioral: int, no_system_design: bool,
+                  flashcard_mode: bool, output: Optional[str]):
+    """
+    Generate interview questions based on job description and resume.
+
+    Generates personalized technical and behavioral interview questions,
+    complete with context, answers, and tips.
+
+    Output includes:
+    - Technical questions with domain-specific focus
+    - Behavioral questions with STAR framework
+    - System design questions (unless disabled)
+    - Job analysis with key technologies and focus areas
+
+    Examples:
+        resume-cli interview-prep --job-desc job-posting.txt
+        resume-cli interview-prep --job-desc job.txt --flashcard-mode -o interview-questions.md
+        resume-cli interview-prep --job-desc job.txt --num-technical 15 --num-behavioral 8
+    """
+    yaml_path = ctx.obj["yaml_path"]
+    config = ctx.obj["config"]
+
+    console.print(f"[bold blue]Generating interview questions...[/bold blue]")
+    console.print(f"  Variant: {variant}")
+    console.print(f"  Technical Questions: {num_technical}")
+    console.print(f"  Behavioral Questions: {num_behavioral}")
+    console.print(f"  System Design: {'No' if no_system_design else 'Yes'}")
+    console.print(f"  Flashcard Mode: {'Yes' if flashcard_mode else 'No'}")
+
+    # Check if yaml exists
+    if not yaml_path.exists():
+        console.print(f"[bold red]Error:[/bold red] resume.yaml not found at {yaml_path}")
+        console.print("  Run 'resume-cli init' to create it first.")
+        sys.exit(1)
+
+    # Read job description
+    job_description = Path(job_desc).read_text()
+
+    try:
+        from .generators.interview_questions_generator import InterviewQuestionsGenerator
+
+        generator = InterviewQuestionsGenerator(yaml_path, config=config)
+
+        # Generate questions
+        questions_data = generator.generate(
+            job_description=job_description,
+            variant=variant,
+            num_technical=num_technical,
+            num_behavioral=num_behavioral,
+            include_system_design=not no_system_design,
+            flashcard_mode=flashcard_mode
+        )
+
+        # Render to markdown
+        if flashcard_mode:
+            content = generator.render_to_flashcards(questions_data)
+        else:
+            content = generator.render_to_markdown(questions_data)
+
+        # Determine output path
+        if output:
+            output_path = Path(output)
+        else:
+            # Auto-generate filename based on job desc
+            from datetime import datetime
+            date_str = datetime.now().strftime("%Y-%m-%d")
+            mode = "-flashcards" if flashcard_mode else ""
+            output_dir = Path(config.output_dir)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            output_path = output_dir / f"interview-questions-{variant}{mode}-{date_str}.md"
+
+        # Save content
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        console.print(f"\n[green]✓[/green] Interview questions saved: {output_path}")
+
+        # Show summary
+        job_analysis = questions_data.get("job_analysis", {})
+        console.print(f"\n[cyan]Job Analysis:[/cyan]")
+        console.print(f"  Role: {job_analysis.get('role_type', 'Unknown')}")
+        console.print(f"  Difficulty: {job_analysis.get('difficulty_estimate', 'Unknown')}")
+        console.print(f"  Technologies: {len(job_analysis.get('key_technologies', []))}")
+
+        tech_questions = questions_data.get("technical_questions", [])
+        behavioral_questions = questions_data.get("behavioral_questions", [])
+        system_design_questions = questions_data.get("system_design_questions")
+
+        console.print(f"\n[cyan]Questions Generated:[/cyan]")
+        console.print(f"  Technical: {len(tech_questions)} ({sum(1 for q in tech_questions if q.get('priority') == 'high')} high priority)")
+        console.print(f"  Behavioral: {len(behavioral_questions)} ({sum(1 for q in behavioral_questions if q.get('priority') == 'high')} high priority)")
+        if system_design_questions:
+            console.print(f"  System Design: {len(system_design_questions)}")
+
+    except Exception as e:
+        console.print(f"[bold red]Error generating interview questions:[/bold red] {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
 def main():
     """Main entry point."""
     cli(obj={})

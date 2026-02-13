@@ -1,0 +1,35 @@
+Senior Backend Engineer
+
+Company: TechStart Inc.
+
+We're looking for a Senior Backend Engineer to join our growing team. You'll be responsible for designing and implementing scalable microservices, optimizing database performance, and mentoring junior developers.
+
+Requirements:
+- 5+ years of experience in backend development
+- Strong proficiency in Python and Django
+- Experience with PostgreSQL and database optimization
+- Knowledge of microservices architecture
+- Familiarity with Docker and Kubernetes for containerization
+- Experience with RESTful API design
+- Understanding of CI/CD pipelines (GitHub Actions, Jenkins)
+- Experience with caching solutions (Redis, Memcached)
+
+Responsibilities:
+- Design and implement RESTful APIs using Django REST Framework
+- Optimize database queries and improve application performance
+- Work with cross-functional teams to deliver high-quality software
+- Mentor junior developers and conduct code reviews
+- Participate in architectural decision-making
+- Ensure code quality through testing and documentation
+
+Nice to have:
+- Experience with event-driven architecture (Kafka, RabbitMQ)
+- Knowledge of GraphQL
+- Experience with AWS or GCP cloud platforms
+- Background in distributed systems
+
+Our stack:
+- Backend: Python, Django, FastAPI
+- Database: PostgreSQL, Redis
+- Infrastructure: Docker, Kubernetes, AWS
+- CI/CD: GitHub Actions

@@ -177,9 +177,9 @@ class TestConfigSave:
 
         assert config_path.exists()
 
-        with open(config_path, "r") as f:
-            loaded = yaml.safe_load(f)
-        assert loaded.get("test.key") == "test_value"
+        # Load the saved config back into a new Config object
+        loaded_config = Config(config_path)
+        assert loaded_config.get("test.key") == "test_value"
 
     def test_save_creates_directories(self, temp_dir: Path):
         """Test save creates parent directories."""

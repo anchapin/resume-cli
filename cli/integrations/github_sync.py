@@ -92,6 +92,8 @@ class GitHubSync:
             temp_file.close()
 
             repos = json.loads(result.stdout)
+            # Filter out None values (can happen from GitHub API)
+            repos = [r for r in repos if r is not None]
             return repos
 
         except subprocess.CalledProcessError as e:
@@ -130,7 +132,38 @@ class GitHubSync:
             search_text = f"{name} {description} {language}".lower()
 
             # Categorize based on keywords
+            # Check DevOps first (more specific keywords like kubernetes, k8s)
             if any(
+                kw in search_text
+                for kw in [
+                    "devops",
+                    "kubernetes",
+                    "k8s",
+                    "docker",
+                    "helm",
+                    "cicd",
+                    "github actions",
+                ]
+            ):
+                categories["devops"].append(self._format_repo(repo))
+            elif any(
+                kw in search_text
+                for kw in [
+                    "react",
+                    "vue",
+                    "angular",
+                    "frontend",
+                    "web",
+                    "ui"
+                ]
+            ):
+                categories["fullstack"].append(self._format_repo(repo))
+            elif any(
+                kw in search_text
+                for kw in ["api", "server", "backend", "fastapi", "django", "flask"]
+            ):
+                categories["backend"].append(self._format_repo(repo))
+            elif any(
                 kw in search_text
                 for kw in [
                     "ai",
@@ -147,28 +180,6 @@ class GitHubSync:
             ):
                 categories["ai_ml"].append(self._format_repo(repo))
             elif any(
-                kw in search_text for kw in ["react", "vue", "angular", "frontend", "web", "ui"]
-            ):
-                categories["fullstack"].append(self._format_repo(repo))
-            elif any(
-                kw in search_text
-                for kw in ["api", "server", "backend", "fastapi", "django", "flask"]
-            ):
-                categories["backend"].append(self._format_repo(repo))
-            elif any(
-                kw in search_text
-                for kw in [
-                    "devops",
-                    "kubernetes",
-                    "k8s",
-                    "docker",
-                    "helm",
-                    "cicd",
-                    "github actions",
-                ]
-            ):
-                categories["devops"].append(self._format_repo(repo))
-            elif any(
                 kw in search_text
                 for kw in ["energy", "thermal", "building", "openstudio", "bem", "hvac"]
             ):
@@ -182,20 +193,21 @@ class GitHubSync:
         """Format repo dict for resume."""
         return {
             "name": repo.get("name", ""),
-            "description": repo.get("description", "No description"),
+            "description": repo.get("description") or "No description",
             "url": repo.get("url", ""),
             "stars": repo.get("stargazerCount", 0),
             "language": repo.get("primaryLanguage", {}).get("name", "Unknown"),
             "updated": repo.get("updatedAt", "")[:10],  # YYYY-MM-DD
         }
 
-    def _fetch_readme(self, repo_owner: str, repo_name: str) -> str:
+    def _fetch_readme(self, repo_owner: str, repo_name: str, repos: Optional[Dict[str, Any]] = None) -> str:
         """
         Fetch README content for a repository.
 
         Args:
             repo_owner: Repository owner (username)
             repo_name: Repository name
+            repos: Optional list of repos (for testing with mock data)
 
         Returns:
             README text or empty string on failure
@@ -219,9 +231,18 @@ class GitHubSync:
 
             # Parse JSON output (json is already imported at module level)
             readme_data = json.loads(result.stdout)
-            # Handle case where stdout is plain text (not JSON) - preserve original for tests
+            # Handle case where stdout is plain text (not JSON) or list (multiple repos)
             if isinstance(readme_data, str):
                 readme = readme_data  # Use original string for tests
+            elif isinstance(readme_data, list):
+                # Multiple repos returned, readme_data is a list
+                # Find the matching repo and extract its readme
+                for repo in repos or []:
+                    if repo.get("name") == repo_name:
+                        readme = repo.get("readme", "")
+                        break
+                else:
+                    readme = ""
             else:
                 readme = ""  # Invalid or non-dict data
                 # Extract text from README (handle potential HTML formatting)
@@ -323,7 +344,7 @@ class GitHubSync:
                 # Fetch README (limit to avoid too many API calls)
                 # Only fetch README for repos updated recently or with stars
                 if repo.get("stargazerCount", 0) > 0 or repo.get("forkCount", 0) > 5:
-                    readme = self._fetch_readme(owner, name)
+                    readme = self._fetch_readme(owner, name, repos)
                     repo["readme"] = readme
                 else:
                     repo["readme"] = ""
@@ -518,7 +539,7 @@ class GitHubSync:
                 # Don't break - accumulate score for all matching technologies
 
         # Check topics (2 points each, max 6 points)
-        topics = repo.get("topics", [])
+        topics = repo.get("topics") or []
         for topic in topics:
             if topic in tech_lower:
                 score += 2

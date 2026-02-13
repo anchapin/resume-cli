@@ -1,6 +1,6 @@
 """AI-powered cover letter generator using Claude or OpenAI."""
 
-import hashlib
+import hashlib as _hashlib
 import os
 import re
 from datetime import datetime
@@ -523,7 +523,7 @@ Return ONLY valid JSON, nothing else."""
         # Create cache key from inputs
         qa = job_details.get("question_answers", {})
         cache_key_input = f"{job_description[:500]}{str(qa)}{variant}"
-        cache_key = hashlib.md5(cache_key_input.encode(), usedforsecurity=False).hexdigest()
+        cache_key = _hashlib.md5(cache_key_input.encode(), usedforsecurity=False).hexdigest()
 
         # Check cache
         if cache_key in self._content_cache:

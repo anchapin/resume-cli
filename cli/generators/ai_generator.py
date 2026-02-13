@@ -1,6 +1,6 @@
 """AI-powered resume generator using Claude or OpenAI."""
 
-import hashlib as _hashlib
+import sys
 import json
 import os
 import re
@@ -9,6 +9,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from rich.console import Console
+
+# Import hashlib before kubernetes_asyncio can patch it
+import hashlib
+# Store reference to md5 function before any monkeypatching
+_md5 = hashlib.md5
 
 # Load environment variables from .env file if present
 try:
@@ -481,7 +486,7 @@ Return ONLY valid JSON, nothing else."""
             Customized resume content
         """
         # Create cache key from inputs (include output_format since content differs)
-        cache_key = _hashlib.md5(
+        cache_key = _md5(
             f"{job_description[:1000]}{variant}{output_format}".encode(),
             usedforsecurity=False,
         ).hexdigest()

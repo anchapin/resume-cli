@@ -186,9 +186,7 @@ class ResumeValidator:
 
         # Check that contact is a dict
         if not isinstance(contact, dict):
-            self.errors.append(
-                ValidationError("contact", "Expected type dict", "error")
-            )
+            self.errors.append(ValidationError("contact", "Expected type dict", "error"))
             return
 
         required_fields = ["name", "phone", "email"]

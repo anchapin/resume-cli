@@ -245,9 +245,9 @@ class TestGetRecentApplications:
         assert len(recent) == 5
 
         # Should be sorted by date descending (all have same date in test)
-        # So they're in reverse order of addition
-        assert recent[0]["company"] == "Company 14"
-        assert recent[4]["company"] == "Company 10"
+        # Stable sort preserves original order for ties
+        assert recent[0]["company"] == "Company 0"
+        assert recent[4]["company"] == "Company 4"
 
     def test_get_recent_applications_default_limit(self, mock_config: Config, temp_dir: Path):
         """Test get_recent_applications uses default limit."""

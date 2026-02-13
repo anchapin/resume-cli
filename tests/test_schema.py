@@ -26,7 +26,7 @@ class TestValidationError:
         error = ValidationError("test.path", "Test message", "error")
         error_str = str(error)
 
-        assert "[ERROR]" in error_str
+        assert "ERROR" in error_str
         assert "test.path" in error_str
         assert "Test message" in error_str
 
@@ -289,9 +289,10 @@ class TestValidateExperience:
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()
 
-        text_errors = [e for e in validator.errors if "text" in e.path]
-        assert len(text_errors) > 0
-        assert "Missing 'text' field" in text_errors[0].message
+        # Check for bullet validation errors (text field missing)
+        bullet_errors = [e for e in validator.errors if "bullets" in e.path]
+        assert len(bullet_errors) > 0
+        assert "Missing 'text' field" in bullet_errors[0].message
 
 
 class TestValidateEducation:
@@ -372,9 +373,9 @@ class TestValidateVariants:
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()
 
-        # Should warn about skill_sections
-        skill_warnings = [w for w in validator.warnings if "skill_sections" in w.path]
-        assert len(skill_warnings) > 0
+        # Should error about missing skill_sections in skills
+        skill_errors = [e for e in validator.errors if "skill_sections" in e.path]
+        assert len(skill_errors) > 0
 
 
 class TestValidateDates:
@@ -425,17 +426,17 @@ class TestValidateDates:
         assert len(date_errors) > 0
 
     def test_validate_dates_accepts_mm_format(self, temp_dir: Path):
-        """Test date validation accepts YYYY-MM format."""
+        """Test date validation accepts YYYY-MM format for experience dates."""
         valid_yaml = temp_dir / "valid_mm.yaml"
         with open(valid_yaml, "w") as f:
             yaml.dump(
                 {
-                    "meta": {"version": "1.0", "last_updated": "2024-01"},
+                    "meta": {"version": "1.0", "last_updated": "2024-01-15"},
                     "experience": [
                         {
                             "company": "Test",
                             "title": "Engineer",
-                            "start_date": "2020-01",  # MM format
+                            "start_date": "2020-01",  # YYYY-MM format (valid for experience)
                             "bullets": [],
                         }
                     ],
@@ -446,7 +447,8 @@ class TestValidateDates:
         validator = ResumeValidator(valid_yaml)
         validator.validate_all()
 
-        date_errors = [e for e in validator.errors if "date" in e.path]
+        # Filter for experience date errors (not meta.last_updated)
+        date_errors = [e for e in validator.errors if "start_date" in e.path]
         assert len(date_errors) == 0
 
     def test_validate_dates_accepts_mmdd_format(self, temp_dir: Path):

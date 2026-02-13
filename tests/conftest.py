@@ -337,3 +337,21 @@ def mock_config(temp_dir: Path) -> Config:
 def yaml_handler(sample_yaml_file: Path) -> ResumeYAML:
     """Create a ResumeYAML instance with test data."""
     return ResumeYAML(sample_yaml_file)
+
+
+@pytest.fixture
+def sample_csv_file(temp_dir: Path) -> Path:
+    """Create a sample CSV file for testing."""
+    csv_path = temp_dir / "sample_tracking.csv"
+    import csv
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "company", "position", "role", "status", "applied_date",
+            "response_date", "resume_version", "cover_letter", "notes"
+        ])
+        writer.writerow([
+            "Test Company", "Software Engineer", "Senior", "applied",
+            "2024-01-15", "", "v1.0.0-base", "Yes", "Test note"
+        ])
+    return csv_path

@@ -68,6 +68,9 @@ class ResumeYAML:
         if "meta" in self._data:
             self._data["meta"]["last_updated"] = datetime.now().strftime("%Y-%m-%d")
 
+        # Create parent directories if needed
+        self.yaml_path.parent.mkdir(parents=True, exist_ok=True)
+
         with open(self.yaml_path, "w", encoding="utf-8") as f:
             yaml.dump(self._data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
 

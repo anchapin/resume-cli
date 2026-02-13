@@ -183,6 +183,14 @@ class ResumeValidator:
     def _validate_contact(self, data: Dict[str, Any]) -> None:
         """Validate contact information."""
         contact = data.get("contact", {})
+
+        # Check that contact is a dict
+        if not isinstance(contact, dict):
+            self.errors.append(
+                ValidationError("contact", "Expected type dict", "error")
+            )
+            return
+
         required_fields = ["name", "phone", "email"]
 
         for field in required_fields:
@@ -317,7 +325,10 @@ class ResumeValidator:
 
     def _validate_email_format(self, data: Dict[str, Any]) -> None:
         """Validate email formats."""
-        email = data.get("contact", {}).get("email", "")
+        contact = data.get("contact")
+        if not isinstance(contact, dict):
+            return
+        email = contact.get("email", "")
         if email:
             # Basic email validation
             if "@" not in email or "." not in email.split("@")[-1]:

@@ -58,6 +58,10 @@ class TemplateGenerator:
             # This must happen before character escaping
             text = re.sub(r"\*\*([^*]+)\*\*", r"\\textbf{\1}", text)
 
+            # Convert "degrees" to degree symbol first
+            text = text.replace("degrees", "°")
+
+            # Escape special characters
             replacements = {
                 "&": r"\&",
                 "%": r"\%",
@@ -78,9 +82,19 @@ class TemplateGenerator:
                 "→": r"$\rightarrow$",
                 "—": r"---",  # em dash
                 "–": r"--",  # en dash
+                # ASCII equivalents for math symbols and arrows
+                ">=": r"$\ge$",
+                "<=": r"$\le$",
+                "->": r"$\rightarrow$",
             }
             for old, new in replacements.items():
                 text = text.replace(old, new)
+
+            # Fix up LaTeX commands by unescaping their braces
+            # Pattern matches \command\{...\} and converts to \command{...}
+            # This handles \textbf, \textsuperscript, \textasciitilde, etc.
+            text = re.sub(r"\\([a-zA-Z]+)\\{(.+?)\\}", r"\\\1{\2}", text)
+
             return text
 
         self.env.filters["latex_escape"] = latex_escape

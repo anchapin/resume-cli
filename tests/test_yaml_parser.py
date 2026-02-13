@@ -197,7 +197,7 @@ class TestResumeYAMLGetSkills:
     def test_get_skills_variant(self, sample_yaml_file: Path):
         """Test get_skills filters by variant."""
         handler = ResumeYAML(sample_yaml_file)
-        skills = handler.get_skills("backend")
+        skills = handler.get_skills("v1.1.0-backend")
 
         # Should only include backend sections
         assert "programming" in skills

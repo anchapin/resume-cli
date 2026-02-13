@@ -1,5 +1,6 @@
 """Configuration management for resume CLI."""
 
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -66,7 +67,7 @@ class Config:
             config_path: Path to config.yaml. If None, uses default config.
         """
         self.config_path = config_path
-        self._config: Dict[str, Any] = self.DEFAULT_CONFIG.copy()
+        self._config: Dict[str, Any] = deepcopy(self.DEFAULT_CONFIG)
 
         if config_path and config_path.exists():
             self.load(config_path)

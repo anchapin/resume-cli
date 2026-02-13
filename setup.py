@@ -47,6 +47,7 @@ setup(
         "dev": [
             "pytest>=7.0.0",
             "pytest-cov>=4.0.0",
+            "pytest-mock>=3.10.0",
             "fastapi>=0.100.0",
             "pydantic>=2.0.0",
             "uvicorn>=0.23.0",

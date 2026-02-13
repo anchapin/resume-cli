@@ -13,6 +13,18 @@ from cli.utils.config import Config
 from cli.utils.yaml_parser import ResumeYAML
 
 
+@pytest.fixture(autouse=True)
+def setup_ai_environment_variables(monkeypatch):
+    """
+    Set up required AI environment variables for tests.
+    This is an autouse fixture that runs for all tests to ensure
+    CoverLetterGenerator and AIGenerator don't fail due to missing API keys.
+    """
+    # Set dummy API keys for both providers
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
+
+
 @pytest.fixture
 def temp_dir(tmp_path: Path) -> Path:
     """Create a temporary directory for test files."""

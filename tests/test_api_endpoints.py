@@ -1,17 +1,16 @@
-from fastapi.testclient import TestClient
-from unittest.mock import MagicMock, patch
-import pytest
 import os
+from unittest.mock import MagicMock, patch
+
+import pytest
+from fastapi.testclient import TestClient
+
 from api.main import app
 
 client = TestClient(app)
 
 # Mock data
-mock_resume_data = {
-    "meta": {"version": "1.0"},
-    "contact": {"name": "Test User"},
-    "experience": []
-}
+mock_resume_data = {"meta": {"version": "1.0"}, "contact": {"name": "Test User"}, "experience": []}
+
 
 def test_get_variants():
     # Ensure no API key required for this test (dev mode behavior)
@@ -21,6 +20,7 @@ def test_get_variants():
         variants = response.json()
         assert isinstance(variants, dict)
         assert "base" in variants
+
 
 @patch("api.main.TemplateGenerator")
 def test_render_pdf(MockTemplateGenerator):
@@ -36,13 +36,13 @@ def test_render_pdf(MockTemplateGenerator):
 
     with patch.dict(os.environ, {}, clear=True):
         response = client.post(
-            "/v1/render/pdf",
-            json={"resume_data": mock_resume_data, "variant": "base"}
+            "/v1/render/pdf", json={"resume_data": mock_resume_data, "variant": "base"}
         )
 
     assert response.status_code == 200
     assert response.content == b"PDF CONTENT"
     assert response.headers["content-type"] == "application/pdf"
+
 
 @patch("api.main.AIGenerator")
 def test_tailor_resume(MockAIGenerator):
@@ -51,8 +51,7 @@ def test_tailor_resume(MockAIGenerator):
 
     with patch.dict(os.environ, {}, clear=True):
         response = client.post(
-            "/v1/tailor",
-            json={"resume_data": mock_resume_data, "job_description": "Job desc"}
+            "/v1/tailor", json={"resume_data": mock_resume_data, "job_description": "Job desc"}
         )
 
     assert response.status_code == 200
@@ -74,8 +73,7 @@ def test_render_pdf_missing_output_file(MockTemplateGenerator):
 
     with patch.dict(os.environ, {}, clear=True):
         response = client.post(
-            "/v1/render/pdf",
-            json={"resume_data": mock_resume_data, "variant": "base"}
+            "/v1/render/pdf", json={"resume_data": mock_resume_data, "variant": "base"}
         )
 
     assert response.status_code == 500
@@ -97,8 +95,7 @@ def test_render_pdf_generation_exception(MockTemplateGenerator):
 
     with patch.dict(os.environ, {}, clear=True):
         response = client.post(
-            "/v1/render/pdf",
-            json={"resume_data": mock_resume_data, "variant": "base"}
+            "/v1/render/pdf", json={"resume_data": mock_resume_data, "variant": "base"}
         )
 
     assert response.status_code == 500
@@ -107,6 +104,7 @@ def test_render_pdf_generation_exception(MockTemplateGenerator):
     assert isinstance(body, dict)
     assert "detail" in body
     assert "failed" in body["detail"].lower()
+
 
 def test_auth_failure():
     # Set API key in env
@@ -199,10 +197,7 @@ def test_auth_failure_render_pdf(MockTemplateGenerator):
 def test_render_pdf_validation_error_missing_resume_data():
     """Test that /v1/render/pdf returns 422 when resume_data is missing."""
     with patch.dict(os.environ, {}, clear=True):
-        response = client.post(
-            "/v1/render/pdf",
-            json={"variant": "base"}
-        )
+        response = client.post("/v1/render/pdf", json={"variant": "base"})
 
     assert response.status_code == 422
     body = response.json()
@@ -227,10 +222,7 @@ def test_render_pdf_uses_default_variant_when_not_specified(MockTemplateGenerato
 
     with patch.dict(os.environ, {}, clear=True):
         # Don't specify variant - should default to "base"
-        response = client.post(
-            "/v1/render/pdf",
-            json={"resume_data": mock_resume_data}
-        )
+        response = client.post("/v1/render/pdf", json={"resume_data": mock_resume_data})
 
     assert response.status_code == 200
 
@@ -238,10 +230,7 @@ def test_render_pdf_uses_default_variant_when_not_specified(MockTemplateGenerato
 def test_tailor_validation_error_missing_resume_data():
     """Test that /v1/tailor returns 422 when resume_data is missing."""
     with patch.dict(os.environ, {}, clear=True):
-        response = client.post(
-            "/v1/tailor",
-            json={"job_description": "Job desc"}
-        )
+        response = client.post("/v1/tailor", json={"job_description": "Job desc"})
 
     assert response.status_code == 422
     body = response.json()
@@ -253,10 +242,7 @@ def test_tailor_validation_error_missing_resume_data():
 def test_tailor_validation_error_missing_job_description():
     """Test that /v1/tailor returns 422 when job_description is missing."""
     with patch.dict(os.environ, {}, clear=True):
-        response = client.post(
-            "/v1/tailor",
-            json={"resume_data": mock_resume_data}
-        )
+        response = client.post("/v1/tailor", json={"resume_data": mock_resume_data})
 
     assert response.status_code == 422
     body = response.json()

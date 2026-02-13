@@ -1,8 +1,9 @@
 """Configuration management for resume CLI."""
 
-import yaml
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+import yaml
 
 
 class Config:
@@ -12,13 +13,9 @@ class Config:
         "output": {
             "directory": "output",
             "naming_scheme": "resume-{variant}-{date}.{ext}",
-            "date_format": "%Y-%m-%d"
+            "date_format": "%Y-%m-%d",
         },
-        "generation": {
-            "default_variant": "v1.0.0-base",
-            "default_format": "md",
-            "max_bullets": 4
-        },
+        "generation": {"default_variant": "v1.0.0-base", "default_format": "md", "max_bullets": 4},
         "ai": {
             "provider": "anthropic",  # anthropic or openai
             "model": "claude-3-5-sonnet-20241022",
@@ -26,12 +23,9 @@ class Config:
             "max_tokens": 4000,
             "fallback_to_template": True,
             "anthropic_base_url": "",
-            "openai_base_url": ""
+            "openai_base_url": "",
         },
-        "tracking": {
-            "enabled": True,
-            "csv_path": "tracking/resume_experiment.csv"
-        },
+        "tracking": {"enabled": True, "csv_path": "tracking/resume_experiment.csv"},
         "cover_letter": {
             "enabled": True,
             "template": "cover_letter_md.j2",
@@ -41,19 +35,16 @@ class Config:
             "optional_questions": ["company_alignment", "relocation", "salary"],
             "smart_guesses": True,
             "tone": "professional",
-            "max_length": 400
+            "max_length": 400,
         },
-        "github": {
-            "username": "anchapin",
-            "sync_months": 3
-        },
+        "github": {"username": "anchapin", "sync_months": 3},
         "variants": {
             "base": "v1.0.0-base",
             "backend": "v1.1.0-backend",
             "ml_ai": "v1.2.0-ml_ai",
             "fullstack": "v1.3.0-fullstack",
             "devops": "v1.4.0-devops",
-            "leadership": "v1.5.0-leadership"
+            "leadership": "v1.5.0-leadership",
         },
         "ats": {
             "enabled": True,
@@ -62,9 +53,9 @@ class Config:
                 "keywords": 30,
                 "section_structure": 20,
                 "contact_info": 15,
-                "readability": 15
-            }
-        }
+                "readability": 15,
+            },
+        },
     }
 
     def __init__(self, config_path: Optional[Path] = None):
@@ -88,6 +79,7 @@ class Config:
 
     def _merge_config(self, user_config: Dict[str, Any]) -> None:
         """Merge user config with defaults (deep merge)."""
+
         def deep_merge(base: Dict, update: Dict) -> Dict:
             result = base.copy()
             for key, value in update.items():

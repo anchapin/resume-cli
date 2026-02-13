@@ -1,9 +1,9 @@
 """Unit tests for Config class."""
 
 import os
-from pathlib import Path
-from unittest.mock import patch, mock_open
 from datetime import datetime
+from pathlib import Path
+from unittest.mock import mock_open, patch
 
 import pytest
 import yaml
@@ -27,12 +27,7 @@ class TestConfigInitialization:
     def test_init_with_config_path(self, temp_dir: Path):
         """Test Config loads from file if path provided."""
         config_path = temp_dir / "config.yaml"
-        user_config = {
-            "ai": {
-                "model": "gpt-4",
-                "temperature": 0.8
-            }
-        }
+        user_config = {"ai": {"model": "gpt-4", "temperature": 0.8}}
         with open(config_path, "w") as f:
             yaml.dump(user_config, f)
 
@@ -56,11 +51,7 @@ class TestConfigDeepMerge:
     def test_merge_config_simple(self):
         """Test simple config merge."""
         config = Config()
-        user_config = {
-            "ai": {
-                "model": "gpt-4"
-            }
-        }
+        user_config = {"ai": {"model": "gpt-4"}}
         config._merge_config(user_config)
 
         assert config.ai_model == "gpt-4"
@@ -70,16 +61,14 @@ class TestConfigDeepMerge:
     def test_merge_config_nested(self):
         """Test nested config merge."""
         config = Config()
-        user_config = {
-            "output": {
-                "directory": "custom_output"
-            }
-        }
+        user_config = {"output": {"directory": "custom_output"}}
         config._merge_config(user_config)
 
         assert config.output_dir == Path("custom_output")
         # Other output defaults remain
-        assert config.get("output.naming_scheme") == Config.DEFAULT_CONFIG["output"]["naming_scheme"]
+        assert (
+            config.get("output.naming_scheme") == Config.DEFAULT_CONFIG["output"]["naming_scheme"]
+        )
 
     def test_merge_config_multiple_sections(self, temp_dir: Path):
         """Test merge with multiple config sections."""
@@ -87,7 +76,7 @@ class TestConfigDeepMerge:
         user_config = {
             "ai": {"model": "gpt-4"},
             "github": {"username": "customuser"},
-            "tracking": {"enabled": False}
+            "tracking": {"enabled": False},
         }
         config._merge_config(user_config)
 

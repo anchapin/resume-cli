@@ -2,10 +2,10 @@
 
 import os
 import tempfile
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-from types import SimpleNamespace
 from datetime import datetime
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -15,20 +15,12 @@ from cli.utils.config import Config
 
 def _make_anthropic_response(text: str):
     """Helper to build fake Anthropic response."""
-    return SimpleNamespace(
-        content=[SimpleNamespace(text=text)]
-    )
+    return SimpleNamespace(content=[SimpleNamespace(text=text)])
 
 
 def _make_openai_response(text: str):
     """Helper to build fake OpenAI response."""
-    return SimpleNamespace(
-        choices=[
-            SimpleNamespace(
-                message=SimpleNamespace(content=text)
-            )
-        ]
-    )
+    return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=text))])
 
 
 class TestCoverLetterGeneratorInitialization:
@@ -82,7 +74,11 @@ class TestExtractJobDetails:
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
         gen.client = SimpleNamespace(
             messages=SimpleNamespace(
-                create=MagicMock(return_value=_make_anthropic_response('{"position": "Engineer", "requirements": ["Python"], "company_mission": null}'))
+                create=MagicMock(
+                    return_value=_make_anthropic_response(
+                        '{"position": "Engineer", "requirements": ["Python"], "company_mission": null}'
+                    )
+                )
             )
         )
 
@@ -100,7 +96,11 @@ class TestExtractJobDetails:
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
         gen.client = SimpleNamespace(
             messages=SimpleNamespace(
-                create=MagicMock(return_value=_make_anthropic_response('{"position": "Engineer", "requirements": ["Python"], "company": "TestCompany"}'))
+                create=MagicMock(
+                    return_value=_make_anthropic_response(
+                        '{"position": "Engineer", "requirements": ["Python"], "company": "TestCompany"}'
+                    )
+                )
             )
         )
 
@@ -117,10 +117,7 @@ class TestDetermineQuestions:
         """Test questions always include motivation."""
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
 
-        job_details = {
-            "company": "Acme",
-            "position": "Engineer"
-        }
+        job_details = {"company": "Acme", "position": "Engineer"}
 
         questions = gen._determine_questions(job_details)
 
@@ -135,7 +132,7 @@ class TestDetermineQuestions:
         job_details = {
             "company": "Acme",
             "position": "Engineer",
-            "company_mission": "Build great software"
+            "company_mission": "Build great software",
         }
 
         questions = gen._determine_questions(job_details)
@@ -148,10 +145,7 @@ class TestDetermineQuestions:
         """Test questions always include connection."""
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
 
-        job_details = {
-            "company": "Acme",
-            "position": "Engineer"
-        }
+        job_details = {"company": "Acme", "position": "Engineer"}
 
         questions = gen._determine_questions(job_details)
 
@@ -166,10 +160,7 @@ class TestGetFallbackContent:
         """Test fallback content returns proper structure."""
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
 
-        job_details = {
-            "company": "Acme",
-            "position": "Engineer"
-        }
+        job_details = {"company": "Acme", "position": "Engineer"}
 
         summary = "Experienced engineer with 10 years"
         fallback = gen._get_fallback_content(job_details, summary)
@@ -202,7 +193,11 @@ class TestGenerateSmartGuesses:
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
         gen.client = SimpleNamespace(
             messages=SimpleNamespace(
-                create=MagicMock(return_value=_make_anthropic_response('{"motivation": "Interested", "company_alignment": null, "connection": null}'))
+                create=MagicMock(
+                    return_value=_make_anthropic_response(
+                        '{"motivation": "Interested", "company_alignment": null, "connection": null}'
+                    )
+                )
             )
         )
 
@@ -225,10 +220,7 @@ class TestBuildCoverLetterPrompt:
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
 
         job_desc = "Looking for Python engineer"
-        job_details = {
-            "company": "Acme",
-            "position": "Senior Engineer"
-        }
+        job_details = {"company": "Acme", "position": "Senior Engineer"}
         resume_context = "Resume context"
         qa = {"motivation": "Excited about role"}
 
@@ -251,7 +243,11 @@ class TestGenerateSingleVersion:
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
         gen.client = SimpleNamespace(
             messages=SimpleNamespace(
-                create=MagicMock(return_value=_make_anthropic_response('{"opening_hook": "Dear hiring manager", "professional_summary": "Summary"}'))
+                create=MagicMock(
+                    return_value=_make_anthropic_response(
+                        '{"opening_hook": "Dear hiring manager", "professional_summary": "Summary"}'
+                    )
+                )
             )
         )
 
@@ -271,7 +267,11 @@ class TestGenerateSingleVersion:
         gen.client = SimpleNamespace(
             chat=SimpleNamespace(
                 completions=SimpleNamespace(
-                    create=MagicMock(return_value=_make_openai_response('{"opening_hook": "Hello", "professional_summary": "My summary"}'))
+                    create=MagicMock(
+                        return_value=_make_openai_response(
+                            '{"opening_hook": "Hello", "professional_summary": "My summary"}'
+                        )
+                    )
                 )
             )
         )
@@ -290,7 +290,7 @@ class TestGenerateSingleVersion:
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
         gen.client = SimpleNamespace(
             messages=SimpleNamespace(
-                create=MagicMock(return_value=_make_anthropic_response('not valid json'))
+                create=MagicMock(return_value=_make_anthropic_response("not valid json"))
             )
         )
 
@@ -310,12 +310,16 @@ class TestGenerateInteractive:
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
         gen.client = SimpleNamespace(
             messages=SimpleNamespace(
-                create=MagicMock(return_value=_make_anthropic_response('{"opening_hook": "Dear hiring manager", "professional_summary": "Experienced engineer"}'))
+                create=MagicMock(
+                    return_value=_make_anthropic_response(
+                        '{"opening_hook": "Dear hiring manager", "professional_summary": "Experienced engineer"}'
+                    )
+                )
             )
         )
 
         # Mock input to return values
-        mocker.patch('builtins.input', return_value='I am excited about this role.')
+        mocker.patch("builtins.input", return_value="I am excited about this role.")
 
         job_desc = "Looking for senior engineer"
         outputs, job_details = gen.generate_interactive(job_desc, company_name="Acme Corp")
@@ -336,7 +340,11 @@ class TestGenerateNonInteractive:
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
         gen.client = SimpleNamespace(
             messages=SimpleNamespace(
-                create=MagicMock(return_value=_make_anthropic_response('{"opening_hook": "Dear hiring manager", "professional_summary": "Summary"}'))
+                create=MagicMock(
+                    return_value=_make_anthropic_response(
+                        '{"opening_hook": "Dear hiring manager", "professional_summary": "Summary"}'
+                    )
+                )
             )
         )
 
@@ -361,13 +369,10 @@ class TestRenderTemplate:
             "key_achievements": ["Achievement 1", "Achievement 2"],
             "skills_highlight": ["Python", "Django"],
             "company_alignment": None,
-            "connection": None
+            "connection": None,
         }
 
-        job_details = {
-            "company": "Acme",
-            "position": "Engineer"
-        }
+        job_details = {"company": "Acme", "position": "Engineer"}
 
         rendered = gen._render_template(content, job_details)
 
@@ -380,7 +385,7 @@ class TestRenderTemplate:
 class TestCompilePdf:
     """Test _compile_pdf method."""
 
-    @patch('subprocess.Popen')
+    @patch("subprocess.Popen")
     def test_compile_pdf_success(self, mock_popen, sample_yaml_file: Path, temp_dir: Path):
         """Test PDF compilation succeeds."""
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
@@ -399,7 +404,7 @@ class TestCompilePdf:
 
         assert result is True
 
-    @patch('subprocess.Popen', side_effect=FileNotFoundError)
+    @patch("subprocess.Popen", side_effect=FileNotFoundError)
     def test_compile_pdf_failure(self, mock_popen, sample_yaml_file: Path, temp_dir: Path):
         """Test PDF compilation fails gracefully."""
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
@@ -437,13 +442,13 @@ class TestGenerateCoverLetterFunction:
         monkeypatch.setenv("AI_PROVIDER", "anthropic")
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
 
-        mocker.patch('builtins.input', return_value='Excited about role')
+        mocker.patch("builtins.input", return_value="Excited about role")
 
         outputs, job_details = generate_cover_letter(
             job_description="Job description",
             company_name="Acme",
             yaml_path=sample_yaml_file,
-            interactive=True
+            interactive=True,
         )
 
         assert isinstance(outputs, dict)
@@ -458,7 +463,7 @@ class TestGenerateCoverLetterFunction:
             job_description="Job description",
             company_name="Acme",
             yaml_path=sample_yaml_file,
-            interactive=False
+            interactive=False,
         )
 
         assert isinstance(outputs, dict)

@@ -33,7 +33,7 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        pytest --cov=cli --cov-report=xml --cov-report=term-missing
+        pytest --cov=cli --cov=api --cov-report=xml --cov-report=term-missing
 
     - name: Upload coverage to Codecov
       if: matrix.python-version == '3.10' && matrix.os == 'ubuntu-latest'
@@ -66,7 +66,7 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        pytest --cov=cli --cov-report=xml --cov-report=term --cov-report=json
+        pytest --cov=cli --cov=api --cov-report=xml --cov-report=term --cov-report=json
 
     - name: Check coverage threshold
       run: |

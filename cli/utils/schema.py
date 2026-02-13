@@ -1,10 +1,10 @@
 """Schema validation for resume.yaml."""
 
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-import yaml
-import sys
 
+import yaml
 
 # Resume YAML Schema
 RESUME_SCHEMA = {
@@ -14,8 +14,8 @@ RESUME_SCHEMA = {
         "fields": {
             "version": {"required": True, "type": str},
             "last_updated": {"required": True, "type": str},
-            "author": {"required": False, "type": str}
-        }
+            "author": {"required": False, "type": str},
+        },
     },
     "contact": {
         "required": True,
@@ -26,22 +26,18 @@ RESUME_SCHEMA = {
             "email": {"required": True, "type": str},
             "credentials": {"required": False, "type": list},
             "location": {"required": False, "type": dict},
-            "urls": {"required": False, "type": dict}
-        }
+            "urls": {"required": False, "type": dict},
+        },
     },
     "professional_summary": {
         "required": True,
         "type": dict,
         "fields": {
             "base": {"required": True, "type": str},
-            "variants": {"required": False, "type": dict}
-        }
+            "variants": {"required": False, "type": dict},
+        },
     },
-    "skills": {
-        "required": True,
-        "type": dict,
-        "fields": {}  # Dynamic categories
-    },
+    "skills": {"required": True, "type": dict, "fields": {}},  # Dynamic categories
     "experience": {
         "required": True,
         "type": list,
@@ -51,8 +47,8 @@ RESUME_SCHEMA = {
             "start_date": {"required": True, "type": str},
             "end_date": {"required": False, "type": (str, type(None))},
             "location": {"required": False, "type": str},
-            "bullets": {"required": True, "type": list}
-        }
+            "bullets": {"required": True, "type": list},
+        },
     },
     "education": {
         "required": True,
@@ -62,8 +58,8 @@ RESUME_SCHEMA = {
             "degree": {"required": True, "type": str},
             "graduation_date": {"required": True, "type": str},
             "location": {"required": False, "type": str},
-            "field": {"required": False, "type": str}
-        }
+            "field": {"required": False, "type": str},
+        },
     },
     "publications": {
         "required": False,
@@ -78,28 +74,19 @@ RESUME_SCHEMA = {
             "pages": {"required": False, "type": str},
             "doi": {"required": False, "type": str},
             "conference": {"required": False, "type": str},
-            "location": {"required": False, "type": str}
-        }
+            "location": {"required": False, "type": str},
+        },
     },
-    "certifications": {
-        "required": False,
-        "type": list
-    },
-    "affiliations": {
-        "required": False,
-        "type": list
-    },
-    "projects": {
-        "required": False,
-        "type": dict
-    },
+    "certifications": {"required": False, "type": list},
+    "affiliations": {"required": False, "type": list},
+    "projects": {"required": False, "type": dict},
     "variants": {
         "required": True,
         "type": dict,
         "fields": {
             # Dynamic variant names
-        }
-    }
+        },
+    },
 }
 
 
@@ -124,7 +111,9 @@ class ValidationError:
         return f"[{level_str}] {self.path}: {self.message}"
 
     def __repr__(self) -> str:
-        return f"ValidationError(path='{self.path}', message='{self.message}', level='{self.level}')"
+        return (
+            f"ValidationError(path='{self.path}', message='{self.message}', level='{self.level}')"
+        )
 
 
 class ResumeValidator:
@@ -138,6 +127,7 @@ class ResumeValidator:
             yaml_path: Path to resume.yaml
         """
         from .yaml_parser import ResumeYAML
+
         self.yaml_handler = ResumeYAML(yaml_path)
         self.errors: List[ValidationError] = []
         self.warnings: List[ValidationError] = []
@@ -186,7 +176,7 @@ class ResumeValidator:
                         ValidationError(
                             key,
                             f"Expected type {expected_type.__name__}, got {type(data[key]).__name__}",
-                            "error"
+                            "error",
                         )
                     )
 
@@ -197,7 +187,9 @@ class ResumeValidator:
 
         for field in required_fields:
             if field not in contact or not contact[field]:
-                self.errors.append(ValidationError(f"contact.{field}", "Missing required field", "error"))
+                self.errors.append(
+                    ValidationError(f"contact.{field}", "Missing required field", "error")
+                )
 
         # Validate email format
         email = contact.get("email", "")
@@ -214,7 +206,9 @@ class ResumeValidator:
             # Check required fields
             for field in ["company", "title", "start_date", "bullets"]:
                 if field not in job or not job[field]:
-                    self.errors.append(ValidationError(f"{prefix}.{field}", "Missing required field", "error"))
+                    self.errors.append(
+                        ValidationError(f"{prefix}.{field}", "Missing required field", "error")
+                    )
 
             # Check bullets structure
             bullets = job.get("bullets", [])
@@ -228,7 +222,9 @@ class ResumeValidator:
                         )
                     elif "text" not in bullet:
                         self.errors.append(
-                            ValidationError(f"{prefix}.bullets.{j}", "Missing 'text' field", "error")
+                            ValidationError(
+                                f"{prefix}.bullets.{j}", "Missing 'text' field", "error"
+                            )
                         )
 
     def _validate_education(self, data: Dict[str, Any]) -> None:
@@ -241,7 +237,9 @@ class ResumeValidator:
             # Check required fields
             for field in ["institution", "degree", "graduation_date"]:
                 if field not in edu or not edu[field]:
-                    self.errors.append(ValidationError(f"{prefix}.{field}", "Missing required field", "error"))
+                    self.errors.append(
+                        ValidationError(f"{prefix}.{field}", "Missing required field", "error")
+                    )
 
     def _validate_variants(self, data: Dict[str, Any]) -> None:
         """Validate variant configurations."""
@@ -270,7 +268,7 @@ class ResumeValidator:
                         ValidationError(
                             f"{prefix}.skill_sections.{section}",
                             f"Skill section '{section}' not defined in skills",
-                            "error"
+                            "error",
                         )
                     )
 
@@ -285,7 +283,9 @@ class ResumeValidator:
                 datetime.strptime(last_updated, "%Y-%m-%d")
             except ValueError:
                 self.errors.append(
-                    ValidationError("meta.last_updated", "Invalid date format (expected YYYY-MM-DD)", "error")
+                    ValidationError(
+                        "meta.last_updated", "Invalid date format (expected YYYY-MM-DD)", "error"
+                    )
                 )
 
         # Check experience dates
@@ -305,15 +305,13 @@ class ResumeValidator:
                                 ValidationError(
                                     f"experience.{i}.{date_field}",
                                     "Invalid date format (expected YYYY-MM or YYYY-MM-DD)",
-                                    "error"
+                                    "error",
                                 )
                             )
                     except ValueError:
                         self.errors.append(
                             ValidationError(
-                                f"experience.{i}.{date_field}",
-                                "Invalid date format",
-                                "error"
+                                f"experience.{i}.{date_field}", "Invalid date format", "error"
                             )
                         )
 
@@ -323,7 +321,9 @@ class ResumeValidator:
         if email:
             # Basic email validation
             if "@" not in email or "." not in email.split("@")[-1]:
-                self.errors.append(ValidationError("contact.email", "Invalid email format", "error"))
+                self.errors.append(
+                    ValidationError("contact.email", "Invalid email format", "error")
+                )
 
     def print_results(self) -> None:
         """Print validation results to stdout."""
@@ -364,6 +364,7 @@ def validate_resume(yaml_path: Optional[Path] = None) -> bool:
 if __name__ == "__main__":
     # Run validation when executed directly
     import sys
+
     yaml_path = sys.argv[1] if len(sys.argv) > 1 else None
     is_valid = validate_resume(yaml_path)
     sys.exit(0 if is_valid else 1)

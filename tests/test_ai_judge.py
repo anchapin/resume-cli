@@ -1,8 +1,9 @@
 """Unit tests for AIJudge class."""
 
 import json
+from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -12,20 +13,12 @@ from cli.utils.config import Config
 
 def _make_anthropic_response(text: str):
     """Helper to build fake Anthropic response."""
-    return SimpleNamespace(
-        content=[SimpleNamespace(text=text)]
-    )
+    return SimpleNamespace(content=[SimpleNamespace(text=text)])
 
 
 def _make_openai_response(text: str):
     """Helper to build fake OpenAI response."""
-    return SimpleNamespace(
-        choices=[
-            SimpleNamespace(
-                message=SimpleNamespace(content=text)
-            )
-        ]
-    )
+    return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=text))])
 
 
 class TestAIJudgeInitialization:
@@ -70,7 +63,11 @@ class TestJudgeCoverLetter:
         config = Config()
         mock_client = SimpleNamespace(
             messages=SimpleNamespace(
-                create=MagicMock(return_value=_make_anthropic_response('{"selected": 1, "action": "select", "justification": "Version 2 is best"}'))
+                create=MagicMock(
+                    return_value=_make_anthropic_response(
+                        '{"selected": 1, "action": "select", "justification": "Version 2 is best"}'
+                    )
+                )
             )
         )
 
@@ -79,7 +76,7 @@ class TestJudgeCoverLetter:
         versions = [
             {"opening_hook": "Version 1"},
             {"opening_hook": "Version 2"},
-            {"opening_hook": "Version 3"}
+            {"opening_hook": "Version 3"},
         ]
         job_desc = "Job description"
         job_details = {"company": "Acme"}
@@ -98,7 +95,11 @@ class TestJudgeCoverLetter:
         config = Config()
         mock_client = SimpleNamespace(
             messages=SimpleNamespace(
-                create=MagicMock(return_value=_make_anthropic_response('{"selected": 0, "action": "combine", "justification": "Combining best elements", "selection": {"opening_hook": 1, "professional_summary": 2}}'))
+                create=MagicMock(
+                    return_value=_make_anthropic_response(
+                        '{"selected": 0, "action": "combine", "justification": "Combining best elements", "selection": {"opening_hook": 1, "professional_summary": 2}}'
+                    )
+                )
             )
         )
 
@@ -107,7 +108,7 @@ class TestJudgeCoverLetter:
         versions = [
             {"opening_hook": "V1", "professional_summary": "S1"},
             {"opening_hook": "V2", "professional_summary": "S2"},
-            {"opening_hook": "V3", "professional_summary": "S3"}
+            {"opening_hook": "V3", "professional_summary": "S3"},
         ]
         job_desc = "Job description"
         job_details = {"company": "Acme"}
@@ -126,18 +127,12 @@ class TestJudgeCoverLetter:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
         config = Config()
         mock_client = SimpleNamespace(
-            messages=SimpleNamespace(
-                create=MagicMock(side_effect=Exception("API error"))
-            )
+            messages=SimpleNamespace(create=MagicMock(side_effect=Exception("API error")))
         )
 
-        judge = AIJudge(mock_client, "anthropic, config")
+        judge = AIJudge(mock_client, "anthropic", config)
 
-        versions = [
-            {"opening_hook": "V1"},
-            {"opening_hook": "V2"},
-            {"opening_hook": "V3"}
-        ]
+        versions = [{"opening_hook": "V1"}, {"opening_hook": "V2"}, {"opening_hook": "V3"}]
         job_desc = "Job description"
         job_details = {"company": "Acme"}
         resume_context = "Resume summary"
@@ -170,23 +165,25 @@ class TestJudgeResumeCustomization:
         assert selected == versions[0]
         assert "Only one version" in justification
 
-    def test_judge_resume_customization_multiple_versions(self, sample_yaml_file: Path, monkeypatch):
+    def test_judge_resume_customization_multiple_versions(
+        self, sample_yaml_file: Path, monkeypatch
+    ):
         """Test judge selects best from multiple versions."""
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
         config = Config()
         mock_client = SimpleNamespace(
             messages=SimpleNamespace(
-                create=MagicMock(return_value=_make_anthropic_response('{"selected": 2, "action": "select", "justification": "Version 3 has best keyword match"}'))
+                create=MagicMock(
+                    return_value=_make_anthropic_response(
+                        '{"selected": 2, "action": "select", "justification": "Version 3 has best keyword match"}'
+                    )
+                )
             )
         )
 
         judge = AIJudge(mock_client, "anthropic", config)
 
-        versions = [
-            {"keywords": ["Python"]},
-            {"keywords": ["Java"]},
-            {"keywords": ["Go"]}
-        ]
+        versions = [{"keywords": ["Python"]}, {"keywords": ["Java"]}, {"keywords": ["Go"]}]
         job_desc = "Job description"
         resume_context = "Resume summary"
 
@@ -211,9 +208,7 @@ class TestJudgeResumeText:
         job_desc = "Job description"
         base_resume = "Original resume"
 
-        selected, justification = judge.judge_resume_text(
-            versions, job_desc, base_resume
-        )
+        selected, justification = judge.judge_resume_text(versions, job_desc, base_resume)
 
         assert selected == versions[0]
         assert "Only one version" in justification
@@ -224,23 +219,21 @@ class TestJudgeResumeText:
         config = Config()
         mock_client = SimpleNamespace(
             messages=SimpleNamespace(
-                create=MagicMock(return_value=_make_anthropic_response('{"selected": 0, "justification": "First version is best"}'))
+                create=MagicMock(
+                    return_value=_make_anthropic_response(
+                        '{"selected": 0, "justification": "First version is best"}'
+                    )
+                )
             )
         )
 
         judge = AIJudge(mock_client, "anthropic", config)
 
-        versions = [
-            "Resume version 1",
-            "Resume version 2",
-            "Resume version 3"
-        ]
+        versions = ["Resume version 1", "Resume version 2", "Resume version 3"]
         job_desc = "Job description"
         base_resume = "Original resume"
 
-        selected, justification = judge.judge_resume_text(
-            versions, job_desc, base_resume
-        )
+        selected, justification = judge.judge_resume_text(versions, job_desc, base_resume)
 
         assert selected == versions[0]
         assert "First version is best" in justification
@@ -280,7 +273,7 @@ class TestParseJudgeResponse:
         mock_client = MagicMock()
         judge = AIJudge(mock_client, "anthropic", config)
 
-        response = 'This is not JSON at all'
+        response = "This is not JSON at all"
         parsed = judge._parse_judge_response(response)
 
         assert parsed["selected"] == 0
@@ -300,14 +293,10 @@ class TestCombineVersions:
         versions = [
             {"opening_hook": "V1", "professional_summary": "S1", "achievements": "A1"},
             {"opening_hook": "V2", "professional_summary": "S2", "achievements": "A2"},
-            {"opening_hook": "V3", "professional_summary": "S3", "achievements": "A3"}
+            {"opening_hook": "V3", "professional_summary": "S3", "achievements": "A3"},
         ]
 
-        selection = {
-            "opening_hook": 1,
-            "professional_summary": 2,
-            "achievements": 3
-        }
+        selection = {"opening_hook": 1, "professional_summary": 2, "achievements": 3}
 
         combined = judge._combine_versions(versions, selection)
 
@@ -321,10 +310,7 @@ class TestCombineVersions:
         mock_client = MagicMock()
         judge = AIJudge(mock_client, "anthropic", config)
 
-        versions = [
-            {"key1": "V1"},
-            {"key1": "V2"}
-        ]
+        versions = [{"key1": "V1"}, {"key1": "V2"}]
 
         selection = {"key1": 5}  # Index 5 doesn't exist
 

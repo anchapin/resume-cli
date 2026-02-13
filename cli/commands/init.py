@@ -2,14 +2,15 @@
 
 import re
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 import yaml
 
 
 def init_from_existing(
     base_resume_path: Optional[Path] = None,
     revised_resume_path: Optional[Path] = None,
-    output_path: Optional[Path] = None
+    output_path: Optional[Path] = None,
 ) -> Path:
     """
     Initialize resume.yaml by parsing existing resume files.
@@ -36,11 +37,7 @@ def init_from_existing(
 
     # Parse resumes
     data = {
-        "meta": {
-            "version": "2.0.0",
-            "last_updated": "",
-            "author": "Alex Chapin"
-        },
+        "meta": {"version": "2.0.0", "last_updated": "", "author": "Alex Chapin"},
         "contact": {},
         "professional_summary": {"base": "", "variants": {}},
         "skills": {},
@@ -50,7 +47,7 @@ def init_from_existing(
         "certifications": [],
         "affiliations": [],
         "projects": {},
-        "variants": {}
+        "variants": {},
     }
 
     # Parse base resume
@@ -143,8 +140,10 @@ def _parse_base_resume(path: Path, data: Dict[str, Any]) -> None:
                 current_job = {
                     "company": job_match.group(1).strip(),
                     "start_date": f"{job_match.group(2)}-01",
-                    "end_date": None if job_match.group(3) == "Present" else f"{job_match.group(3)}-01",
-                    "bullets": []
+                    "end_date": (
+                        None if job_match.group(3) == "Present" else f"{job_match.group(3)}-01"
+                    ),
+                    "bullets": [],
                 }
                 data["experience"].append(current_job)
             elif line.startswith("•") and current_job:
@@ -154,10 +153,9 @@ def _parse_base_resume(path: Path, data: Dict[str, Any]) -> None:
                 if label_match:
                     label = label_match.group(1).strip()
                     text = label_match.group(2).strip()
-                    current_job["bullets"].append({
-                        "text": text,
-                        "skills": [label.replace(":", "").strip()]
-                    })
+                    current_job["bullets"].append(
+                        {"text": text, "skills": [label.replace(":", "").strip()]}
+                    )
                 else:
                     current_job["bullets"].append({"text": bullet_text})
 
@@ -165,11 +163,13 @@ def _parse_base_resume(path: Path, data: Dict[str, Any]) -> None:
             # Education: "Degree | Institution | Year"
             edu_match = re.match(r"^(.+?)\s*\|\s*(.+?)\s*\|\s*(\d+)", line)
             if edu_match:
-                data["education"].append({
-                    "degree": edu_match.group(1).strip(),
-                    "institution": edu_match.group(2).strip(),
-                    "graduation_date": f"{edu_match.group(3)}-01"
-                })
+                data["education"].append(
+                    {
+                        "degree": edu_match.group(1).strip(),
+                        "institution": edu_match.group(2).strip(),
+                        "graduation_date": f"{edu_match.group(3)}-01",
+                    }
+                )
 
         elif current_section == "publications" and line.startswith("•"):
             pub_text = line[1:].strip()
@@ -178,10 +178,9 @@ def _parse_base_resume(path: Path, data: Dict[str, Any]) -> None:
             data["publications"].append({"title": pub_text})
 
         elif current_section == "publications" and line.startswith("•") and "License:" in line:
-            data["certifications"].append({
-                "name": "Licensed Professional Engineer",
-                "license_number": "58110"
-            })
+            data["certifications"].append(
+                {"name": "Licensed Professional Engineer", "license_number": "58110"}
+            )
 
 
 def _parse_revised_resume(path: Path, data: Dict[str, Any]) -> None:
@@ -194,7 +193,7 @@ def _parse_revised_resume(path: Path, data: Dict[str, Any]) -> None:
         data["contact"]["location"] = {
             "city": location_match.group(1).strip(),
             "state": location_match.group(2).strip(),
-            "zip": location_match.group(3).strip()
+            "zip": location_match.group(3).strip(),
         }
 
     # Extract URLs
@@ -217,33 +216,34 @@ def _add_default_variants(data: Dict[str, Any]) -> None:
             "summary_key": "base",
             "skill_sections": list(data["skills"].keys()) if data["skills"] else [],
             "max_bullets_per_job": 4,
-            "emphasize_keywords": []
+            "emphasize_keywords": [],
         },
         "v1.1.0-backend": {
             "description": "Backend & DevOps specialization",
             "summary_key": "base",
             "skill_sections": ["programming_languages", "cloud_devops", "databases"],
             "max_bullets_per_job": 5,
-            "emphasize_keywords": ["backend", "api", "scalability"]
+            "emphasize_keywords": ["backend", "api", "scalability"],
         },
         "v1.2.0-ml_ai": {
             "description": "ML/AI specialization",
             "summary_key": "base",
             "skill_sections": ["programming_languages", "ai_ml"],
             "max_bullets_per_job": 5,
-            "emphasize_keywords": ["ai", "ml", "machine learning", "llm"]
+            "emphasize_keywords": ["ai", "ml", "machine learning", "llm"],
         },
         "v1.3.0-fullstack": {
             "description": "Full-stack specialization",
             "summary_key": "base",
             "skill_sections": ["programming_languages", "frontend", "backend"],
             "max_bullets_per_job": 4,
-            "emphasize_keywords": ["fullstack", "react", "web"]
-        }
+            "emphasize_keywords": ["fullstack", "react", "web"],
+        },
     }
 
 
 if __name__ == "__main__":
     import sys
+
     output = init_from_existing()
     sys.exit(0)

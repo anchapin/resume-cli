@@ -10,10 +10,7 @@ class TestResumeRequest:
 
     def test_resume_request_initialization(self):
         """Test ResumeRequest initialization."""
-        request = ResumeRequest(
-            resume_data={"name": "John"},
-            variant="backend"
-        )
+        request = ResumeRequest(resume_data={"name": "John"}, variant="backend")
 
         assert request.resume_data == {"name": "John"}
         assert request.variant == "backend"
@@ -26,9 +23,7 @@ class TestResumeRequest:
 
     def test_resume_request_validation_success(self):
         """Test ResumeRequest validation succeeds with required fields."""
-        request = ResumeRequest(
-            resume_data={"name": "John"}
-        )
+        request = ResumeRequest(resume_data={"name": "John"})
 
         # Pydantic validation passes
         assert request.resume_data == {"name": "John"}
@@ -37,18 +32,10 @@ class TestResumeRequest:
         """Test ResumeRequest handles complex resume data."""
         complex_data = {
             "meta": {"version": "1.0"},
-            "contact": {
-                "name": "John Doe",
-                "email": "john@example.com",
-                "phone": "+1-555-1234"
-            },
+            "contact": {"name": "John Doe", "email": "john@example.com", "phone": "+1-555-1234"},
             "experience": [
-                {
-                    "company": "Acme",
-                    "title": "Engineer",
-                    "bullets": [{"text": "Did work"}]
-                }
-            ]
+                {"company": "Acme", "title": "Engineer", "bullets": [{"text": "Did work"}]}
+            ],
         }
 
         request = ResumeRequest(resume_data=complex_data)
@@ -68,8 +55,7 @@ class TestTailorRequest:
     def test_tailor_request_initialization(self):
         """Test TailorRequest initialization."""
         request = TailorRequest(
-            resume_data={"name": "John"},
-            job_description="Senior Python Engineer needed"
+            resume_data={"name": "John"}, job_description="Senior Python Engineer needed"
         )
 
         assert request.resume_data == {"name": "John"}
@@ -77,10 +63,7 @@ class TestTailorRequest:
 
     def test_tailor_request_short_description(self):
         """Test TailorRequest with short job description."""
-        request = TailorRequest(
-            resume_data={"name": "Jane"},
-            job_description="Engineer"
-        )
+        request = TailorRequest(resume_data={"name": "Jane"}, job_description="Engineer")
 
         assert request.job_description == "Engineer"
 
@@ -88,10 +71,7 @@ class TestTailorRequest:
         """Test TailorRequest with long job description."""
         long_desc = "We are looking for a Senior Software Engineer with 10+ years of experience in distributed systems, microservices architecture, cloud-native applications using Go, Python, or Rust. Experience with Kubernetes, Docker, and CI/CD pipelines is required. You will be working on a team of 5-7 engineers building next-generation platform for enterprise clients."
 
-        request = TailorRequest(
-            resume_data={"name": "Bob"},
-            job_description=long_desc
-        )
+        request = TailorRequest(resume_data={"name": "Bob"}, job_description=long_desc)
 
         assert request.job_description == long_desc
 
@@ -99,7 +79,7 @@ class TestTailorRequest:
         """Test TailorRequest handles special characters."""
         request = TailorRequest(
             resume_data={"name": "Alice"},
-            job_description="Engineer needed - must know Python, Java & C++ / C#"
+            job_description="Engineer needed - must know Python, Java & C++ / C#",
         )
 
         assert request.job_description == "Engineer needed - must know Python, Java & C++ / C#"
@@ -120,9 +100,6 @@ Responsibilities:
 - Optimize database performance
 """
 
-        request = TailorRequest(
-            resume_data={"name": "Charlie"},
-            job_description=multiline_desc
-        )
+        request = TailorRequest(resume_data={"name": "Charlie"}, job_description=multiline_desc)
 
         assert request.job_description == multiline_desc

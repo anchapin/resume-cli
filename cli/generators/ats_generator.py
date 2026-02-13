@@ -2,33 +2,36 @@
 
 import json
 import re
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional, Tuple
 
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 
-from ..utils.yaml_parser import ResumeYAML
 from ..utils.config import Config
+from ..utils.yaml_parser import ResumeYAML
 
 # Load environment variables from .env file if present
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass
 
 try:
     import anthropic
+
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
 
 try:
     import openai
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
@@ -39,6 +42,7 @@ console = Console()
 @dataclass
 class ATSCategoryScore:
     """Score for a single ATS category."""
+
     name: str
     points_earned: int
     points_possible: int
@@ -56,6 +60,7 @@ class ATSCategoryScore:
 @dataclass
 class ATSReport:
     """Complete ATS score report."""
+
     total_score: int
     total_possible: int
     categories: Dict[str, ATSCategoryScore]
@@ -73,11 +78,7 @@ class ATSReport:
 class ATSGenerator:
     """Generate ATS scores and reports for resumes."""
 
-    def __init__(
-        self,
-        yaml_path: Optional[Path] = None,
-        config: Optional[Config] = None
-    ):
+    def __init__(self, yaml_path: Optional[Path] = None, config: Optional[Config] = None):
         """
         Initialize ATS generator.
 
@@ -102,6 +103,7 @@ class ATSGenerator:
                     console.print("[dim]AI not available - using fallback keyword extraction[/dim]")
                 else:
                     import os
+
                     api_key = os.getenv("ANTHROPIC_API_KEY")
                     if api_key:
                         base_url = os.getenv("ANTHROPIC_BASE_URL") or self.config.anthropic_base_url
@@ -112,13 +114,16 @@ class ATSGenerator:
                         self.provider = "anthropic"
                         self.ai_available = True
                     else:
-                        console.print("[dim]ANTHROPIC_API_KEY not set - using fallback keyword extraction[/dim]")
+                        console.print(
+                            "[dim]ANTHROPIC_API_KEY not set - using fallback keyword extraction[/dim]"
+                        )
 
             elif provider == "openai":
                 if not OPENAI_AVAILABLE:
                     console.print("[dim]AI not available - using fallback keyword extraction[/dim]")
                 else:
                     import os
+
                     api_key = os.getenv("OPENAI_API_KEY")
                     if api_key:
                         base_url = os.getenv("OPENAI_BASE_URL") or self.config.openai_base_url
@@ -129,16 +134,14 @@ class ATSGenerator:
                         self.provider = "openai"
                         self.ai_available = True
                     else:
-                        console.print("[dim]OPENAI_API_KEY not set - using fallback keyword extraction[/dim]")
+                        console.print(
+                            "[dim]OPENAI_API_KEY not set - using fallback keyword extraction[/dim]"
+                        )
 
         except Exception as e:
             console.print(f"[dim]AI initialization failed ({e}) - using fallback methods[/dim]")
 
-    def generate_report(
-        self,
-        job_description: str,
-        variant: Optional[str] = None
-    ) -> ATSReport:
+    def generate_report(self, job_description: str, variant: Optional[str] = None) -> ATSReport:
         """
         Generate comprehensive ATS report.
 
@@ -158,7 +161,7 @@ class ATSGenerator:
             "keywords": self._check_keywords(resume_data, job_description),
             "section_structure": self._check_section_structure(resume_data),
             "contact_info": self._check_contact_info(resume_data),
-            "readability": self._check_readability(resume_data)
+            "readability": self._check_readability(resume_data),
         }
 
         # Calculate total score
@@ -166,16 +169,14 @@ class ATSGenerator:
         total_possible = sum(cat.points_possible for cat in categories.values())
 
         # Generate summary and recommendations
-        summary, recommendations = self._generate_summary(
-            categories, total_score, total_possible
-        )
+        summary, recommendations = self._generate_summary(categories, total_score, total_possible)
 
         return ATSReport(
             total_score=total_score,
             total_possible=total_possible,
             categories=categories,
             summary=summary,
-            recommendations=recommendations
+            recommendations=recommendations,
         )
 
     def _get_resume_data(self, variant: Optional[str]) -> Dict[str, Any]:
@@ -208,8 +209,8 @@ class ATSGenerator:
 
         # Check for complex formatting indicators
         all_text = self._get_all_text(resume_data)
-        has_tables = bool(re.search(r'\|[^\n]+\|', all_text))
-        has_special_chars = len(re.findall(r'[^a-zA-Z0-9\s\-\.\,\@\(\)\#\/]', all_text))
+        has_tables = bool(re.search(r"\|[^\n]+\|", all_text))
+        has_special_chars = len(re.findall(r"[^a-zA-Z0-9\s\-\.\,\@\(\)\#\/]", all_text))
 
         if not has_tables:
             details.append("No tables detected (ATS-friendly)")
@@ -229,10 +230,12 @@ class ATSGenerator:
             points_earned=max(0, points),
             points_possible=20,
             details=details,
-            suggestions=suggestions
+            suggestions=suggestions,
         )
 
-    def _check_keywords(self, resume_data: Dict[str, Any], job_description: str) -> ATSCategoryScore:
+    def _check_keywords(
+        self, resume_data: Dict[str, Any], job_description: str
+    ) -> ATSCategoryScore:
         """
         Check keyword matching between resume and job description.
 
@@ -282,7 +285,7 @@ class ATSGenerator:
             points_earned=points,
             points_possible=30,
             details=details,
-            suggestions=suggestions
+            suggestions=suggestions,
         )
 
     def _check_section_structure(self, resume_data: Dict[str, Any]) -> ATSCategoryScore:
@@ -299,7 +302,7 @@ class ATSGenerator:
             "experience": resume_data.get("experience"),
             "education": resume_data.get("education"),
             "skills": resume_data.get("skills"),
-            "summary": resume_data.get("summary")
+            "summary": resume_data.get("summary"),
         }
 
         for section_name, section_data in required_sections.items():
@@ -324,7 +327,7 @@ class ATSGenerator:
             points_earned=points,
             points_possible=20,
             details=details,
-            suggestions=suggestions
+            suggestions=suggestions,
         )
 
     def _check_contact_info(self, resume_data: Dict[str, Any]) -> ATSCategoryScore:
@@ -341,9 +344,9 @@ class ATSGenerator:
 
         # Check required contact fields
         contact_fields = {
-            "email": (contact.get("email"), 5, r'^[^@]+@[^@]+\.[^@]+$'),
-            "phone": (contact.get("phone"), 5, r'\d'),
-            "location": (contact.get("location"), 5, None)  # Just presence check
+            "email": (contact.get("email"), 5, r"^[^@]+@[^@]+\.[^@]+$"),
+            "phone": (contact.get("phone"), 5, r"\d"),
+            "location": (contact.get("location"), 5, None),  # Just presence check
         }
 
         for field_name, (field_value, field_points, pattern) in contact_fields.items():
@@ -370,7 +373,7 @@ class ATSGenerator:
             points_earned=points,
             points_possible=15,
             details=details,
-            suggestions=suggestions
+            suggestions=suggestions,
         )
 
     def _check_readability(self, resume_data: Dict[str, Any]) -> ATSCategoryScore:
@@ -387,12 +390,19 @@ class ATSGenerator:
 
         # Check for action verbs in experience bullets
         action_verbs = [
-            "developed", "implemented", "built", "created", "designed",
-            "managed", "led", "increased", "decreased", "improved", "achieved"
+            "developed",
+            "implemented",
+            "built",
+            "created",
+            "designed",
+            "managed",
+            "led",
+            "increased",
+            "decreased",
+            "improved",
+            "achieved",
         ]
-        action_verb_count = sum(
-            1 for verb in action_verbs if verb in all_text.lower()
-        )
+        action_verb_count = sum(1 for verb in action_verbs if verb in all_text.lower())
 
         if action_verb_count >= 3:
             details.append(f"✓ Uses action verbs ({action_verb_count} found)")
@@ -401,7 +411,7 @@ class ATSGenerator:
             suggestions.append("Use more action verbs (e.g., developed, implemented)")
 
         # Check for quantifiable achievements
-        has_numbers = bool(re.search(r'\d+%|\$\d+|\d+\s*(users|customers|projects)', all_text))
+        has_numbers = bool(re.search(r"\d+%|\$\d+|\d+\s*(users|customers|projects)", all_text))
         if has_numbers:
             details.append("✓ Includes quantifiable achievements")
         else:
@@ -410,7 +420,7 @@ class ATSGenerator:
 
         # Check for acronyms (should be minimal or defined)
         # This is a simple heuristic
-        acronym_pattern = r'\b[A-Z]{2,4}\b'
+        acronym_pattern = r"\b[A-Z]{2,4}\b"
         acronyms = re.findall(acronym_pattern, all_text)
         if len(acronyms) < 10:
             details.append(f"✓ Minimal acronyms ({len(acronyms)} found)")
@@ -433,7 +443,7 @@ class ATSGenerator:
             points_earned=max(0, points),
             points_possible=15,
             details=details,
-            suggestions=suggestions
+            suggestions=suggestions,
         )
 
     def _get_all_text(self, resume_data: Dict[str, Any]) -> str:
@@ -490,7 +500,7 @@ Please extract the keywords:"""
                     response = self._call_openai(prompt)
 
                 # Parse JSON from response
-                json_match = re.search(r'\[.*\]', response, re.DOTALL)
+                json_match = re.search(r"\[.*\]", response, re.DOTALL)
                 if json_match:
                     keywords = json.loads(json_match.group(0))
                     if isinstance(keywords, list):
@@ -532,12 +542,12 @@ Please extract the keywords:"""
                     text = bullet.get("text", "").lower()
                     # Extract common tech terms from text
                     # This is a simple heuristic - AI could do better
-                    keywords.extend(re.findall(r'\b[a-z]+(?:\s+[a-z]+)?\b', text))
+                    keywords.extend(re.findall(r"\b[a-z]+(?:\s+[a-z]+)?\b", text))
 
         # Extract from summary
         summary = resume_data.get("summary", "")
         if summary:
-            keywords.extend(re.findall(r'\b[a-z]{2,}\b', summary.lower()))
+            keywords.extend(re.findall(r"\b[a-z]{2,}\b", summary.lower()))
 
         return list(set(k.strip() for k in keywords if len(k) > 2))
 
@@ -553,13 +563,50 @@ Please extract the keywords:"""
         """
         # Common tech keywords to look for
         common_keywords = [
-            "python", "javascript", "typescript", "react", "vue", "angular",
-            "node.js", "django", "flask", "fastapi", "kubernetes", "docker",
-            "aws", "gcp", "azure", "sql", "mongodb", "postgresql", "redis",
-            "ci/cd", "devops", "machine learning", "ai", "llm", "pytorch",
-            "tensorflow", "react native", "graphql", "rest api", "microservices",
-            "java", "go", "rust", "c++", "c#", ".net", "spring", "hibernate",
-            "agile", "scrum", "kanban", "leadership", "communication", "teamwork"
+            "python",
+            "javascript",
+            "typescript",
+            "react",
+            "vue",
+            "angular",
+            "node.js",
+            "django",
+            "flask",
+            "fastapi",
+            "kubernetes",
+            "docker",
+            "aws",
+            "gcp",
+            "azure",
+            "sql",
+            "mongodb",
+            "postgresql",
+            "redis",
+            "ci/cd",
+            "devops",
+            "machine learning",
+            "ai",
+            "llm",
+            "pytorch",
+            "tensorflow",
+            "react native",
+            "graphql",
+            "rest api",
+            "microservices",
+            "java",
+            "go",
+            "rust",
+            "c++",
+            "c#",
+            ".net",
+            "spring",
+            "hibernate",
+            "agile",
+            "scrum",
+            "kanban",
+            "leadership",
+            "communication",
+            "teamwork",
         ]
 
         jd_lower = job_description.lower()
@@ -568,10 +615,7 @@ Please extract the keywords:"""
         return found
 
     def _generate_summary(
-        self,
-        categories: Dict[str, ATSCategoryScore],
-        total_score: int,
-        total_possible: int
+        self, categories: Dict[str, ATSCategoryScore], total_score: int, total_possible: int
     ) -> Tuple[str, List[str]]:
         """
         Generate summary and recommendations.
@@ -617,9 +661,7 @@ Please extract the keywords:"""
             model=model,
             max_tokens=self.config.get("ai.max_tokens", 2000),
             temperature=self.config.get("ai.temperature", 0.3),
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            messages=[{"role": "user", "content": prompt}],
         )
 
         return message.content[0].text
@@ -635,9 +677,7 @@ Please extract the keywords:"""
             model=model,
             max_tokens=self.config.get("ai.max_tokens", 2000),
             temperature=self.config.get("ai.temperature", 0.3),
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            messages=[{"role": "user", "content": prompt}],
         )
 
         return response.choices[0].message.content
@@ -650,8 +690,14 @@ Please extract the keywords:"""
             report: ATSReport object to print
         """
         # Overall score
-        score_color = "green" if report.overall_percentage >= 70 else "yellow" if report.overall_percentage >= 50 else "red"
-        score_text = Text(f"ATS Score: {report.total_score}/{report.total_possible} ({report.overall_percentage:.0f}%)")
+        score_color = (
+            "green"
+            if report.overall_percentage >= 70
+            else "yellow" if report.overall_percentage >= 50 else "red"
+        )
+        score_text = Text(
+            f"ATS Score: {report.total_score}/{report.total_possible} ({report.overall_percentage:.0f}%)"
+        )
         score_text.stylize(f"bold {score_color}")
 
         console.print(Panel(score_text, title="ATS Compatibility Report", padding=1))
@@ -677,7 +723,7 @@ Please extract the keywords:"""
             console.print(
                 f"\n{status} [bold]{category.name}:[/bold] "
                 f"{category.points_earned}/{category.points_possible} ({category.percentage:.0f}%)",
-                style=color
+                style=color,
             )
 
             # Print details
@@ -711,9 +757,7 @@ Please extract the keywords:"""
             "overall_percentage": report.overall_percentage,
             "summary": report.summary,
             "recommendations": report.recommendations,
-            "categories": {
-                name: asdict(cat) for name, cat in report.categories.items()
-            }
+            "categories": {name: asdict(cat) for name, cat in report.categories.items()},
         }
 
         output_path.parent.mkdir(parents=True, exist_ok=True)

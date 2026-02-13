@@ -2,15 +2,15 @@
 
 import os
 import tempfile
-from pathlib import Path
-from unittest.mock import patch, MagicMock, Mock
 from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 from cli.generators.template import TemplateGenerator
-from cli.utils.yaml_parser import ResumeYAML
 from cli.utils.config import Config
+from cli.utils.yaml_parser import ResumeYAML
 
 
 class TestTemplateGeneratorInitialization:
@@ -27,10 +27,7 @@ class TestTemplateGeneratorInitialization:
     def test_init_with_template_dir(self, sample_yaml_file: Path, temp_dir: Path):
         """Test initialization with custom template dir."""
         template_dir = temp_dir / "templates"
-        gen = TemplateGenerator(
-            yaml_path=sample_yaml_file,
-            template_dir=template_dir
-        )
+        gen = TemplateGenerator(yaml_path=sample_yaml_file, template_dir=template_dir)
 
         assert gen.template_dir == template_dir
 
@@ -44,8 +41,8 @@ class TestTemplateGeneratorInitialization:
         """Test that custom Jinja2 filters are registered."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
 
-        assert 'latex_escape' in gen.env.filters
-        assert 'proper_title' in gen.env.filters
+        assert "latex_escape" in gen.env.filters
+        assert "proper_title" in gen.env.filters
 
 
 class TestLatexEscapeFilter:
@@ -54,7 +51,7 @@ class TestLatexEscapeFilter:
     def test_latex_escape_special_chars(self):
         """Test latex_escape escapes special LaTeX characters."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['latex_escape']
+        filter_func = gen.env.filters["latex_escape"]
 
         # Test various special characters
         assert filter_func("a & b") == r"a \& b"
@@ -68,7 +65,7 @@ class TestLatexEscapeFilter:
     def test_latex_escape_copyright_symbols(self):
         """Test latex_escape escapes copyright symbols."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['latex_escape']
+        filter_func = gen.env.filters["latex_escape"]
 
         assert filter_func("TradeMark") == r"TradeMark"
         assert filter_func("Registered") == r"Registered"
@@ -78,7 +75,7 @@ class TestLatexEscapeFilter:
     def test_latex_escape_math_symbols(self):
         """Test latex_escape escapes math symbols."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['latex_escape']
+        filter_func = gen.env.filters["latex_escape"]
 
         assert filter_func("x >= y") == r"x $\ge$ y"
         assert filter_func("x <= y") == r"x $\le$ y"
@@ -87,22 +84,22 @@ class TestLatexEscapeFilter:
     def test_latex_escape_arrows(self):
         """Test latex_escape escapes arrows."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['latex_escape']
+        filter_func = gen.env.filters["latex_escape"]
 
         assert filter_func("a -> b") == r"a $\rightarrow$ b"
 
     def test_latex_escape_dashes(self):
         """Test latex_escape converts dashes."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['latex_escape']
+        filter_func = gen.env.filters["latex_escape"]
 
         assert filter_func("word—word") == r"word---word"  # em dash
-        assert filter_func("word–word") == r"word--word"   # en dash
+        assert filter_func("word–word") == r"word--word"  # en dash
 
     def test_latex_escape_none(self):
         """Test latex_escape handles None input."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['latex_escape']
+        filter_func = gen.env.filters["latex_escape"]
 
         result = filter_func(None)
         assert result is None
@@ -110,7 +107,7 @@ class TestLatexEscapeFilter:
     def test_latex_escape_empty(self):
         """Test latex_escape handles empty string."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['latex_escape']
+        filter_func = gen.env.filters["latex_escape"]
 
         result = filter_func("")
         assert result == ""
@@ -118,7 +115,7 @@ class TestLatexEscapeFilter:
     def test_latex_escape_markdown_bold(self):
         """Test latex_escape converts markdown bold."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['latex_escape']
+        filter_func = gen.env.filters["latex_escape"]
 
         # Markdown bold **text** should be converted to \textbf{text}
         result = filter_func("**bold text**")
@@ -135,7 +132,7 @@ class TestProperTitleFilter:
     def test_proper_title_capitalizes(self):
         """Test proper_title capitalizes correctly."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['proper_title']
+        filter_func = gen.env.filters["proper_title"]
 
         assert filter_func("hello world") == "Hello World"
         assert filter_func("the quick brown fox") == "The Quick Brown Fox"
@@ -143,7 +140,7 @@ class TestProperTitleFilter:
     def test_proper_title_small_words(self):
         """Test proper_title keeps small words lowercase."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['proper_title']
+        filter_func = gen.env.filters["proper_title"]
 
         # Small words should be lowercase (except first word)
         assert filter_func("The Cat and The Dog") == "The Cat and the Dog"
@@ -152,7 +149,7 @@ class TestProperTitleFilter:
     def test_proper_title_first_word_capitalized(self):
         """Test proper_title always capitalizes first word."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['proper_title']
+        filter_func = gen.env.filters["proper_title"]
 
         assert filter_func("the book") == "The book"
         assert filter_func("a story") == "A story"
@@ -160,14 +157,14 @@ class TestProperTitleFilter:
     def test_proper_title_underscore_replacement(self):
         """Test proper_title replaces underscores with spaces."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['proper_title']
+        filter_func = gen.env.filters["proper_title"]
 
         assert filter_func("hello_world_test") == "Hello World Test"
 
     def test_proper_title_empty(self):
         """Test proper_title handles empty string."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['proper_title']
+        filter_func = gen.env.filters["proper_title"]
 
         result = filter_func("")
         assert result == ""
@@ -175,7 +172,7 @@ class TestProperTitleFilter:
     def test_proper_title_none(self):
         """Test proper_title handles None input."""
         gen = TemplateGenerator()
-        filter_func = gen.env.filters['proper_title']
+        filter_func = gen.env.filters["proper_title"]
 
         result = filter_func(None)
         assert result is None
@@ -184,17 +181,13 @@ class TestProperTitleFilter:
 class TestGenerateMethod:
     """Test generate method."""
 
-    @patch('cli.generators.template.TemplateGenerator._compile_pdf')
+    @patch("cli.generators.template.TemplateGenerator._compile_pdf")
     def test_generate_markdown(self, mock_compile_pdf, sample_yaml_file: Path, temp_dir: Path):
         """Test generate creates markdown output."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
         output_path = temp_dir / "test.md"
 
-        content = gen.generate(
-            variant="v1.0.0-base",
-            output_format="md",
-            output_path=output_path
-        )
+        content = gen.generate(variant="v1.0.0-base", output_format="md", output_path=output_path)
 
         assert isinstance(content, str)
         assert output_path.exists()
@@ -202,38 +195,35 @@ class TestGenerateMethod:
         # PDF should not be called for MD format
         mock_compile_pdf.assert_not_called()
 
-    @patch('cli.generators.template.TemplateGenerator._compile_pdf')
-    def test_generate_pdf_calls_compile(self, mock_compile_pdf, sample_yaml_file: Path, temp_dir: Path):
+    @patch("cli.generators.template.TemplateGenerator._compile_pdf")
+    def test_generate_pdf_calls_compile(
+        self, mock_compile_pdf, sample_yaml_file: Path, temp_dir: Path
+    ):
         """Test generate with pdf format calls _compile_pdf."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
         output_path = temp_dir / "test.pdf"
 
-        gen.generate(
-            variant="v1.0.0-base",
-            output_format="pdf",
-            output_path=output_path
-        )
+        gen.generate(variant="v1.0.0-base", output_format="pdf", output_path=output_path)
 
         mock_compile_pdf.assert_called_once()
         # .tex file should be created
-        tex_path = output_path.with_suffix('.tex')
+        tex_path = output_path.with_suffix(".tex")
         assert tex_path.exists()
 
-    @patch('cli.generators.template.TemplateGenerator._compile_pdf')
+    @patch("cli.generators.template.TemplateGenerator._compile_pdf")
     def test_generate_without_output_path(self, mock_compile_pdf, sample_yaml_file: Path):
         """Test generate without output_path returns content only."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
 
-        content = gen.generate(
-            variant="v1.0.0-base",
-            output_format="md"
-        )
+        content = gen.generate(variant="v1.0.0-base", output_format="md")
 
         assert isinstance(content, str)
         assert len(content) > 0
 
-    @patch('cli.generators.template.TemplateGenerator._compile_pdf')
-    def test_generate_with_enhanced_context(self, mock_compile_pdf, sample_yaml_file: Path, temp_dir: Path):
+    @patch("cli.generators.template.TemplateGenerator._compile_pdf")
+    def test_generate_with_enhanced_context(
+        self, mock_compile_pdf, sample_yaml_file: Path, temp_dir: Path
+    ):
         """Test generate with enhanced_context merges context."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
         output_path = temp_dir / "test.md"
@@ -245,48 +235,42 @@ class TestGenerateMethod:
             variant="v1.0.0-base",
             output_format="md",
             output_path=output_path,
-            enhanced_context={
-                "summary": enhanced_summary,
-                "projects": enhanced_projects
-            }
+            enhanced_context={"summary": enhanced_summary, "projects": enhanced_projects},
         )
 
         # Enhanced context should be merged
         assert enhanced_summary in content
         assert "test project" in content
 
-    def test_generate_with_template_prioritization(self, mock_compile_pdf, sample_yaml_file: Path, temp_dir: Path):
+    def test_generate_with_template_prioritization(
+        self, mock_compile_pdf, sample_yaml_file: Path, temp_dir: Path
+    ):
         """Test generate prioritizes skills from enhanced context."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
 
         enhanced_projects = {
             "featured": [
-                {
-                    "name": "k8s-app",
-                    "highlighted_technologies": ["Kubernetes", "Docker", "Python"]
-                }
+                {"name": "k8s-app", "highlighted_technologies": ["Kubernetes", "Docker", "Python"]}
             ]
         }
 
         content = gen.generate(
             variant="v1.0.0-base",
             output_format="md",
-            enhanced_context={"projects": enhanced_projects}
+            enhanced_context={"projects": enhanced_projects},
         )
 
         # Just verify it runs without error
         assert isinstance(content, str)
 
-    def test_generate_creates_parent_directories(self, mock_compile_pdf, sample_yaml_file: Path, temp_dir: Path):
+    def test_generate_creates_parent_directories(
+        self, mock_compile_pdf, sample_yaml_file: Path, temp_dir: Path
+    ):
         """Test generate creates parent directories."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
         nested_path = temp_dir / "nested" / "dir" / "test.md"
 
-        gen.generate(
-            variant="v1.0.0-base",
-            output_format="md",
-            output_path=nested_path
-        )
+        gen.generate(variant="v1.0.0-base", output_format="md", output_path=nested_path)
 
         assert nested_path.exists()
         assert nested_path.parent.exists()
@@ -301,9 +285,7 @@ class TestGenerateEmail:
         output_path = temp_dir / "email.md"
 
         content = gen.generate_email(
-            company_name="Acme Corp",
-            position_name="Senior Engineer",
-            output_path=output_path
+            company_name="Acme Corp", position_name="Senior Engineer", output_path=output_path
         )
 
         assert isinstance(content, str)
@@ -319,7 +301,7 @@ class TestGenerateEmail:
             company_name="Acme Corp",
             position_name="Senior Engineer",
             hiring_manager_name="John Smith",
-            output_path=output_path
+            output_path=output_path,
         )
 
         assert "John Smith" in content
@@ -328,10 +310,7 @@ class TestGenerateEmail:
         """Test generate_email without output_path returns content only."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
 
-        content = gen.generate_email(
-            company_name="Acme Corp",
-            position_name="Senior Engineer"
-        )
+        content = gen.generate_email(company_name="Acme Corp", position_name="Senior Engineer")
 
         assert isinstance(content, str)
         assert len(content) > 0
@@ -346,9 +325,7 @@ class TestGetOutputPath:
         output_dir = temp_dir / "output"
 
         output_path = gen.get_output_path(
-            variant="v1.0.0-base",
-            output_format="md",
-            output_dir=output_dir
+            variant="v1.0.0-base", output_format="md", output_dir=output_dir
         )
 
         # Check path structure
@@ -362,9 +339,7 @@ class TestGetOutputPath:
         output_dir = temp_dir / "new_output"
 
         output_path = gen.get_output_path(
-            variant="v1.0.0-base",
-            output_format="pdf",
-            output_dir=output_dir
+            variant="v1.0.0-base", output_format="pdf", output_dir=output_dir
         )
 
         assert output_dir.exists()
@@ -389,7 +364,7 @@ class TestListTemplates:
 class TestCompilePdf:
     """Test _compile_pdf method."""
 
-    @patch('subprocess.Popen')
+    @patch("subprocess.Popen")
     def test_compile_pdf_pdflatex_success(self, mock_popen, sample_yaml_file: Path, temp_dir: Path):
         """Test _compile_pdf with successful pdflatex run."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
@@ -409,8 +384,10 @@ class TestCompilePdf:
 
         assert output_path.exists()
 
-    @patch('subprocess.Popen', side_effect=FileNotFoundError)
-    def test_compile_pdf_pdflatex_not_found(self, mock_popen, sample_yaml_file: Path, temp_dir: Path, capsys):
+    @patch("subprocess.Popen", side_effect=FileNotFoundError)
+    def test_compile_pdf_pdflatex_not_found(
+        self, mock_popen, sample_yaml_file: Path, temp_dir: Path, capsys
+    ):
         """Test _compile_pdf raises error when pdflatex not found."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
         output_path = temp_dir / "test.pdf"
@@ -422,7 +399,7 @@ class TestCompilePdf:
         assert "PDF compilation failed" in str(exc_info.value)
         assert "pdflatex" in str(exc_info.value)
 
-    @patch('subprocess.Popen')
+    @patch("subprocess.Popen")
     def test_compile_pdf_creates_tex_file(self, mock_popen, sample_yaml_file: Path, temp_dir: Path):
         """Test _compile_pdf creates .tex file."""
         gen = TemplateGenerator(yaml_path=sample_yaml_file)
@@ -439,6 +416,6 @@ class TestCompilePdf:
 
         gen._compile_pdf(output_path, tex_content)
 
-        tex_path = output_path.with_suffix('.tex')
+        tex_path = output_path.with_suffix(".tex")
         assert tex_path.exists()
         assert tex_path.read_text() == tex_content

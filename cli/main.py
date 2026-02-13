@@ -13,10 +13,10 @@ from rich.console import Console
 from rich.table import Table
 
 from . import __version__
-from .utils.config import Config
-from .utils.yaml_parser import ResumeYAML
-from .utils.schema import ResumeValidator
 from .generators.template import TemplateGenerator
+from .utils.config import Config
+from .utils.schema import ResumeValidator
+from .utils.yaml_parser import ResumeYAML
 
 # Initialize rich console
 console = Console()
@@ -32,13 +32,13 @@ DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config" / "default.yaml"
     "--yaml-path",
     type=click.Path(exists=True),
     default=str(DEFAULT_YAML_PATH),
-    help="Path to resume.yaml file"
+    help="Path to resume.yaml file",
 )
 @click.option(
     "--config-path",
     type=click.Path(exists=True),
     default=str(DEFAULT_CONFIG_PATH),
-    help="Path to config file"
+    help="Path to config file",
 )
 @click.pass_context
 def cli(ctx, yaml_path: str, config_path: str):
@@ -60,11 +60,7 @@ def cli(ctx, yaml_path: str, config_path: str):
 
 
 @cli.command()
-@click.option(
-    "--from-existing",
-    is_flag=True,
-    help="Initialize from existing resume files"
-)
+@click.option("--from-existing", is_flag=True, help="Initialize from existing resume files")
 @click.pass_context
 def init(ctx, from_existing: bool):
     """Initialize resume.yaml from existing resume files."""
@@ -79,7 +75,7 @@ def init(ctx, from_existing: bool):
             init_from_existing(
                 base_resume_path=job_hunt_dir / "resumes" / "base_resume.txt",
                 revised_resume_path=job_hunt_dir / "Alex Chapin - Resume - REVISED.md",
-                output_path=job_hunt_dir / "resume.yaml"
+                output_path=job_hunt_dir / "resume.yaml",
             )
             console.print("[green]✓[/green] Initialization complete!")
             console.print("  Review and edit resume.yaml as needed.")
@@ -119,39 +115,30 @@ def validate(ctx):
 
 
 @cli.command()
+@click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to generate")
 @click.option(
-    "-v", "--variant",
-    default="v1.0.0-base",
-    help="Resume variant to generate"
+    "-f", "--format", type=click.Choice(["md", "tex", "pdf"]), default="md", help="Output format"
 )
 @click.option(
-    "-f", "--format",
-    type=click.Choice(["md", "tex", "pdf"]),
-    default="md",
-    help="Output format"
+    "-o", "--output", type=click.Path(), help="Output file path (default: auto-generated)"
 )
-@click.option(
-    "-o", "--output",
-    type=click.Path(),
-    help="Output file path (default: auto-generated)"
-)
-@click.option(
-    "--no-save",
-    is_flag=True,
-    help="Print to stdout without saving"
-)
-@click.option(
-    "--ai",
-    is_flag=True,
-    help="Use AI-powered generation (requires API key)"
-)
+@click.option("--no-save", is_flag=True, help="Print to stdout without saving")
+@click.option("--ai", is_flag=True, help="Use AI-powered generation (requires API key)")
 @click.option(
     "--job-desc",
     type=click.Path(exists=True),
-    help="Path to job description file for AI customization"
+    help="Path to job description file for AI customization",
 )
 @click.pass_context
-def generate(ctx, variant: str, format: str, output: Optional[str], no_save: bool, ai: bool, job_desc: Optional[str]):
+def generate(
+    ctx,
+    variant: str,
+    format: str,
+    output: Optional[str],
+    no_save: bool,
+    ai: bool,
+    job_desc: Optional[str],
+):
     """
     Generate resume from template or AI.
 
@@ -193,7 +180,9 @@ def generate(ctx, variant: str, format: str, output: Optional[str], no_save: boo
 
             if output_path is None and not no_save:
                 # Add -ai suffix to filename
-                base_path = TemplateGenerator(yaml_path, config=config).get_output_path(variant, format)
+                base_path = TemplateGenerator(yaml_path, config=config).get_output_path(
+                    variant, format
+                )
                 stem = base_path.stem
                 output_path = base_path.parent / f"{stem}-ai{base_path.suffix}"
 
@@ -201,7 +190,7 @@ def generate(ctx, variant: str, format: str, output: Optional[str], no_save: boo
                 variant=variant,
                 job_description=job_description,
                 output_format=format,
-                output_path=output_path
+                output_path=output_path,
             )
         else:
             generator = TemplateGenerator(yaml_path, config=config)
@@ -210,9 +199,7 @@ def generate(ctx, variant: str, format: str, output: Optional[str], no_save: boo
                 output_path = generator.get_output_path(variant, format)
 
             content = generator.generate(
-                variant=variant,
-                output_format=format,
-                output_path=output_path
+                variant=variant, output_format=format, output_path=output_path
             )
 
         if no_save:
@@ -233,52 +220,40 @@ def generate(ctx, variant: str, format: str, output: Optional[str], no_save: boo
 
 
 @cli.command("generate-package")
+@click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to generate")
 @click.option(
-    "-v", "--variant",
-    default="v1.0.0-base",
-    help="Resume variant to generate"
-)
-@click.option(
-    "-f", "--format",
+    "-f",
+    "--format",
     type=click.Choice(["md", "tex", "pdf"]),
     default="md",
-    help="Deprecated: generate-package always produces both MD and PDF formats"
+    help="Deprecated: generate-package always produces both MD and PDF formats",
 )
 @click.option(
-    "--job-desc",
-    type=click.Path(exists=True),
-    required=True,
-    help="Path to job description file"
+    "--job-desc", type=click.Path(exists=True), required=True, help="Path to job description file"
 )
 @click.option(
-    "--company",
-    type=str,
-    help="Company name (overrides extraction from job description)"
+    "--company", type=str, help="Company name (overrides extraction from job description)"
 )
-@click.option(
-    "--non-interactive",
-    is_flag=True,
-    help="Skip questions, use smart defaults"
-)
-@click.option(
-    "--no-cover-letter",
-    is_flag=True,
-    help="Skip cover letter generation"
-)
-@click.option(
-    "--output-dir",
-    type=click.Path(),
-    help="Output directory (default: config setting)"
-)
+@click.option("--non-interactive", is_flag=True, help="Skip questions, use smart defaults")
+@click.option("--no-cover-letter", is_flag=True, help="Skip cover letter generation")
+@click.option("--output-dir", type=click.Path(), help="Output directory (default: config setting)")
 @click.option(
     "--include-github-projects",
     is_flag=True,
-    help="Auto-select and include GitHub projects matching job technologies (searches repos AND code in organization)"
+    help="Auto-select and include GitHub projects matching job technologies (searches repos AND code in organization)",
 )
 @click.pass_context
-def generate_package(ctx, variant: str, format: str, job_desc: str, company: Optional[str],
-                     non_interactive: bool, no_cover_letter: bool, output_dir: Optional[str],
-                     include_github_projects: bool):
+def generate_package(
+    ctx,
+    variant: str,
+    format: str,
+    job_desc: str,
+    company: Optional[str],
+    non_interactive: bool,
+    no_cover_letter: bool,
+    output_dir: Optional[str],
+    include_github_projects: bool,
+):
     """
     Generate a complete application package: resume + cover letter.
 
@@ -329,26 +304,30 @@ def generate_package(ctx, variant: str, format: str, job_desc: str, company: Opt
         # Step 1: Generate AI-customized resume (both MD and PDF)
         console.print("\n[cyan]Step 1: Generating AI-customized resume...[/cyan]")
         from .generators.ai_generator import AIGenerator
+
         resume_gen = AIGenerator(yaml_path, config=config)
 
         # For package output, we need to determine the company name first
         # Extract company name for directory structure
         from .generators.cover_letter_generator import CoverLetterGenerator
+
         cl_gen_temp = CoverLetterGenerator(yaml_path, config=config)
         job_details_temp = cl_gen_temp._extract_job_details(job_description, company)
         company_name = company or job_details_temp.get("company", "company")
 
         # Create package directory
         date_str = datetime.now().strftime("%Y-%m-%d")
-        company_slug = re.sub(r'[^\w\s-]', '', company_name).strip().lower()[:30]
-        company_slug = re.sub(r'[-\s]+', '-', company_slug)
+        company_slug = re.sub(r"[^\w\s-]", "", company_name).strip().lower()[:30]
+        company_slug = re.sub(r"[-\s]+", "-", company_slug)
         package_dir = output_base_dir / f"{company_slug}-{date_str}"
         package_dir.mkdir(parents=True, exist_ok=True)
 
         # Step 1.5: Auto-select GitHub projects if requested
         enhanced_context = {}
         if include_github_projects:
-            console.print("\n[cyan]Step 1.5: Selecting GitHub projects matching job technologies...[/cyan]")
+            console.print(
+                "\n[cyan]Step 1.5: Selecting GitHub projects matching job technologies...[/cyan]"
+            )
             try:
                 from .integrations.github_sync import GitHubSync
 
@@ -356,11 +335,15 @@ def generate_package(ctx, variant: str, format: str, job_desc: str, company: Opt
                 technologies = resume_gen.extract_technologies(job_description)
 
                 if not technologies:
-                    console.print("[yellow]Warning:[/yellow] No technologies extracted from job description.")
+                    console.print(
+                        "[yellow]Warning:[/yellow] No technologies extracted from job description."
+                    )
                     console.print("  Continuing without GitHub projects.")
                 else:
                     console.print(f"[dim]Extracted technologies: {', '.join(technologies)}[/dim]")
-                    console.print(f"[dim]Using top 3 for matching: {', '.join(technologies[:3])}[/dim]")
+                    console.print(
+                        f"[dim]Using top 3 for matching: {', '.join(technologies[:3])}[/dim]"
+                    )
                     console.print("[dim]Searching for code in organization...[/dim]")
 
                     # Select matching projects
@@ -369,25 +352,29 @@ def generate_package(ctx, variant: str, format: str, job_desc: str, company: Opt
                     months = config.get("github.sync_months", 12)
 
                     selected_projects = github_sync.select_matching_projects(
-                        technologies=technologies,
-                        top_n=max_projects,
-                        months=months
+                        technologies=technologies, top_n=max_projects, months=months
                     )
 
                     if not selected_projects:
                         top_techs = technologies[:3]
-                        console.print(f"[yellow]Warning:[/yellow] No matching GitHub projects found for: {', '.join(top_techs)}")
+                        console.print(
+                            f"[yellow]Warning:[/yellow] No matching GitHub projects found for: {', '.join(top_techs)}"
+                        )
                         console.print("  Continuing without GitHub projects.")
                     else:
-                        console.print(f"[green]✓[/green] Selected {len(selected_projects)} GitHub projects:")
+                        console.print(
+                            f"[green]✓[/green] Selected {len(selected_projects)} GitHub projects:"
+                        )
                         for proj in selected_projects:
-                            console.print(f"    • {proj['name']} ({proj['language']}) - score: {proj['match_score']}")
+                            console.print(
+                                f"    • {proj['name']} ({proj['language']}) - score: {proj['match_score']}"
+                            )
 
                         # Enhance project descriptions with AI (ephemeral - doesn't modify resume.yaml)
                         enhanced_projects = resume_gen.enhance_project_descriptions(
                             projects=selected_projects,
                             job_description=job_description,
-                            technologies=technologies
+                            technologies=technologies,
                         )
 
                         # Generate enhanced professional summary integrating projects
@@ -395,7 +382,7 @@ def generate_package(ctx, variant: str, format: str, job_desc: str, company: Opt
                         enhanced_summary = resume_gen.generate_project_summary(
                             enhanced_projects=enhanced_projects,
                             base_summary=base_summary,
-                            variant=variant
+                            variant=variant,
                         )
 
                         # Build enhanced context for template rendering
@@ -404,11 +391,15 @@ def generate_package(ctx, variant: str, format: str, job_desc: str, company: Opt
                             "summary": enhanced_summary,
                         }
 
-                        console.print("[dim]AI enhancements applied (ephemeral - resume.yaml unchanged)[/dim]")
+                        console.print(
+                            "[dim]AI enhancements applied (ephemeral - resume.yaml unchanged)[/dim]"
+                        )
 
             except RuntimeError as e:
                 console.print(f"[yellow]Warning:[/yellow] GitHub CLI error: {e}")
-                console.print("  Continuing without GitHub projects. Make sure 'gh' CLI is installed and authenticated.")
+                console.print(
+                    "  Continuing without GitHub projects. Make sure 'gh' CLI is installed and authenticated."
+                )
             except Exception as e:
                 console.print(f"[yellow]Warning:[/yellow] Failed to select GitHub projects: {e}")
                 console.print("  Continuing without GitHub projects.")
@@ -422,7 +413,7 @@ def generate_package(ctx, variant: str, format: str, job_desc: str, company: Opt
                 job_description=job_description,
                 output_format=resume_format,
                 output_path=resume_path,
-                enhanced_context=enhanced_context if enhanced_context else None
+                enhanced_context=enhanced_context if enhanced_context else None,
             )
             all_saved_paths[f"resume_{resume_format}"] = resume_path
             console.print(f"[green]✓[/green] Resume ({resume_format.upper()}): {resume_path}")
@@ -436,21 +427,19 @@ def generate_package(ctx, variant: str, format: str, job_desc: str, company: Opt
                     job_description=job_description,
                     company_name=company,
                     variant=variant,
-                    output_formats=config.cover_letter_formats
+                    output_formats=config.cover_letter_formats,
                 )
             else:
                 cover_letter_outputs, job_details = cl_gen_temp.generate_interactive(
                     job_description=job_description,
                     company_name=company,
                     variant=variant,
-                    output_formats=config.cover_letter_formats
+                    output_formats=config.cover_letter_formats,
                 )
 
             # Save cover letter outputs
             cover_letter_paths = cl_gen_temp.save_outputs(
-                outputs=cover_letter_outputs,
-                company_name=company_name,
-                output_dir=package_dir
+                outputs=cover_letter_outputs, company_name=company_name, output_dir=package_dir
             )
 
             all_saved_paths.update(cover_letter_paths)
@@ -468,6 +457,7 @@ def generate_package(ctx, variant: str, format: str, job_desc: str, company: Opt
     except Exception as e:
         console.print(f"[bold red]Error generating package:[/bold red] {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -491,12 +481,7 @@ def variants(ctx):
             skills = ", ".join(config.get("skill_sections", []))
             summary = config.get("summary_key", "base")
 
-            table.add_row(
-                name,
-                config.get("description", ""),
-                summary,
-                skills
-            )
+            table.add_row(name, config.get("description", ""), summary, skills)
 
         console.print(table)
 
@@ -514,31 +499,22 @@ def track():
 @cli.command()
 @click.argument("company")
 @click.argument("status")
-@click.option(
-    "-r", "--role",
-    help="Job role/title"
-)
-@click.option(
-    "-v", "--variant",
-    default="v1.0.0-base",
-    help="Resume variant used"
-)
-@click.option(
-    "-s", "--source",
-    default="manual",
-    help="Application source"
-)
-@click.option(
-    "-u", "--url",
-    help="Job posting URL"
-)
-@click.option(
-    "-n", "--notes",
-    help="Additional notes"
-)
+@click.option("-r", "--role", help="Job role/title")
+@click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant used")
+@click.option("-s", "--source", default="manual", help="Application source")
+@click.option("-u", "--url", help="Job posting URL")
+@click.option("-n", "--notes", help="Additional notes")
 @click.pass_context
-def apply(ctx, company: str, status: str, role: Optional[str], variant: str,
-          source: str, url: Optional[str], notes: Optional[str]):
+def apply(
+    ctx,
+    company: str,
+    status: str,
+    role: Optional[str],
+    variant: str,
+    source: str,
+    url: Optional[str],
+    notes: Optional[str],
+):
     """
     Log a job application.
 
@@ -563,7 +539,7 @@ def apply(ctx, company: str, status: str, role: Optional[str], variant: str,
             variant=variant,
             source=source,
             url=url,
-            notes=notes
+            notes=notes,
         )
 
         console.print(f"[green]✓[/green] Logged application: {company}")
@@ -574,12 +550,7 @@ def apply(ctx, company: str, status: str, role: Optional[str], variant: str,
 
 
 @cli.command()
-@click.option(
-    "--months",
-    type=int,
-    default=3,
-    help="Number of months to look back"
-)
+@click.option("--months", type=int, default=3, help="Number of months to look back")
 @click.pass_context
 def sync_github(ctx, months: int):
     """Sync GitHub projects to resume.yaml."""
@@ -594,7 +565,9 @@ def sync_github(ctx, months: int):
         sync = GitHubSync(config)
         projects = sync.fetch_projects(months=months)
 
-        console.print(f"[green]✓[/green] Found {len(projects.get('ai_ml', [])) + len(projects.get('fullstack', []))} projects")
+        console.print(
+            f"[green]✓[/green] Found {len(projects.get('ai_ml', [])) + len(projects.get('fullstack', []))} projects"
+        )
 
         # TODO: Update resume.yaml with projects
         console.print("[yellow]Note:[/yellow] Auto-update of resume.yaml coming soon.")
@@ -645,22 +618,11 @@ def analyze(ctx):
 
 
 @cli.command("ats-check")
+@click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to check")
 @click.option(
-    "-v", "--variant",
-    default="v1.0.0-base",
-    help="Resume variant to check"
+    "--job-desc", type=click.Path(exists=True), required=True, help="Path to job description file"
 )
-@click.option(
-    "--job-desc",
-    type=click.Path(exists=True),
-    required=True,
-    help="Path to job description file"
-)
-@click.option(
-    "--output",
-    type=click.Path(),
-    help="Save report as JSON file"
-)
+@click.option("--output", type=click.Path(), help="Save report as JSON file")
 @click.pass_context
 def ats_check(ctx, variant: str, job_desc: str, output: Optional[str]):
     """
@@ -708,6 +670,7 @@ def ats_check(ctx, variant: str, job_desc: str, output: Optional[str]):
     except Exception as e:
         console.print(f"[bold red]Error checking ATS score:[/bold red] {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

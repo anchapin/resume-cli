@@ -1,9 +1,9 @@
 """Unit tests for GitHubSync class."""
 
 import json
-from pathlib import Path
-from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -65,7 +65,7 @@ class TestFormatRepo:
             "url": "https://github.com/user/test-repo",
             "stargazerCount": 10,
             "primaryLanguage": {"name": "Python"},
-            "updatedAt": "2024-01-15T00:00:00Z"
+            "updatedAt": "2024-01-15T00:00:00Z",
         }
 
         formatted = sync._format_repo(repo_data)
@@ -84,7 +84,7 @@ class TestFormatRepo:
         repo_data = {
             "name": "minimal-repo",
             "description": "",
-            "url": "https://github.com/user/minimal-repo"
+            "url": "https://github.com/user/minimal-repo",
         }
 
         formatted = sync._format_repo(repo_data)
@@ -106,13 +106,13 @@ class TestCategorizeRepos:
             {
                 "name": "ml-pipeline",
                 "description": "Machine learning pipeline using TensorFlow",
-                "primaryLanguage": {"name": "Python"}
+                "primaryLanguage": {"name": "Python"},
             },
             {
                 "name": "llm-agent",
                 "description": "Large language model agent",
-                "primaryLanguage": {"name": "Python"}
-            }
+                "primaryLanguage": {"name": "Python"},
+            },
         ]
 
         categories = sync._categorize_repos(repos)
@@ -128,13 +128,13 @@ class TestCategorizeRepos:
             {
                 "name": "web-app",
                 "description": "React frontend with Python backend",
-                "primaryLanguage": {"name": "TypeScript"}
+                "primaryLanguage": {"name": "TypeScript"},
             },
             {
                 "name": "vue-project",
                 "description": "Vue.js application",
-                "primaryLanguage": {"name": "JavaScript"}
-            }
+                "primaryLanguage": {"name": "JavaScript"},
+            },
         ]
 
         categories = sync._categorize_repos(repos)
@@ -150,13 +150,13 @@ class TestCategorizeRepos:
             {
                 "name": "api-server",
                 "description": "FastAPI REST API server",
-                "primaryLanguage": {"name": "Python"}
+                "primaryLanguage": {"name": "Python"},
             },
             {
                 "name": "flask-service",
                 "description": "Flask microservice",
-                "primaryLanguage": {"name": "Python"}
-            }
+                "primaryLanguage": {"name": "Python"},
+            },
         ]
 
         categories = sync._categorize_repos(repos)
@@ -172,13 +172,13 @@ class TestCategorizeRepos:
             {
                 "name": "k8s-config",
                 "description": "Kubernetes configuration files",
-                "primaryLanguage": {"name": "YAML"}
+                "primaryLanguage": {"name": "YAML"},
             },
             {
                 "name": "docker-setup",
                 "description": "Docker container setup",
-                "primaryLanguage": {"name": "Shell"}
-            }
+                "primaryLanguage": {"name": "Shell"},
+            },
         ]
 
         categories = sync._categorize_repos(repos)
@@ -194,13 +194,13 @@ class TestCategorizeRepos:
             {
                 "name": "random-script",
                 "description": "Random utility scripts",
-                "primaryLanguage": {"name": "Bash"}
+                "primaryLanguage": {"name": "Bash"},
             },
             {
                 "name": "helper-tool",
                 "description": "Helper utility",
-                "primaryLanguage": {"name": "Python"}
-            }
+                "primaryLanguage": {"name": "Python"},
+            },
         ]
 
         categories = sync._categorize_repos(repos)
@@ -219,7 +219,7 @@ class TestCalculateTechMatchScore:
             "name": "random-project",
             "description": "A random project",
             "primaryLanguage": {"name": "Bash"},
-            "topics": []
+            "topics": [],
         }
 
         score = sync.calculate_tech_match_score(repo, ["Python", "Django", "React"])
@@ -234,7 +234,7 @@ class TestCalculateTechMatchScore:
             "name": "python-app",
             "description": "Python application",
             "primaryLanguage": {"name": "Python"},
-            "topics": []
+            "topics": [],
         }
 
         score = sync.calculate_tech_match_score(repo, ["Python", "Django"])
@@ -250,7 +250,7 @@ class TestCalculateTechMatchScore:
             "name": "django-project",
             "description": "Django web app",
             "primaryLanguage": {"name": "Python"},
-            "topics": []
+            "topics": [],
         }
 
         score = sync.calculate_tech_match_score(repo, ["Django", "Python"])
@@ -266,7 +266,7 @@ class TestCalculateTechMatchScore:
             "name": "web-api",
             "description": "REST API using FastAPI",
             "primaryLanguage": {"name": "Python"},
-            "topics": []
+            "topics": [],
         }
 
         score = sync.calculate_tech_match_score(repo, ["FastAPI", "Python"])
@@ -282,7 +282,7 @@ class TestCalculateTechMatchScore:
             "name": "api-service",
             "description": "API service",
             "primaryLanguage": {"name": "Python"},
-            "topics": ["kubernetes", "docker"]
+            "topics": ["kubernetes", "docker"],
         }
 
         score = sync.calculate_tech_match_score(repo, ["Kubernetes", "Docker"])
@@ -298,15 +298,10 @@ class TestCalculateTechMatchScore:
             "name": "test-repo",
             "description": "Test",
             "primaryLanguage": {"name": "Python"},
-            "topics": []
+            "topics": [],
         }
 
-        code_matches = {
-            "test-repo": {
-                "count": 3,
-                "url": "https://github.com/user/test-repo"
-            }
-        }
+        code_matches = {"test-repo": {"count": 3, "url": "https://github.com/user/test-repo"}}
 
         score = sync.calculate_tech_match_score(repo, ["Python"], code_matches=code_matches)
 
@@ -322,7 +317,7 @@ class TestCalculateTechMatchScore:
             "name": "k8s-deployment",
             "description": "Kubernetes deployment scripts",
             "primaryLanguage": {"name": "YAML"},
-            "topics": []
+            "topics": [],
         }
 
         # Use uppercase in technologies
@@ -334,9 +329,11 @@ class TestCalculateTechMatchScore:
 class TestSelectMatchingProjects:
     """Test select_matching_projects method."""
 
-    @patch('cli.integrations.github_sync.GitHubSync._search_code_in_org')
-    @patch('cli.integrations.github_sync.GitHubSync._fetch_repos_with_details')
-    def test_select_matching_projects_no_technologies(self, mock_fetch, mock_search, mock_config: Config):
+    @patch("cli.integrations.github_sync.GitHubSync._search_code_in_org")
+    @patch("cli.integrations.github_sync.GitHubSync._fetch_repos_with_details")
+    def test_select_matching_projects_no_technologies(
+        self, mock_fetch, mock_search, mock_config: Config
+    ):
         """Test select returns empty when no technologies provided."""
         sync = GitHubSync(mock_config)
 
@@ -346,16 +343,18 @@ class TestSelectMatchingProjects:
         mock_fetch.assert_not_called()
         mock_search.assert_not_called()
 
-    @patch('cli.integrations.github_sync.GitHubSync._search_code_in_org')
-    @patch('cli.integrations.github_sync.GitHubSync._fetch_repos_with_details')
-    def test_select_matching_projects_filters_and_sorts(self, mock_fetch, mock_search, mock_config: Config):
+    @patch("cli.integrations.github_sync.GitHubSync._search_code_in_org")
+    @patch("cli.integrations.github_sync.GitHubSync._fetch_repos_with_details")
+    def test_select_matching_projects_filters_and_sorts(
+        self, mock_fetch, mock_search, mock_config: Config
+    ):
         """Test select filters by match and sorts by score."""
         sync = GitHubSync(mock_config)
 
         # Mock repos with different match potential
         mock_fetch.return_value = {
             "high-match": {"count": 3, "url": "url1"},
-            "medium-match": {"count": 1, "url": "url2"}
+            "medium-match": {"count": 1, "url": "url2"},
         }
 
         mock_fetch.return_value = [
@@ -365,7 +364,7 @@ class TestSelectMatchingProjects:
                 "primaryLanguage": {"name": "Python"},
                 "stargazerCount": 10,
                 "url": "url1",
-                "topics": ["django", "python"]
+                "topics": ["django", "python"],
             },
             {
                 "name": "medium-match",
@@ -373,7 +372,7 @@ class TestSelectMatchingProjects:
                 "primaryLanguage": {"name": "Java"},
                 "stargazerCount": 5,
                 "url": "url2",
-                "topics": ["java"]
+                "topics": ["java"],
             },
             {
                 "name": "no-match",
@@ -381,22 +380,21 @@ class TestSelectMatchingProjects:
                 "primaryLanguage": {"name": "Bash"},
                 "stargazerCount": 2,
                 "url": "url3",
-                "topics": ["bash"]
-            }
+                "topics": ["bash"],
+            },
         ]
 
-        result = sync.select_matching_projects(
-            technologies=["Python", "Django"],
-            top_n=2
-        )
+        result = sync.select_matching_projects(technologies=["Python", "Django"], top_n=2)
 
         # Should return top 2 matching repos (sorted by score)
         assert len(result) <= 2
         assert any(r["name"] == "high-match" for r in result)
 
-    @patch('cli.integrations.github_sync.GitHubSync._search_code_in_org')
-    @patch('cli.integrations.github_sync.GitHubSync._fetch_repos_with_details')
-    def test_select_matching_projects_excludes_zero_score(self, mock_fetch, mock_search, mock_config: Config):
+    @patch("cli.integrations.github_sync.GitHubSync._search_code_in_org")
+    @patch("cli.integrations.github_sync.GitHubSync._fetch_repos_with_details")
+    def test_select_matching_projects_excludes_zero_score(
+        self, mock_fetch, mock_search, mock_config: Config
+    ):
         """Test select excludes repos with zero match score."""
         sync = GitHubSync(mock_config)
 
@@ -407,29 +405,28 @@ class TestSelectMatchingProjects:
                 "description": "Python project",
                 "primaryLanguage": {"name": "Python"},
                 "url": "url1",
-                "topics": ["python"]
+                "topics": ["python"],
             },
             {
                 "name": "no-match",
                 "description": "Unrelated",
                 "primaryLanguage": {"name": "Bash"},
                 "url": "url2",
-                "topics": ["bash"]
-            }
+                "topics": ["bash"],
+            },
         ]
 
-        result = sync.select_matching_projects(
-            technologies=["Python"],
-            top_n=10
-        )
+        result = sync.select_matching_projects(technologies=["Python"], top_n=10)
 
         # Should only include matched repo
         assert len(result) == 1
         assert result[0]["name"] == "matched"
 
-    @patch('cli.integrations.github_sync.GitHubSync._search_code_in_org')
-    @patch('cli.integrations.github_sync.GitHubSync._fetch_repos_with_details')
-    def test_select_matching_projects_formats_output(self, mock_fetch, mock_search, mock_config: Config):
+    @patch("cli.integrations.github_sync.GitHubSync._search_code_in_org")
+    @patch("cli.integrations.github_sync.GitHubSync._fetch_repos_with_details")
+    def test_select_matching_projects_formats_output(
+        self, mock_fetch, mock_search, mock_config: Config
+    ):
         """Test select formats output correctly."""
         sync = GitHubSync(mock_config)
 
@@ -442,7 +439,7 @@ class TestSelectMatchingProjects:
                 "stargazerCount": 5,
                 "url": "https://github.com/user/test-repo",
                 "topics": ["python"],
-                "match_score": 8
+                "match_score": 8,
             }
         ]
 
@@ -460,7 +457,7 @@ class TestSelectMatchingProjects:
 class TestUpdateResumeProjects:
     """Test update_resume_projects method."""
 
-    @patch('cli.integrations.github_sync.ResumeYAML')
+    @patch("cli.integrations.github_sync.ResumeYAML")
     def test_update_resume_projects(self, mock_resume_class, mock_config: Config, temp_dir: Path):
         """Test update_resume_projects writes to YAML."""
         sync = GitHubSync(mock_config)
@@ -479,7 +476,7 @@ class TestUpdateResumeProjects:
                 "url": "url1",
                 "stars": 10,
                 "language": "Python",
-                "match_score": 8
+                "match_score": 8,
             }
         ]
 
@@ -500,27 +497,29 @@ class TestUpdateResumeProjects:
 class TestFetchReposWithDetails:
     """Test _fetch_repos_with_details method."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_fetch_repos_with_details_success(self, mock_run, mock_config: Config):
         """Test fetching repos with details succeeds."""
         sync = GitHubSync(mock_config)
 
         mock_run.return_value = MagicMock(
             returncode=0,
-            stdout=json.dumps([
-                {
-                    "name": "test-repo",
-                    "description": "Test",
-                    "primaryLanguage": {"name": "Python"},
-                    "stargazerCount": 5,
-                    "forkCount": 2,
-                    "url": "https://github.com/user/test-repo",
-                    "owner": {"login": "user"},
-                    "isFork": False,
-                    "updatedAt": "2024-01-15T00:00:00Z"
-                }
-            ]),
-            stderr=""
+            stdout=json.dumps(
+                [
+                    {
+                        "name": "test-repo",
+                        "description": "Test",
+                        "primaryLanguage": {"name": "Python"},
+                        "stargazerCount": 5,
+                        "forkCount": 2,
+                        "url": "https://github.com/user/test-repo",
+                        "owner": {"login": "user"},
+                        "isFork": False,
+                        "updatedAt": "2024-01-15T00:00:00Z",
+                    }
+                ]
+            ),
+            stderr="",
         )
 
         repos = sync._fetch_repos_with_details(date_threshold="2023-01-01")
@@ -528,7 +527,7 @@ class TestFetchReposWithDetails:
         assert len(repos) == 1
         assert repos[0]["name"] == "test-repo"
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_fetch_repos_with_details_command_error(self, mock_run, mock_config: Config):
         """Test fetching handles subprocess error."""
         sync = GitHubSync(mock_config)
@@ -540,16 +539,12 @@ class TestFetchReposWithDetails:
 
         assert "Failed to fetch GitHub repos" in str(exc_info.value)
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_fetch_repos_with_details_json_error(self, mock_run, mock_config: Config):
         """Test fetching handles JSON decode error."""
         sync = GitHubSync(mock_config)
 
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="invalid json",
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="invalid json", stderr="")
 
         with pytest.raises(RuntimeError) as exc_info:
             sync._fetch_repos_with_details(date_threshold="2023-01-01")
@@ -560,22 +555,20 @@ class TestFetchReposWithDetails:
 class TestFetchReadme:
     """Test _fetch_readme method."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_fetch_readme_success(self, mock_run, mock_config: Config):
         """Test fetching README succeeds."""
         sync = GitHubSync(mock_config)
 
         mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout='README content with some text and more text',
-            stderr=""
+            returncode=0, stdout="README content with some text and more text", stderr=""
         )
 
         readme = sync._fetch_readme("user", "repo")
 
         assert "README content" in readme
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_fetch_readme_error(self, mock_run, mock_config: Config):
         """Test fetching README returns empty string on error."""
         sync = GitHubSync(mock_config)
@@ -586,18 +579,14 @@ class TestFetchReadme:
 
         assert readme == ""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_fetch_readme_truncates_long(self, mock_run, mock_config: Config):
         """Test fetching README truncates long content."""
         sync = GitHubSync(mock_config)
 
         # Create a very long README
         long_readme = "A" * 3000
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout=long_readme,
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout=long_readme, stderr="")
 
         readme = sync._fetch_readme("user", "repo")
 
@@ -608,15 +597,13 @@ class TestFetchReadme:
 class TestFetchRepoTopics:
     """Test _fetch_repo_topics method."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_fetch_repo_topics_success(self, mock_run, mock_config: Config):
         """Test fetching topics succeeds."""
         sync = GitHubSync(mock_config)
 
         mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="python\ndjango\nrest-api",
-            stderr=""
+            returncode=0, stdout="python\ndjango\nrest-api", stderr=""
         )
 
         topics = sync._fetch_repo_topics("user", "repo")
@@ -626,7 +613,7 @@ class TestFetchRepoTopics:
         assert "django" in topics
         assert "rest-api" in topics
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_fetch_repo_topics_error(self, mock_run, mock_config: Config):
         """Test fetching topics returns empty list on error."""
         sync = GitHubSync(mock_config)
@@ -641,7 +628,7 @@ class TestFetchRepoTopics:
 class TestSearchCodeInOrg:
     """Test _search_code_in_org method."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_search_code_in_org_success(self, mock_run, mock_config: Config):
         """Test code search succeeds."""
         sync = GitHubSync(mock_config)
@@ -650,7 +637,7 @@ class TestSearchCodeInOrg:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout='{"repository": {"name": "repo1", "url": "url1", "owner": {"login": "user"}}\n{"repository": {"name": "repo2", "url": "url2", "owner": {"login": "user"}}',
-            stderr=""
+            stderr="",
         )
 
         results = sync._search_code_in_org(technologies=["Python", "Django"])
@@ -659,7 +646,7 @@ class TestSearchCodeInOrg:
         assert "repo2" in results
         assert results["repo1"]["count"] == 2  # Both techs match
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_search_code_in_org_handles_timeout(self, mock_run, mock_config: Config):
         """Test code search handles timeout gracefully."""
         sync = GitHubSync(mock_config)

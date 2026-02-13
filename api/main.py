@@ -1,17 +1,18 @@
-from fastapi import FastAPI, HTTPException, Security, Depends, Response
-from fastapi.responses import JSONResponse
-import tempfile
-import shutil
-import os
 import json
 import logging
-import yaml
+import os
+import shutil
+import tempfile
 from pathlib import Path
 
-from api.models import ResumeRequest, TailorRequest
+import yaml
+from fastapi import Depends, FastAPI, HTTPException, Response, Security
+from fastapi.responses import JSONResponse
+
 from api.auth import get_api_key
-from cli.generators.template import TemplateGenerator
+from api.models import ResumeRequest, TailorRequest
 from cli.generators.ai_generator import AIGenerator
+from cli.generators.template import TemplateGenerator
 from cli.utils.config import Config
 
 # Configure logging
@@ -19,10 +20,12 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Resume API", version="1.0.0")
 
+
 @app.get("/v1/variants", dependencies=[Security(get_api_key)])
 async def get_variants():
-    config = Config() # Uses default config path logic
+    config = Config()  # Uses default config path logic
     return config.get("variants")
+
 
 @app.post("/v1/render/pdf", dependencies=[Security(get_api_key)])
 async def render_pdf(request: ResumeRequest):
@@ -42,11 +45,7 @@ async def render_pdf(request: ResumeRequest):
             # We output to a temp file
             output_pdf = temp_path / "output.pdf"
 
-            generator.generate(
-                variant=request.variant,
-                output_format="pdf",
-                output_path=output_pdf
-            )
+            generator.generate(variant=request.variant, output_format="pdf", output_path=output_pdf)
 
             if not output_pdf.exists():
                 raise HTTPException(status_code=500, detail="PDF generation failed")
@@ -57,7 +56,9 @@ async def render_pdf(request: ResumeRequest):
             return Response(
                 content=content,
                 media_type="application/pdf",
-                headers={"Content-Disposition": f"attachment; filename=resume-{request.variant}.pdf"}
+                headers={
+                    "Content-Disposition": f"attachment; filename=resume-{request.variant}.pdf"
+                },
             )
 
         except Exception as e:
@@ -65,6 +66,7 @@ async def render_pdf(request: ResumeRequest):
             logger.exception("Error during PDF generation", exc_info=e)
             # Return generic error message to client
             raise HTTPException(status_code=500, detail="PDF generation failed")
+
 
 @app.post("/v1/tailor", dependencies=[Security(get_api_key)])
 async def tailor_resume(request: TailorRequest):
@@ -76,8 +78,7 @@ async def tailor_resume(request: TailorRequest):
         generator = AIGenerator(yaml_path=None, config=config)
 
         tailored_data = generator.tailor_data(
-            resume_data=request.resume_data,
-            job_description=request.job_description
+            resume_data=request.resume_data, job_description=request.job_description
         )
 
         return tailored_data
@@ -88,6 +89,8 @@ async def tailor_resume(request: TailorRequest):
         # Return generic error message to client
         raise HTTPException(status_code=500, detail="Resume tailoring failed")
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,12 +1,13 @@
 """Unit tests for ResumeValidator class."""
 
 import os
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
 import pytest
 import yaml
 
-from cli.utils.schema import ResumeValidator, ValidationError, validate_resume, RESUME_SCHEMA
+from cli.utils.schema import RESUME_SCHEMA, ResumeValidator, ValidationError, validate_resume
 
 
 class TestValidationError:
@@ -141,10 +142,9 @@ class TestValidateStructure:
         """Test structure validation detects wrong type."""
         invalid_yaml = temp_dir / "wrong_type.yaml"
         with open(invalid_yaml, "w") as f:
-            yaml.dump({
-                "contact": "not a dict",  # Should be dict
-                "professional_summary": "not a dict"
-            }, f)
+            yaml.dump(
+                {"contact": "not a dict", "professional_summary": "not a dict"}, f  # Should be dict
+            )
 
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()
@@ -218,13 +218,9 @@ class TestValidateExperience:
         """Test experience validation detects missing company."""
         invalid_yaml = temp_dir / "no_company.yaml"
         with open(invalid_yaml, "w") as f:
-            yaml.dump({
-                "experience": [{
-                    "title": "Engineer",
-                    "start_date": "2020-01",
-                    "bullets": []
-                }]
-            }, f)
+            yaml.dump(
+                {"experience": [{"title": "Engineer", "start_date": "2020-01", "bullets": []}]}, f
+            )
 
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()
@@ -236,13 +232,10 @@ class TestValidateExperience:
         """Test experience validation detects missing bullets."""
         invalid_yaml = temp_dir / "no_bullets.yaml"
         with open(invalid_yaml, "w") as f:
-            yaml.dump({
-                "experience": [{
-                    "company": "Test",
-                    "title": "Engineer",
-                    "start_date": "2020-01"
-                }]
-            }, f)
+            yaml.dump(
+                {"experience": [{"company": "Test", "title": "Engineer", "start_date": "2020-01"}]},
+                f,
+            )
 
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()
@@ -254,14 +247,19 @@ class TestValidateExperience:
         """Test experience validation detects bullets not a list."""
         invalid_yaml = temp_dir / "bullets_not_list.yaml"
         with open(invalid_yaml, "w") as f:
-            yaml.dump({
-                "experience": [{
-                    "company": "Test",
-                    "title": "Engineer",
-                    "start_date": "2020-01",
-                    "bullets": "not a list"
-                }]
-            }, f)
+            yaml.dump(
+                {
+                    "experience": [
+                        {
+                            "company": "Test",
+                            "title": "Engineer",
+                            "start_date": "2020-01",
+                            "bullets": "not a list",
+                        }
+                    ]
+                },
+                f,
+            )
 
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()
@@ -274,14 +272,19 @@ class TestValidateExperience:
         """Test experience validation detects bullet without text."""
         invalid_yaml = temp_dir / "bullet_no_text.yaml"
         with open(invalid_yaml, "w") as f:
-            yaml.dump({
-                "experience": [{
-                    "company": "Test",
-                    "title": "Engineer",
-                    "start_date": "2020-01",
-                    "bullets": [{"skills": ["Python"]}]  # Missing text
-                }]
-            }, f)
+            yaml.dump(
+                {
+                    "experience": [
+                        {
+                            "company": "Test",
+                            "title": "Engineer",
+                            "start_date": "2020-01",
+                            "bullets": [{"skills": ["Python"]}],  # Missing text
+                        }
+                    ]
+                },
+                f,
+            )
 
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()
@@ -306,12 +309,7 @@ class TestValidateEducation:
         """Test education validation detects missing institution."""
         invalid_yaml = temp_dir / "no_institution.yaml"
         with open(invalid_yaml, "w") as f:
-            yaml.dump({
-                "education": [{
-                    "degree": "BS",
-                    "graduation_date": "2020-01"
-                }]
-            }, f)
+            yaml.dump({"education": [{"degree": "BS", "graduation_date": "2020-01"}]}, f)
 
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()
@@ -323,12 +321,7 @@ class TestValidateEducation:
         """Test education validation detects missing graduation_date."""
         invalid_yaml = temp_dir / "no_grad_date.yaml"
         with open(invalid_yaml, "w") as f:
-            yaml.dump({
-                "education": [{
-                    "institution": "University",
-                    "degree": "BS"
-                }]
-            }, f)
+            yaml.dump({"education": [{"institution": "University", "degree": "BS"}]}, f)
 
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()
@@ -365,16 +358,16 @@ class TestValidateVariants:
         """Test variants validation warns about missing skill_sections."""
         invalid_yaml = temp_dir / "variant_no_skills.yaml"
         with open(invalid_yaml, "w") as f:
-            yaml.dump({
-                "meta": {"version": "1.0"},
-                "skills": {"programming": ["Python"]},
-                "variants": {
-                    "test": {
-                        "description": "Test",
-                        "skill_sections": ["nonexistent"]
-                    }
-                }
-            }, f)
+            yaml.dump(
+                {
+                    "meta": {"version": "1.0"},
+                    "skills": {"programming": ["Python"]},
+                    "variants": {
+                        "test": {"description": "Test", "skill_sections": ["nonexistent"]}
+                    },
+                },
+                f,
+            )
 
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()
@@ -399,9 +392,7 @@ class TestValidateDates:
         """Test date validation detects invalid last_updated."""
         invalid_yaml = temp_dir / "invalid_date.yaml"
         with open(invalid_yaml, "w") as f:
-            yaml.dump({
-                "meta": {"version": "1.0", "last_updated": "2024-13-45"}
-            }, f)
+            yaml.dump({"meta": {"version": "1.0", "last_updated": "2024-13-45"}}, f)
 
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()
@@ -413,14 +404,19 @@ class TestValidateDates:
         """Test date validation detects invalid experience dates."""
         invalid_yaml = temp_dir / "invalid_exp_date.yaml"
         with open(invalid_yaml, "w") as f:
-            yaml.dump({
-                "experience": [{
-                    "company": "Test",
-                    "title": "Engineer",
-                    "start_date": "not-a-date",
-                    "bullets": []
-                }]
-            }, f)
+            yaml.dump(
+                {
+                    "experience": [
+                        {
+                            "company": "Test",
+                            "title": "Engineer",
+                            "start_date": "not-a-date",
+                            "bullets": [],
+                        }
+                    ]
+                },
+                f,
+            )
 
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()
@@ -432,15 +428,20 @@ class TestValidateDates:
         """Test date validation accepts YYYY-MM format."""
         valid_yaml = temp_dir / "valid_mm.yaml"
         with open(valid_yaml, "w") as f:
-            yaml.dump({
-                "meta": {"version": "1.0", "last_updated": "2024-01"},
-                "experience": [{
-                    "company": "Test",
-                    "title": "Engineer",
-                    "start_date": "2020-01",  # MM format
-                    "bullets": []
-                }]
-            }, f)
+            yaml.dump(
+                {
+                    "meta": {"version": "1.0", "last_updated": "2024-01"},
+                    "experience": [
+                        {
+                            "company": "Test",
+                            "title": "Engineer",
+                            "start_date": "2020-01",  # MM format
+                            "bullets": [],
+                        }
+                    ],
+                },
+                f,
+            )
 
         validator = ResumeValidator(valid_yaml)
         validator.validate_all()
@@ -452,15 +453,20 @@ class TestValidateDates:
         """Test date validation accepts YYYY-MM-DD format."""
         valid_yaml = temp_dir / "valid_mmdd.yaml"
         with open(valid_yaml, "w") as f:
-            yaml.dump({
-                "meta": {"version": "1.0", "last_updated": "2024-01-15"},
-                "experience": [{
-                    "company": "Test",
-                    "title": "Engineer",
-                    "start_date": "2020-06-15",  # MM-DD format
-                    "bullets": []
-                }]
-            }, f)
+            yaml.dump(
+                {
+                    "meta": {"version": "1.0", "last_updated": "2024-01-15"},
+                    "experience": [
+                        {
+                            "company": "Test",
+                            "title": "Engineer",
+                            "start_date": "2020-06-15",  # MM-DD format
+                            "bullets": [],
+                        }
+                    ],
+                },
+                f,
+            )
 
         validator = ResumeValidator(valid_yaml)
         validator.validate_all()
@@ -484,9 +490,7 @@ class TestValidateEmailFormat:
         """Test email validation detects missing @ sign."""
         invalid_yaml = temp_dir / "no_at.yaml"
         with open(invalid_yaml, "w") as f:
-            yaml.dump({
-                "contact": {"name": "Test", "email": "invalidemail.com"}
-            }, f)
+            yaml.dump({"contact": {"name": "Test", "email": "invalidemail.com"}}, f)
 
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()
@@ -499,9 +503,7 @@ class TestValidateEmailFormat:
         """Test email validation detects missing domain."""
         invalid_yaml = temp_dir / "no_domain.yaml"
         with open(invalid_yaml, "w") as f:
-            yaml.dump({
-                "contact": {"name": "Test", "email": "test@"}
-            }, f)
+            yaml.dump({"contact": {"name": "Test", "email": "test@"}}, f)
 
         validator = ResumeValidator(invalid_yaml)
         validator.validate_all()

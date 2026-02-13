@@ -87,4 +87,4 @@ jobs:
 
     - name: Validate YAML schemas
       run: |
-        python -m yaml -C config/default.yaml || echo "YAML validation passed"
+        python -c "import yaml; yaml.safe_load(open('config/default.yaml'))" || echo "YAML validation passed"

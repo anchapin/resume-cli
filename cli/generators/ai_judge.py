@@ -2,8 +2,8 @@
 
 import json
 import re
-from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class AIJudge:
@@ -27,7 +27,7 @@ class AIJudge:
         versions: List[Dict[str, Any]],
         job_description: str,
         job_details: Dict[str, Any],
-        resume_context: str
+        resume_context: str,
     ) -> Tuple[Dict[str, Any], str]:
         """
         Evaluate and select best cover letter version.
@@ -64,16 +64,17 @@ class AIJudge:
 
             if decision.get("action") == "combine":
                 # Judge wants to combine elements from multiple versions
-                combined = self._combine_versions(
-                    versions,
-                    decision.get("selection", {})
+                combined = self._combine_versions(versions, decision.get("selection", {}))
+                return combined, decision.get(
+                    "justification", "Combined best elements from multiple versions."
                 )
-                return combined, decision.get("justification", "Combined best elements from multiple versions.")
 
             # Judge selected a specific version
             selected_idx = decision.get("selected", 0)
             if 0 <= selected_idx < len(versions):
-                return versions[selected_idx], decision.get("justification", f"Selected version {selected_idx + 1}.")
+                return versions[selected_idx], decision.get(
+                    "justification", f"Selected version {selected_idx + 1}."
+                )
 
         except Exception as e:
             # On judge failure, return first version with note
@@ -83,10 +84,7 @@ class AIJudge:
         return versions[0], "Judge unable to decide. Using first version."
 
     def judge_resume_customization(
-        self,
-        versions: List[Dict[str, Any]],
-        job_description: str,
-        resume_context: str
+        self, versions: List[Dict[str, Any]], job_description: str, resume_context: str
     ) -> Tuple[Dict[str, Any], str]:
         """
         Evaluate and select best resume customization (structured data).
@@ -106,9 +104,7 @@ class AIJudge:
             return versions[0], "Only one version available."
 
         # Create comparison prompt
-        prompt = self._create_resume_judge_prompt(
-            versions, job_description, resume_context
-        )
+        prompt = self._create_resume_judge_prompt(versions, job_description, resume_context)
 
         try:
             # Call AI to judge
@@ -122,16 +118,17 @@ class AIJudge:
 
             if decision.get("action") == "combine":
                 # Judge wants to combine elements
-                combined = self._combine_versions(
-                    versions,
-                    decision.get("selection", {})
+                combined = self._combine_versions(versions, decision.get("selection", {}))
+                return combined, decision.get(
+                    "justification", "Combined best elements from multiple versions."
                 )
-                return combined, decision.get("justification", "Combined best elements from multiple versions.")
 
             # Judge selected a specific version
             selected_idx = decision.get("selected", 0)
             if 0 <= selected_idx < len(versions):
-                return versions[selected_idx], decision.get("justification", f"Selected version {selected_idx + 1}.")
+                return versions[selected_idx], decision.get(
+                    "justification", f"Selected version {selected_idx + 1}."
+                )
 
         except Exception as e:
             # On judge failure, return first version
@@ -141,10 +138,7 @@ class AIJudge:
         return versions[0], "Judge unable to decide. Using first version."
 
     def judge_resume_text(
-        self,
-        versions: List[str],
-        job_description: str,
-        base_resume: str
+        self, versions: List[str], job_description: str, base_resume: str
     ) -> Tuple[str, str]:
         """
         Evaluate and select best full resume text version.
@@ -164,9 +158,7 @@ class AIJudge:
             return versions[0], "Only one version available."
 
         # Create comparison prompt for full resumes
-        prompt = self._create_resume_text_judge_prompt(
-            versions, job_description, base_resume
-        )
+        prompt = self._create_resume_text_judge_prompt(versions, job_description, base_resume)
 
         try:
             # Call AI to judge
@@ -181,7 +173,9 @@ class AIJudge:
             # Judge selected a specific version
             selected_idx = decision.get("selected", 0)
             if 0 <= selected_idx < len(versions):
-                return versions[selected_idx], decision.get("justification", f"Selected version {selected_idx + 1}.")
+                return versions[selected_idx], decision.get(
+                    "justification", f"Selected version {selected_idx + 1}."
+                )
 
         except Exception as e:
             # On judge failure, return first version
@@ -195,7 +189,7 @@ class AIJudge:
         versions: List[Dict[str, Any]],
         job_description: str,
         job_details: Dict[str, Any],
-        resume_context: str
+        resume_context: str,
     ) -> str:
         """Create prompt for judging cover letter versions."""
         company = job_details.get("company", "the company")
@@ -227,7 +221,7 @@ Evaluate each version on these FOUR criteria (weighted equally):
             prompt += f"Summary: {version.get('professional_summary', 'N/A')[:300]}\n"
             prompt += f"Achievements: {json.dumps(version.get('key_achievements', []), indent=2)}\n"
             prompt += f"Skills: {json.dumps(version.get('skills_highlight', []), indent=2)}\n"
-            if version.get('company_alignment'):
+            if version.get("company_alignment"):
                 prompt += f"Alignment: {version['company_alignment'][:200]}\n"
 
         prompt += """
@@ -256,10 +250,7 @@ Return ONLY valid JSON, nothing else."""
         return prompt
 
     def _create_resume_judge_prompt(
-        self,
-        versions: List[Dict[str, Any]],
-        job_description: str,
-        resume_context: str
+        self, versions: List[Dict[str, Any]], job_description: str, resume_context: str
     ) -> str:
         """Create prompt for judging resume customization versions."""
         prompt = f"""You are an expert technical recruiter and hiring manager. Your task is to judge which of 3 AI-generated resume customizations is the best.
@@ -284,7 +275,7 @@ Evaluate each version on these FOUR criteria (weighted equally):
             prompt += f"\n--- Version {i} ---\n"
             prompt += f"Keywords: {version.get('keywords', [])}\n"
             # Show first few bullet reorders as sample
-            bullet_orders = version.get('bullet_reorder', {})
+            bullet_orders = version.get("bullet_reorder", {})
             for job, bullets in list(bullet_orders.items())[:2]:
                 prompt += f"  {job}: {bullets[:3]}...\n"
 
@@ -311,10 +302,7 @@ Return ONLY valid JSON, nothing else."""
         return prompt
 
     def _create_resume_text_judge_prompt(
-        self,
-        versions: List[str],
-        job_description: str,
-        base_resume: str
+        self, versions: List[str], job_description: str, base_resume: str
     ) -> str:
         """Create prompt for judging full resume text versions."""
         prompt = f"""You are an expert technical recruiter and hiring manager. Your task is to judge which of 3 AI-generated resume versions is the best.
@@ -362,18 +350,20 @@ Return ONLY valid JSON, nothing else."""
 
     def _parse_judge_response(self, response: str) -> Dict[str, Any]:
         """Parse the judge's JSON response."""
-        json_match = re.search(r'\{.*\}', response, re.DOTALL)
+        json_match = re.search(r"\{.*\}", response, re.DOTALL)
         if json_match:
             try:
                 return json.loads(json_match.group(0))
             except json.JSONDecodeError:
                 pass
-        return {"selected": 0, "action": "select", "justification": "Failed to parse judge response"}
+        return {
+            "selected": 0,
+            "action": "select",
+            "justification": "Failed to parse judge response",
+        }
 
     def _combine_versions(
-        self,
-        versions: List[Dict[str, Any]],
-        selection: Dict[str, int]
+        self, versions: List[Dict[str, Any]], selection: Dict[str, int]
     ) -> Dict[str, Any]:
         """Combine elements from multiple versions based on judge's selection."""
         combined = {}
@@ -390,7 +380,7 @@ Return ONLY valid JSON, nothing else."""
             model=model,
             max_tokens=self.config.get("ai.max_tokens", 4000),
             temperature=self.config.get("ai.temperature", 0.7),
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt}],
         )
         return message.content[0].text
 
@@ -401,7 +391,7 @@ Return ONLY valid JSON, nothing else."""
             model=model,
             max_tokens=self.config.get("ai.max_tokens", 4000),
             temperature=self.config.get("ai.temperature", 0.7),
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt}],
         )
         return response.choices[0].message.content
 

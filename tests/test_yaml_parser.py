@@ -1,9 +1,9 @@
 """Unit tests for ResumeYAML class."""
 
 import os
-from pathlib import Path
-from unittest.mock import patch, MagicMock
 from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -173,9 +173,7 @@ class TestResumeYAMLGetSummary:
         """Test get_summary works without variants section."""
         yaml_path = temp_dir / "no_variants.yaml"
         with open(yaml_path, "w") as f:
-            yaml.dump({
-                "professional_summary": {"base": "Base summary only"}
-            }, f)
+            yaml.dump({"professional_summary": {"base": "Base summary only"}}, f)
 
         handler = ResumeYAML(yaml_path)
         summary = handler.get_summary("backend")
@@ -213,11 +211,15 @@ class TestResumeYAMLGetSkills:
         skills = handler.get_skills("backend")
 
         # Go is emphasized for backend
-        go_skills = [s for s in skills["programming"] if isinstance(s, dict) and s.get("name") == "Go"]
+        go_skills = [
+            s for s in skills["programming"] if isinstance(s, dict) and s.get("name") == "Go"
+        ]
         assert len(go_skills) == 1
 
         # Kubernetes should be present in frameworks (emphasized for backend)
-        k8s_skills = [s for s in skills["frameworks"] if isinstance(s, dict) and s.get("name") == "Kubernetes"]
+        k8s_skills = [
+            s for s in skills["frameworks"] if isinstance(s, dict) and s.get("name") == "Kubernetes"
+        ]
         assert len(k8s_skills) == 1
 
     def test_get_skills_string_skills_included(self, sample_yaml_file: Path):
@@ -234,8 +236,7 @@ class TestResumeYAMLGetSkills:
         """Test skill prioritization moves matching skills to front."""
         handler = ResumeYAML(sample_yaml_file)
         skills = handler.get_skills(
-            variant="backend",
-            prioritize_technologies=["Kubernetes", "Django", "PostgreSQL"]
+            variant="backend", prioritize_technologies=["Kubernetes", "Django", "PostgreSQL"]
         )
 
         programming = skills["programming"]
@@ -250,8 +251,7 @@ class TestResumeYAMLGetSkills:
         """Test that _prioritize_skills is case-insensitive."""
         handler = ResumeYAML(sample_yaml_file)
         skills = handler.get_skills(
-            variant=None,
-            prioritize_technologies=["kubernetes", "DOCKER", "ReAct"]
+            variant=None, prioritize_technologies=["kubernetes", "DOCKER", "ReAct"]
         )
 
         # Kubernetes and Docker should be prioritized (moved to front of lists)
@@ -307,28 +307,28 @@ class TestResumeYAMLGetExperience:
         """Test get_experience falls back to first bullets if no matches."""
         yaml_path = temp_dir / "fallback.yaml"
         with open(yaml_path, "w") as f:
-            yaml.dump({
-                "experience": [
-                    {
-                        "company": "Test",
-                        "title": "Engineer",
-                        "start_date": "2020-01",
-                        "bullets": [
-                            {"text": "Bullet 1"},
-                            {"text": "Bullet 2"},
-                            {"text": "Bullet 3"},
-                            {"text": "Bullet 4"},
-                            {"text": "Bullet 5"}
-                        ]
-                    }
-                ],
-                "variants": {
-                    "test": {
-                        "max_bullets_per_job": 4,
-                        "emphasize_keywords": ["nomatch"]
-                    }
-                }
-            }, f)
+            yaml.dump(
+                {
+                    "experience": [
+                        {
+                            "company": "Test",
+                            "title": "Engineer",
+                            "start_date": "2020-01",
+                            "bullets": [
+                                {"text": "Bullet 1"},
+                                {"text": "Bullet 2"},
+                                {"text": "Bullet 3"},
+                                {"text": "Bullet 4"},
+                                {"text": "Bullet 5"},
+                            ],
+                        }
+                    ],
+                    "variants": {
+                        "test": {"max_bullets_per_job": 4, "emphasize_keywords": ["nomatch"]}
+                    },
+                },
+                f,
+            )
 
         handler = ResumeYAML(yaml_path)
         experience = handler.get_experience("test")

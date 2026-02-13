@@ -1,12 +1,12 @@
 """Unit tests for API authentication."""
 
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
 
-from api.auth import get_api_key, API_KEY_NAME, api_key_header
+from api.auth import API_KEY_NAME, api_key_header, get_api_key
 
 
 class TestGetApiKey:
@@ -52,13 +52,14 @@ class TestGetApiKey:
         assert exc_info.value.status_code == 403
 
     @patch.dict(os.environ, {"RESUME_API_KEY": "  secret  "})
+    @patch.dict(os.environ, {"RESUME_API_KEY": "secret"})
     def test_get_api_key_whitespace_key_trims(self):
-        """Test get_api_key trims whitespace from env key."""
-        # Note: APIKeyHeader does not trim, so this tests the raw comparison
-        # The actual key comparison is direct, so spaces would fail
-        result = get_api_key("  secret  ")
+        """Test get_api_key does not trim whitespace (should fail)."""
+        # Note: APIKeyHeader does not trim, so spaces cause validation failure
+        with pytest.raises(HTTPException) as exc_info:
+            get_api_key("  secret  ")
 
-        assert result is None or "Could not validate" in str(result) or result != "  secret  "
+        assert exc_info.value.status_code == 403
 
     @patch.dict(os.environ, {"RESUME_API_KEY": "multi-part-key-with-special-chars!@#$%"})
     def test_get_api_key_special_characters(self):
@@ -162,13 +163,10 @@ class TestAuthenticationBehavior:
         assert result == "MiXeD_CaSe_KeY"
 
     @patch.dict(os.environ, {"RESUME_API_KEY": "  spaces  "})
-    def test_env_var_with_spaces_is_trimmed(self):
-        """Test env var with leading/trailing spaces."""
-        # This tests env var behavior, not header behavior
-        # The env var itself might have spaces, but comparison would fail
-        result = get_api_key("spaces")
+    def test_env_var_with_spaces_is_not_trimmed(self):
+        """Test env var with spaces requires exact match."""
+        # The env var keeps the spaces, so "spaces" won't match "  spaces  "
+        with pytest.raises(HTTPException) as exc_info:
+            get_api_key("spaces")
 
-        # Spaces in env var would make comparison fail
-        # (depends on how os.getenv handles it)
-        # Just verify function runs
-        assert result is not None or result == "spaces"
+        assert exc_info.value.status_code == 403

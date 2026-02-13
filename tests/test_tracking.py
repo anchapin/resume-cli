@@ -1,9 +1,9 @@
 """Unit tests for TrackingIntegration class."""
 
-import os
-from pathlib import Path
-from datetime import datetime
 import csv
+import os
+from datetime import datetime
+from pathlib import Path
 
 import pytest
 
@@ -92,10 +92,7 @@ class TestLogApplication:
 
         tracking = TrackingIntegration(config)
         tracking.log_application(
-            company="Acme Corp",
-            role="Senior Engineer",
-            status="applied",
-            variant="v1.0.0-base"
+            company="Acme Corp", role="Senior Engineer", status="applied", variant="v1.0.0-base"
         )
 
         # Read CSV
@@ -125,7 +122,7 @@ class TestLogApplication:
             url="https://example.com/job",
             notes="Referred by John",
             cover_letter_generated=True,
-            package_path="/output/acme-2024-01-15"
+            package_path="/output/acme-2024-01-15",
         )
 
         # Read CSV
@@ -148,18 +145,10 @@ class TestLogApplication:
         tracking = TrackingIntegration(config)
 
         # Log first application
-        tracking.log_application(
-            company="Company A",
-            role="Role A",
-            status="applied"
-        )
+        tracking.log_application(company="Company A", role="Role A", status="applied")
 
         # Log second application
-        tracking.log_application(
-            company="Company B",
-            role="Role B",
-            status="applied"
-        )
+        tracking.log_application(company="Company B", role="Role B", status="applied")
 
         # Read CSV
         with open(csv_path, "r", newline="") as f:
@@ -291,10 +280,7 @@ class TestUpdateStatus:
         tracking.log_application(company="Acme", role="Engineer", status="applied")
 
         # Update status
-        updated = tracking.update_status(
-            company="Acme",
-            new_status="interview"
-        )
+        updated = tracking.update_status(company="Acme", new_status="interview")
 
         assert updated is True
 
@@ -330,11 +316,7 @@ class TestUpdateStatus:
         tracking.log_application(company="Acme", role="Manager", status="applied")
 
         # Update Manager role
-        updated = tracking.update_status(
-            company="Acme",
-            new_status="interview",
-            role="Manager"
-        )
+        updated = tracking.update_status(company="Acme", new_status="interview", role="Manager")
 
         assert updated is True
 
@@ -353,10 +335,7 @@ class TestUpdateStatus:
         tracking.log_application(company="Acme", role="Engineer", status="applied")
 
         # Try to update non-existent company
-        updated = tracking.update_status(
-            company="NonExistent",
-            new_status="interview"
-        )
+        updated = tracking.update_status(company="NonExistent", new_status="interview")
 
         assert updated is False
 
@@ -370,10 +349,7 @@ class TestUpdateStatus:
         tracking.log_application(company="Acme Corp", role="Engineer", status="applied")
 
         # Update with different case
-        updated = tracking.update_status(
-            company="acme corp",
-            new_status="interview"
-        )
+        updated = tracking.update_status(company="acme corp", new_status="interview")
 
         assert updated is True
         entries = tracking._read_csv()

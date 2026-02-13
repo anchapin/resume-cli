@@ -1,16 +1,16 @@
 """Shared fixtures and test configuration for pytest."""
 
 import os
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import pytest
 import yaml
 
-from cli.utils.yaml_parser import ResumeYAML
 from cli.utils.config import Config
+from cli.utils.yaml_parser import ResumeYAML
 
 
 @pytest.fixture
@@ -26,24 +26,16 @@ def temp_dir(tmp_path: Path) -> Path:
 def sample_resume_data() -> Dict[str, Any]:
     """Sample resume data for testing."""
     return {
-        "meta": {
-            "version": "2.0.0",
-            "last_updated": "2024-01-15",
-            "author": "Test Author"
-        },
+        "meta": {"version": "2.0.0", "last_updated": "2024-01-15", "author": "Test Author"},
         "contact": {
             "name": "John Doe",
             "phone": "+1-555-123-4567",
             "email": "john.doe@example.com",
-            "location": {
-                "city": "San Francisco",
-                "state": "CA",
-                "country": "USA"
-            },
+            "location": {"city": "San Francisco", "state": "CA", "country": "USA"},
             "urls": {
                 "linkedin": "https://linkedin.com/in/johndoe",
-                "github": "https://github.com/johndoe"
-            }
+                "github": "https://github.com/johndoe",
+            },
         },
         "professional_summary": {
             "base": "Experienced software engineer with 10+ years in distributed systems.",
@@ -52,8 +44,8 @@ def sample_resume_data() -> Dict[str, Any]:
                 "ml_ai": "ML engineer focused on deep learning and NLP applications.",
                 "fullstack": "Full-stack engineer with expertise in React and Python.",
                 "devops": "DevOps engineer with expertise in Kubernetes and CI/CD.",
-                "leadership": "Engineering leader with 15+ years of team management experience."
-            }
+                "leadership": "Engineering leader with 15+ years of team management experience.",
+            },
         },
         "skills": {
             "programming": [
@@ -61,40 +53,36 @@ def sample_resume_data() -> Dict[str, Any]:
                 "JavaScript",
                 "TypeScript",
                 {"name": "Go", "emphasize_for": ["backend", "devops"]},
-                "Java"
+                "Java",
             ],
             "frameworks": [
                 "Django",
                 "FastAPI",
                 "React",
                 {"name": "Kubernetes", "emphasize_for": ["backend", "devops"]},
-                "Flask"
+                "Flask",
             ],
             "databases": [
                 "PostgreSQL",
                 "MongoDB",
                 "Redis",
-                {"name": "MySQL", "emphasize_for": ["backend"]}
+                {"name": "MySQL", "emphasize_for": ["backend"]},
             ],
             "devops": [
                 "Docker",
                 "Kubernetes",
                 "Git",
                 {"name": "Jenkins", "emphasize_for": ["devops"]},
-                "GitHub Actions"
+                "GitHub Actions",
             ],
-            "cloud": [
-                "AWS",
-                "GCP",
-                "Azure"
-            ],
+            "cloud": ["AWS", "GCP", "Azure"],
             "ai_ml": [
                 "TensorFlow",
                 "PyTorch",
                 "scikit-learn",
                 {"name": "LangChain", "emphasize_for": ["ml_ai"]},
-                "Transformers"
-            ]
+                "Transformers",
+            ],
         },
         "experience": [
             {
@@ -104,13 +92,33 @@ def sample_resume_data() -> Dict[str, Any]:
                 "end_date": "2023-12",
                 "location": "San Francisco, CA",
                 "bullets": [
-                    {"text": "Led team of 5 engineers", "skills": ["Leadership"], "emphasize_for": ["leadership"]},
-                    {"text": "Built scalable REST API handling 10k+ requests/second", "skills": ["Python", "FastAPI", "Kubernetes"], "emphasize_for": ["backend"]},
-                    {"text": "Implemented microservices architecture", "skills": ["Python", "Docker"], "emphasize_for": ["fullstack", "backend"]},
-                    {"text": "Deployed ML models to production", "skills": ["TensorFlow", "Kubernetes"], "emphasize_for": ["ml_ai"]},
-                    {"text": "Set up CI/CD pipeline", "skills": ["Jenkins", "GitHub Actions"], "emphasize_for": ["devops"]},
-                    {"text": "Optimized database queries", "skills": ["PostgreSQL", "Redis"]}
-                ]
+                    {
+                        "text": "Led team of 5 engineers",
+                        "skills": ["Leadership"],
+                        "emphasize_for": ["leadership"],
+                    },
+                    {
+                        "text": "Built scalable REST API handling 10k+ requests/second",
+                        "skills": ["Python", "FastAPI", "Kubernetes"],
+                        "emphasize_for": ["backend"],
+                    },
+                    {
+                        "text": "Implemented microservices architecture",
+                        "skills": ["Python", "Docker"],
+                        "emphasize_for": ["fullstack", "backend"],
+                    },
+                    {
+                        "text": "Deployed ML models to production",
+                        "skills": ["TensorFlow", "Kubernetes"],
+                        "emphasize_for": ["ml_ai"],
+                    },
+                    {
+                        "text": "Set up CI/CD pipeline",
+                        "skills": ["Jenkins", "GitHub Actions"],
+                        "emphasize_for": ["devops"],
+                    },
+                    {"text": "Optimized database queries", "skills": ["PostgreSQL", "Redis"]},
+                ],
             },
             {
                 "company": "Startup Inc",
@@ -119,11 +127,27 @@ def sample_resume_data() -> Dict[str, Any]:
                 "end_date": "2020-01",
                 "location": "Remote",
                 "bullets": [
-                    {"text": "Developed React frontend", "skills": ["React", "JavaScript"], "emphasize_for": ["fullstack"]},
-                    {"text": "Built Django backend", "skills": ["Python", "Django"], "emphasize_for": ["backend"]},
-                    {"text": "Integrated OpenAI API", "skills": ["Python", "LangChain"], "emphasize_for": ["ml_ai"]},
-                    {"text": "Set up AWS infrastructure", "skills": ["AWS", "Docker"], "emphasize_for": ["devops"]}
-                ]
+                    {
+                        "text": "Developed React frontend",
+                        "skills": ["React", "JavaScript"],
+                        "emphasize_for": ["fullstack"],
+                    },
+                    {
+                        "text": "Built Django backend",
+                        "skills": ["Python", "Django"],
+                        "emphasize_for": ["backend"],
+                    },
+                    {
+                        "text": "Integrated OpenAI API",
+                        "skills": ["Python", "LangChain"],
+                        "emphasize_for": ["ml_ai"],
+                    },
+                    {
+                        "text": "Set up AWS infrastructure",
+                        "skills": ["AWS", "Docker"],
+                        "emphasize_for": ["devops"],
+                    },
+                ],
             },
             {
                 "company": "Current Company",
@@ -132,12 +156,27 @@ def sample_resume_data() -> Dict[str, Any]:
                 "end_date": None,
                 "location": "New York, NY",
                 "bullets": [
-                    {"text": "Leading technical architecture decisions", "skills": ["Leadership"], "emphasize_for": ["leadership"]},
-                    {"text": "Mentoring junior engineers", "skills": ["Leadership"], "emphasize_for": ["leadership"]},
-                    {"text": "Building real-time analytics system", "skills": ["Python", "Redis", "Kafka"]},
-                    {"text": "Deploying models with MLflow", "skills": ["PyTorch", "MLflow"], "emphasize_for": ["ml_ai"]}
-                ]
-            }
+                    {
+                        "text": "Leading technical architecture decisions",
+                        "skills": ["Leadership"],
+                        "emphasize_for": ["leadership"],
+                    },
+                    {
+                        "text": "Mentoring junior engineers",
+                        "skills": ["Leadership"],
+                        "emphasize_for": ["leadership"],
+                    },
+                    {
+                        "text": "Building real-time analytics system",
+                        "skills": ["Python", "Redis", "Kafka"],
+                    },
+                    {
+                        "text": "Deploying models with MLflow",
+                        "skills": ["PyTorch", "MLflow"],
+                        "emphasize_for": ["ml_ai"],
+                    },
+                ],
+            },
         ],
         "education": [
             {
@@ -145,15 +184,15 @@ def sample_resume_data() -> Dict[str, Any]:
                 "degree": "Bachelor of Science",
                 "field": "Computer Science",
                 "graduation_date": "2015-05",
-                "location": "Berkeley, CA"
+                "location": "Berkeley, CA",
             },
             {
                 "institution": "Stanford University",
                 "degree": "Master of Science",
                 "field": "Computer Science",
                 "graduation_date": "2018-06",
-                "location": "Stanford, CA"
-            }
+                "location": "Stanford, CA",
+            },
         ],
         "publications": [
             {
@@ -161,16 +200,14 @@ def sample_resume_data() -> Dict[str, Any]:
                 "year": "2020",
                 "title": "Distributed Systems at Scale",
                 "type": "Journal Article",
-                "journal": "IEEE Transactions"
+                "journal": "IEEE Transactions",
             }
         ],
         "certifications": [
             {"name": "AWS Solutions Architect", "year": "2022"},
-            {"name": "Kubernetes Administrator", "year": "2023"}
+            {"name": "Kubernetes Administrator", "year": "2023"},
         ],
-        "affiliations": [
-            {"name": "ACM Member", "years": "2015-Present"}
-        ],
+        "affiliations": [{"name": "ACM Member", "years": "2015-Present"}],
         "projects": {
             "featured": [
                 {
@@ -178,7 +215,7 @@ def sample_resume_data() -> Dict[str, Any]:
                     "description": "A CLI tool for generating resumes from YAML",
                     "url": "https://github.com/johndoe/resume-cli",
                     "stars": 150,
-                    "language": "Python"
+                    "language": "Python",
                 }
             ],
             "ai_ml": [
@@ -187,7 +224,7 @@ def sample_resume_data() -> Dict[str, Any]:
                     "description": "Machine learning pipeline for data processing",
                     "url": "https://github.com/johndoe/ml-pipeline",
                     "stars": 75,
-                    "language": "Python"
+                    "language": "Python",
                 }
             ],
             "fullstack": [
@@ -196,54 +233,61 @@ def sample_resume_data() -> Dict[str, Any]:
                     "description": "Full-stack web application",
                     "url": "https://github.com/johndoe/web-app",
                     "stars": 50,
-                    "language": "TypeScript"
+                    "language": "TypeScript",
                 }
-            ]
+            ],
         },
         "variants": {
             "v1.0.0-base": {
                 "description": "Base variant with all content",
                 "summary_key": "base",
-                "skill_sections": ["programming", "frameworks", "databases", "devops", "cloud", "ai_ml"],
+                "skill_sections": [
+                    "programming",
+                    "frameworks",
+                    "databases",
+                    "devops",
+                    "cloud",
+                    "ai_ml",
+                ],
                 "max_bullets_per_job": 4,
-                "emphasize_keywords": []
+                "emphasize_keywords": [],
             },
             "v1.1.0-backend": {
                 "description": "Backend-focused variant",
                 "summary_key": "backend",
                 "skill_sections": ["programming", "frameworks", "databases", "devops"],
                 "max_bullets_per_job": 4,
-                "emphasize_keywords": ["api", "backend", "database", "scalable"]
+                "emphasize_keywords": ["api", "backend", "database", "scalable"],
             },
             "v1.2.0-ml_ai": {
                 "description": "ML/AI-focused variant",
                 "summary_key": "ml_ai",
                 "skill_sections": ["programming", "ai_ml", "frameworks", "databases"],
                 "max_bullets_per_job": 5,
-                "emphasize_keywords": ["machine learning", "ai", "neural", "deep learning"]
+                "emphasize_keywords": ["machine learning", "ai", "neural", "deep learning"],
             },
             "v1.3.0-fullstack": {
                 "description": "Full-stack variant",
                 "summary_key": "fullstack",
                 "skill_sections": ["programming", "frameworks", "databases", "cloud"],
                 "max_bullets_per_job": 4,
-                "emphasize_keywords": ["frontend", "fullstack", "react", "javascript"]
+                "emphasize_keywords": ["frontend", "fullstack", "react", "javascript"],
             },
             "v1.4.0-devops": {
                 "description": "DevOps-focused variant",
                 "summary_key": "devops",
                 "skill_sections": ["devops", "cloud", "databases", "programming"],
                 "max_bullets_per_job": 4,
-                "emphasize_keywords": ["devops", "kubernetes", "docker", "ci/cd"]
+                "emphasize_keywords": ["devops", "kubernetes", "docker", "ci/cd"],
             },
             "v1.5.0-leadership": {
                 "description": "Leadership-focused variant",
                 "summary_key": "leadership",
                 "skill_sections": ["programming", "frameworks", "devops", "cloud"],
                 "max_bullets_per_job": 5,
-                "emphasize_keywords": ["lead", "team", "mentor", "manage"]
-            }
-        }
+                "emphasize_keywords": ["lead", "team", "mentor", "manage"],
+            },
+        },
     }
 
 
@@ -263,16 +307,13 @@ def mock_config(temp_dir: Path) -> Config:
         "output": {
             "directory": str(temp_dir / "output"),
             "naming_scheme": "resume-{variant}-{date}.{ext}",
-            "date_format": "%Y-%m-%d"
+            "date_format": "%Y-%m-%d",
         },
         "tracking": {
             "enabled": True,
-            "csv_path": str(temp_dir / "tracking" / "resume_experiment.csv")
+            "csv_path": str(temp_dir / "tracking" / "resume_experiment.csv"),
         },
-        "github": {
-            "username": "testuser",
-            "sync_months": 3
-        }
+        "github": {"username": "testuser", "sync_months": 3},
     }
 
     config = Config()

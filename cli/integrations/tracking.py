@@ -1,9 +1,9 @@
 """Integration with CSV-based application tracking."""
 
-from pathlib import Path
-from typing import Optional, Dict, Any
-from datetime import datetime
 import csv
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class TrackingIntegration:
@@ -29,7 +29,7 @@ class TrackingIntegration:
         url: Optional[str] = None,
         notes: Optional[str] = None,
         cover_letter_generated: bool = False,
-        package_path: Optional[str] = None
+        package_path: Optional[str] = None,
     ) -> None:
         """
         Log a job application to CSV.
@@ -63,7 +63,7 @@ class TrackingIntegration:
             "source": source,
             "url": url or "",
             "cover_letter": "1" if cover_letter_generated else "0",
-            "package_path": package_path or ""
+            "package_path": package_path or "",
         }
 
         entries.append(entry)
@@ -93,7 +93,7 @@ class TrackingIntegration:
             "source",
             "url",
             "cover_letter",
-            "package_path"
+            "package_path",
         ]
 
     def _read_csv(self) -> list:
@@ -128,13 +128,7 @@ class TrackingIntegration:
 
         total = len(entries)
         if total == 0:
-            return {
-                "total": 0,
-                "applied": 0,
-                "interview": 0,
-                "offer": 0,
-                "response_rate": 0.0
-            }
+            return {"total": 0, "applied": 0, "interview": 0, "offer": 0, "response_rate": 0.0}
 
         # Count by status
         status_counts = {}
@@ -152,7 +146,7 @@ class TrackingIntegration:
             "interview": status_counts.get("interview", 0),
             "offer": status_counts.get("offer", 0),
             "response_rate": response_rate,
-            "by_status": status_counts
+            "by_status": status_counts,
         }
 
     def get_recent_applications(self, limit: int = 10) -> list:
@@ -170,12 +164,7 @@ class TrackingIntegration:
         entries.sort(key=lambda e: e.get("date", ""), reverse=True)
         return entries[:limit]
 
-    def update_status(
-        self,
-        company: str,
-        new_status: str,
-        role: Optional[str] = None
-    ) -> bool:
+    def update_status(self, company: str, new_status: str, role: Optional[str] = None) -> bool:
         """
         Update application status.
 

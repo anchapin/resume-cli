@@ -1,9 +1,10 @@
 """YAML parser utility for resume data."""
 
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
+
 import yaml
-from datetime import datetime
 
 
 class ResumeYAML:
@@ -36,8 +37,7 @@ class ResumeYAML:
         """
         if not self.yaml_path.exists():
             raise FileNotFoundError(
-                f"Resume file not found: {self.yaml_path}\n"
-                f"Run 'resume-cli init' to create it."
+                f"Resume file not found: {self.yaml_path}\n" f"Run 'resume-cli init' to create it."
             )
 
         with open(self.yaml_path, "r", encoding="utf-8") as f:
@@ -90,7 +90,9 @@ class ResumeYAML:
             return summaries.get("base", "")
         return summaries.get("variants", {}).get(variant, summaries.get("base", ""))
 
-    def get_skills(self, variant: Optional[str] = None, prioritize_technologies: Optional[list] = None) -> Dict[str, list]:
+    def get_skills(
+        self, variant: Optional[str] = None, prioritize_technologies: Optional[list] = None
+    ) -> Dict[str, list]:
         """
         Get skills, optionally filtered by variant.
 
@@ -118,9 +120,12 @@ class ResumeYAML:
                     section_skills = all_skills[section]
                     if isinstance(section_skills, list):
                         filtered_skills[section] = [
-                            s for s in section_skills
-                            if (isinstance(s, dict) and variant in s.get("emphasize_for", [variant])) or
-                               (isinstance(s, str))
+                            s
+                            for s in section_skills
+                            if (
+                                isinstance(s, dict) and variant in s.get("emphasize_for", [variant])
+                            )
+                            or (isinstance(s, str))
                         ]
                     else:
                         filtered_skills[section] = section_skills
@@ -199,8 +204,9 @@ class ResumeYAML:
                 text = bullet.get("text", "")
 
                 # Include if variant is emphasized or keywords match
-                if (variant in emphasize_for or
-                    any(kw.lower() in text.lower() for kw in emphasize_keywords)):
+                if variant in emphasize_for or any(
+                    kw.lower() in text.lower() for kw in emphasize_keywords
+                ):
                     filtered_bullets.append(bullet)
 
             # Limit bullets and preserve order

@@ -44,6 +44,10 @@ resume-cli generate -v v1.1.0-backend -f pdf
 # List all variants
 resume-cli variants
 
+# Check ATS compatibility score
+resume-cli ats-check -v v1.1.0-backend --job-desc job-posting.txt
+resume-cli ats-check --job-desc job.txt --output ats-report.json
+
 # Generate complete application package (resume + cover letter)
 resume-cli generate-package --job-desc job-posting.txt --variant v1.1.0-backend
 resume-cli generate-package --job-desc job.txt --company "Acme Corp" --non-interactive
@@ -576,6 +580,123 @@ PDF compilation happens in `TemplateGenerator._compile_pdf()` (cli/generators/te
 
 **Note**: PDF generation is significantly slower than Markdown/TEX due to compilation.
 
+## ATS (Applicant Tracking System) Checking
+
+The `ats-check` command analyzes resume compatibility with automated screening systems.
+
+### Usage
+
+```bash
+# Check ATS score for a specific variant
+resume-cli ats-check -v v1.1.0-backend --job-desc job-posting.txt
+
+# Save report as JSON
+resume-cli ats-check --job-desc job.txt --output ats-report.json
+```
+
+### Scoring System
+
+The ATS checker evaluates 5 categories (100 points total):
+
+**1. Format Parsing (20pts)**
+- Checks if resume is in text-extractable format
+- Validates no images/tables that block ATS parsers
+- Checks for minimal special characters
+
+**2. Keywords (30pts)**
+- Uses AI to extract key requirements from job description
+- Compares against resume skills and experience
+- Falls back to regex-based extraction if AI unavailable
+- Returns missing keywords for improvement
+
+**3. Section Structure (20pts)**
+- Validates presence of standard ATS sections:
+  - Experience (preferred first)
+  - Education
+  - Skills
+  - Professional summary
+
+**4. Contact Info (15pts)**
+- Checks email format validity
+- Verifies phone and location presence
+- Bonus for LinkedIn/GitHub links
+
+**5. Readability (15pts)**
+- Detects action verbs in experience bullets
+- Checks for quantifiable metrics (e.g., "increased by 30%")
+- Validates use of bullet points
+- Checks for excessive acronyms
+
+### Sample Output
+
+```
+ATS Score: 81/100 (81%)
+
+Good! Your resume is ATS-friendly with room for improvement.
+
+Category Breakdown:
+✓ Format Parsing: 20/20 (100%)
+  Structured text format (no images)
+  No tables detected (ATS-friendly)
+  Minimal special characters (good)
+
+✗ Keywords: 14/30 (47%)
+  Job keywords found: 15
+  Matching keywords: 7
+  Top matches: kubernetes, postgresql, fastapi, python, docker
+  Missing keywords: microservices, communication, graphql, agile, ci/cd
+  Suggestions:
+    • Add these keywords to skills or experience: microservices, communication...
+
+✓ Section Structure: 20/20 (100%)
+  ✓ Experience section present
+  ✓ Education section present
+  ✓ Skills section present
+  ✓ Summary section present
+
+✓ Contact Info: 15/15 (100%)
+  ✓ Email present and valid
+  ✓ Phone present and valid
+  ✓ Location present
+
+✗ Readability: 12/15 (80%)
+  ✓ Uses action verbs (3 found)
+  ✓ Minimal acronyms (0 found)
+  ✓ Uses bullet points for experience
+  Suggestions:
+    • Add quantifiable metrics (e.g., 'increased by 30%')
+
+Top Recommendations:
+  1. Add these keywords to skills or experience: microservices, communication...
+  2. Add quantifiable metrics (e.g., 'increased by 30%')
+```
+
+### Implementation Details
+
+`cli/generators/ats_generator.py` (`ATSGenerator` class):
+- `generate_report()`: Main method to generate complete ATS report
+- `_check_format_parsing()`: Validates text format
+- `_check_keywords()`: AI-powered keyword extraction and matching
+- `_check_section_structure()`: Validates ATS-required sections
+- `_check_contact_info()`: Validates contact information
+- `_check_readability()`: Checks action verbs, metrics, formatting
+- `print_report()`: Formats and displays report using Rich console
+- `export_json()`: Saves report as JSON for programmatic access
+
+**AI Integration**: The ATS checker uses AI for intelligent keyword extraction when available (Anthropic/OpenAI). Falls back to regex-based extraction if AI is unavailable or API keys are not configured.
+
+**Configuration**: ATS settings in `config/default.yaml`:
+```yaml
+ats:
+  enabled: true
+  scoring:
+    format_parsing: 20
+    keywords: 30
+    section_structure: 20
+    contact_info: 15
+    readability: 15
+```
+
 ## Error Handling and Troubleshooting
 
 ### Common Issues
@@ -660,3 +781,40 @@ The AI Judge (`cli/generators/ai_judge.py`) implements quality control:
 4. Configurable via `ai.judge_enabled` and `ai.num_generations`
 
 This pattern improves output quality by reducing randomness in AI generation.
+
+### Resume API Server
+
+The system includes a FastAPI-based REST API server for programmatic resume generation:
+
+**api/main.py** - FastAPI application with endpoints:
+- `GET /v1/variants` - List available resume variants (API key required)
+- `POST /v1/render/pdf` - Render resume as PDF from YAML data (API key required)
+- `POST /v1/tailor` - AI-tailor resume data for job description (API key required)
+
+**api/models.py** - Pydantic models for API requests:
+- `ResumeRequest` - Contains `resume_data` dict and `variant` string
+- `TailorRequest` - Contains `resume_data` dict and `job_description` string
+
+**api/auth.py** - API key authentication via `get_api_key()` dependency
+
+**API Security:**
+- All endpoints require API key via `Security(get_api_key)` dependency
+- API key is checked from `API_KEY` environment variable
+- Returns 401 if API key is missing or invalid
+
+**Usage:**
+```bash
+# Start API server
+python -m api.main
+
+# Or via uvicorn
+uvicorn api.main:app --host 0.0.0.0 --port 8000
+```
+
+**API Dependencies:**
+- `fastapi` - Web framework
+- `pydantic` - Request/response validation
+- `uvicorn` - ASGI server (for running)
+- Reuses `TemplateGenerator` and `AIGenerator` from CLI
+
+**Note**: The API server creates temporary YAML files for rendering and returns PDF bytes directly in the response.

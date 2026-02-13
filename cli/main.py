@@ -644,6 +644,12 @@ def analyze(ctx):
         sys.exit(1)
 
 
+# Add LinkedIn commands
+from .commands.linkedin import linkedin_import, linkedin_export
+cli.add_command(linkedin_import)
+cli.add_command(linkedin_export)
+
+
 def main():
     """Main entry point."""
     cli(obj={})

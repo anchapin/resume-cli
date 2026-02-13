@@ -57,6 +57,12 @@ github:
   emphasize_experience: false   # Future: emphasize relevant experience bullets
   enhancement_cache_ttl: 3600   # Cache TTL for enhancement results (seconds)
 
+linkedin:
+  # LinkedIn import/export settings
+  import_merge_mode: merge      # Options: merge, overwrite
+  export_format: linkedin       # Options: linkedin, plain
+  output_directory: output     # Default directory for LinkedIn exports
+
 variants:
   base: v1.0.0-base
   backend: v1.1.0-backend

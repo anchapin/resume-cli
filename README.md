@@ -11,6 +11,7 @@ A unified command-line interface for generating job-specific resumes from a sing
 - **Multiple Formats**: Output to Markdown, LaTeX, or PDF
 - **Application Tracking**: Built-in CSV tracking with analytics
 - **GitHub Integration**: Sync projects automatically
+- **LinkedIn Integration**: Import/export LinkedIn profile data
 - **Schema Validation**: Catch errors before generating
 
 ## Installation
@@ -233,6 +234,87 @@ Options:
 - GitHub CLI (`gh`) installed and authenticated
 - Run `gh auth login` first if needed
 
+### linkedin-import
+
+Import LinkedIn profile data into resume.yaml.
+
+```bash
+resume-cli linkedin-import [OPTIONS]
+
+Options:
+  --data-file PATH     Path to LinkedIn exported JSON data file (required)
+  --output PATH        Output YAML file path (default: resume.yaml)
+  --merge              Merge with existing resume.yaml instead of overwriting
+  --dry-run            Preview changes without writing to file
+```
+
+**Note:** Direct URL import is not supported due to LinkedIn API restrictions. You must export your LinkedIn data first:
+
+1. Go to https://www.linkedin.com/psettings/member-data
+2. Request 'Profile' data export
+3. Use the downloaded JSON file with `--data-file`
+
+**Examples:**
+
+```bash
+# Import from exported JSON (creates new resume.yaml)
+resume-cli linkedin-import --data-file linkedin_data.json
+
+# Merge with existing resume.yaml
+resume-cli linkedin-import --data-file linkedin_data.json --merge
+
+# Preview changes before importing
+resume-cli linkedin-import --data-file linkedin_data.json --dry-run
+
+# Import to custom path
+resume-cli linkedin-import --data-file linkedin_data.json --output my-resume.yaml
+```
+
+**Field Mapping:**
+
+| LinkedIn Field | resume.yaml Field |
+|----------------|------------------|
+| firstName/lastName | contact.name |
+| email | contact.email |
+| phone | contact.phone |
+| location | contact.location |
+| headline/summary | professional_summary.base |
+| skills | skills.* (auto-categorized) |
+| experience | experience |
+| education | education |
+| certifications | certifications |
+
+### linkedin-export
+
+Export resume.yaml data to LinkedIn-friendly format.
+
+```bash
+resume-cli linkedin-export [OPTIONS]
+
+Options:
+  -v, --variant TEXT    Resume variant to export (default: v1.0.0-base)
+  -o, --output PATH    Output file path (default: output/linkedin-update.txt)
+  --format CHOICE      Output format: linkedin, plain (default: linkedin)
+```
+
+**Examples:**
+
+```bash
+# Export for LinkedIn update
+resume-cli linkedin-export
+
+# Export specific variant
+resume-cli linkedin-export -v v1.1.0-backend
+
+# Export to custom file
+resume-cli linkedin-export -o my-linkedin-update.txt
+
+# Export plain text format
+resume-cli linkedin-export --format plain
+```
+
+**Note:** LinkedIn has character limits for each field. You may need to trim bullets to fit LinkedIn's format.
+
 ### init
 
 Initialize resume.yaml from existing resume files.
@@ -453,6 +535,12 @@ github:
   sync_months: 3
   # Auto-projects feature for generate-package
   max_projects: 3
+
+linkedin:
+  # LinkedIn import/export settings
+  import_merge_mode: merge      # Options: merge, overwrite
+  export_format: linkedin       # Options: linkedin, plain
+  output_directory: output     # Default directory for LinkedIn exports
 ```
 
 ## PDF Generation
@@ -492,7 +580,7 @@ job_hunt/
 │   ├── main.py              # Entry point
 │   ├── commands/            # Command implementations
 │   ├── generators/          # Template + AI engines
-│   ├── integrations/        # Tracking, GitHub, etc.
+│   ├── integrations/        # Tracking, GitHub, LinkedIn, etc.
 │   └── utils/               # YAML parser, schema, config
 ├── templates/               # Jinja2 templates
 │   ├── resume_md.j2

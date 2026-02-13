@@ -2,6 +2,7 @@
 
 import json
 import subprocess
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -62,7 +63,9 @@ class GitHubSync:
 
     def _fetch_repos(self, date_threshold: str) -> List[Dict[str, Any]]:
         """Fetch repositories from GitHub using gh CLI."""
-        temp_file = Path("/tmp/gh-resume-repos.json")
+        # Use secure temp file instead of hardcoded /tmp path
+        temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+        temp_path = Path(temp_file.name)
 
         try:
             # Run gh repo list
@@ -85,8 +88,8 @@ class GitHubSync:
             )
 
             # Save to temp file for debugging
-            with open(temp_file, "w") as f:
-                f.write(result.stdout)
+            temp_file.write(result.stdout)
+            temp_file.close()
 
             repos = json.loads(result.stdout)
             return repos

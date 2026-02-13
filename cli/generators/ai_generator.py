@@ -483,7 +483,8 @@ Return ONLY valid JSON, nothing else."""
         import hashlib
 
         cache_key = hashlib.md5(
-            f"{job_description[:1000]}{variant}{output_format}".encode()
+            f"{job_description[:1000]}{variant}{output_format}".encode(),
+            usedforsecurity=False,
         ).hexdigest()
 
         # Check cache - return customized content converted to requested format

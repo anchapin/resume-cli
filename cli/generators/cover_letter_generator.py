@@ -524,7 +524,7 @@ Return ONLY valid JSON, nothing else."""
 
         qa = job_details.get("question_answers", {})
         cache_key_input = f"{job_description[:500]}{str(qa)}{variant}"
-        cache_key = hashlib.md5(cache_key_input.encode()).hexdigest()
+        cache_key = hashlib.md5(cache_key_input.encode(), usedforsecurity=False).hexdigest()
 
         # Check cache
         if cache_key in self._content_cache:

@@ -12,12 +12,14 @@ from api.auth import API_KEY_NAME, api_key_header, get_api_key
 class TestGetApiKey:
     """Test get_api_key function."""
 
-    def test_get_api_key_no_env_key(self):
-        """Test get_api_key returns provided key when no env key set (dev mode)."""
+    def test_get_api_key_no_env_key_raises_error(self):
+        """Test get_api_key raises error when no env key set (secure by default)."""
         with patch.dict(os.environ, {}, clear=True):
-            result = get_api_key("provided-key")
+            with pytest.raises(HTTPException) as exc_info:
+                get_api_key("provided-key")
 
-            assert result == "provided-key"
+            assert exc_info.value.status_code == 500
+            assert "Server misconfiguration" in exc_info.value.detail
 
     @patch.dict(os.environ, {"RESUME_API_KEY": "secret-key"})
     def test_get_api_key_matches_env_key(self):
@@ -84,6 +86,16 @@ class TestGetApiKey:
 
         assert exc_info.value.status_code == 403
 
+    def test_insecure_mode_allows_access(self):
+        """Test insecure mode allows access without API key."""
+        with patch.dict(os.environ, {"RESUME_INSECURE_MODE": "true"}, clear=True):
+            result = get_api_key("any-key")
+            assert result == "any-key"
+
+        with patch.dict(os.environ, {"RESUME_INSECURE_MODE": "TRUE"}, clear=True):
+            result = get_api_key("any-key")
+            assert result == "any-key"
+
 
 class TestApiKeyHeader:
     """Test API key header configuration."""
@@ -111,21 +123,21 @@ class TestAuthenticationBehavior:
         assert result1 == result2 == "test-key"
 
     @patch.dict(os.environ, {"RESUME_API_KEY": ""})
-    def test_empty_env_string_allows_access(self):
-        """Test empty env string allows access (dev mode)."""
+    def test_empty_env_string_raises_error(self):
+        """Test empty env string raises error (secure by default)."""
         # Empty string is falsy, so should behave like no key set
-        result = get_api_key("any-key")
+        with pytest.raises(HTTPException) as exc_info:
+            get_api_key("any-key")
 
-        # Should accept any key when env var is empty (dev mode)
-        assert result == "any-key"
+        assert exc_info.value.status_code == 500
 
     @patch.dict(os.environ, {}, clear=True)
-    def test_no_env_variable_allows_access(self):
-        """Test missing env variable allows access (dev mode)."""
-        result = get_api_key("any-key")
+    def test_no_env_variable_raises_error(self):
+        """Test missing env variable raises error (secure by default)."""
+        with pytest.raises(HTTPException) as exc_info:
+            get_api_key("any-key")
 
-        # Should accept any key when env var is not set (dev mode)
-        assert result == "any-key"
+        assert exc_info.value.status_code == 500
 
     @patch.dict(os.environ, {"RESUME_API_KEY": "secret-key-12345"})
     def test_numeric_suffix_key(self):

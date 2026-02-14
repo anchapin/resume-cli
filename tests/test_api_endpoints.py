@@ -14,7 +14,7 @@ mock_resume_data = {"meta": {"version": "1.0"}, "contact": {"name": "Test User"}
 
 def test_get_variants():
     # Ensure no API key required for this test (dev mode behavior)
-    with patch.dict(os.environ, {}, clear=True):
+    with patch.dict(os.environ, {"RESUME_INSECURE_MODE": "true"}, clear=True):
         response = client.get("/v1/variants")
         assert response.status_code == 200
         variants = response.json()
@@ -34,7 +34,7 @@ def test_render_pdf(MockTemplateGenerator):
 
     mock_instance.generate.side_effect = side_effect
 
-    with patch.dict(os.environ, {}, clear=True):
+    with patch.dict(os.environ, {"RESUME_INSECURE_MODE": "true"}, clear=True):
         response = client.post(
             "/v1/render/pdf", json={"resume_data": mock_resume_data, "variant": "base"}
         )
@@ -49,7 +49,7 @@ def test_tailor_resume(MockAIGenerator):
     mock_instance = MockAIGenerator.return_value
     mock_instance.tailor_data.return_value = {"tailored": "data"}
 
-    with patch.dict(os.environ, {}, clear=True):
+    with patch.dict(os.environ, {"RESUME_INSECURE_MODE": "true"}, clear=True):
         response = client.post(
             "/v1/tailor", json={"resume_data": mock_resume_data, "job_description": "Job desc"}
         )
@@ -71,7 +71,7 @@ def test_render_pdf_missing_output_file(MockTemplateGenerator):
 
     mock_instance.generate.side_effect = side_effect
 
-    with patch.dict(os.environ, {}, clear=True):
+    with patch.dict(os.environ, {"RESUME_INSECURE_MODE": "true"}, clear=True):
         response = client.post(
             "/v1/render/pdf", json={"resume_data": mock_resume_data, "variant": "base"}
         )
@@ -93,7 +93,7 @@ def test_render_pdf_generation_exception(MockTemplateGenerator):
     # Simulate an exception during PDF generation
     mock_instance.generate.side_effect = RuntimeError("generation failed")
 
-    with patch.dict(os.environ, {}, clear=True):
+    with patch.dict(os.environ, {"RESUME_INSECURE_MODE": "true"}, clear=True):
         response = client.post(
             "/v1/render/pdf", json={"resume_data": mock_resume_data, "variant": "base"}
         )
@@ -196,7 +196,7 @@ def test_auth_failure_render_pdf(MockTemplateGenerator):
 
 def test_render_pdf_validation_error_missing_resume_data():
     """Test that /v1/render/pdf returns 422 when resume_data is missing."""
-    with patch.dict(os.environ, {}, clear=True):
+    with patch.dict(os.environ, {"RESUME_INSECURE_MODE": "true"}, clear=True):
         response = client.post("/v1/render/pdf", json={"variant": "base"})
 
     assert response.status_code == 422
@@ -220,7 +220,7 @@ def test_render_pdf_uses_default_variant_when_not_specified(MockTemplateGenerato
 
     mock_instance.generate.side_effect = side_effect
 
-    with patch.dict(os.environ, {}, clear=True):
+    with patch.dict(os.environ, {"RESUME_INSECURE_MODE": "true"}, clear=True):
         # Don't specify variant - should default to "base"
         response = client.post("/v1/render/pdf", json={"resume_data": mock_resume_data})
 
@@ -229,7 +229,7 @@ def test_render_pdf_uses_default_variant_when_not_specified(MockTemplateGenerato
 
 def test_tailor_validation_error_missing_resume_data():
     """Test that /v1/tailor returns 422 when resume_data is missing."""
-    with patch.dict(os.environ, {}, clear=True):
+    with patch.dict(os.environ, {"RESUME_INSECURE_MODE": "true"}, clear=True):
         response = client.post("/v1/tailor", json={"job_description": "Job desc"})
 
     assert response.status_code == 422
@@ -241,7 +241,7 @@ def test_tailor_validation_error_missing_resume_data():
 
 def test_tailor_validation_error_missing_job_description():
     """Test that /v1/tailor returns 422 when job_description is missing."""
-    with patch.dict(os.environ, {}, clear=True):
+    with patch.dict(os.environ, {"RESUME_INSECURE_MODE": "true"}, clear=True):
         response = client.post("/v1/tailor", json={"resume_data": mock_resume_data})
 
     assert response.status_code == 422

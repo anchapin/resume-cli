@@ -1,29 +1,16 @@
 """AI-powered resume generator using Claude or OpenAI."""
 
-import sys
+import hashlib
 import json
 import os
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from rich.console import Console
-
 # Import hashlib before kubernetes_asyncio can patch it
 # Use sha256 instead of md5 to avoid kubernetes_asyncio patching
-import hashlib
-
-_sha256 = hashlib.sha256
-
-# Load environment variables from .env file if present
-try:
-    from dotenv import load_dotenv
-
-    load_dotenv()
-except ImportError:
-    pass  # python-dotenv is optional but recommended
-
 try:
     import anthropic
 
@@ -38,9 +25,28 @@ try:
 except ImportError:
     OPENAI_AVAILABLE = False
 
+from rich.console import Console
+
 from ..utils.config import Config
 from .ai_judge import create_ai_judge
 from .template import TemplateGenerator
+
+# Load environment variables from .env file if present
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv is optional but recommended
+
+
+# Python 3.8 compatibility for hashlib
+def _sha256(data, usedforsecurity=True):
+    if sys.version_info < (3, 9):
+        # Python 3.8 and earlier don't support 'usedforsecurity'
+        return hashlib.sha256(data)
+    return hashlib.sha256(data, usedforsecurity=usedforsecurity)
+
 
 # Initialize console for output
 console = Console()

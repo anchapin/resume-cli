@@ -1,31 +1,15 @@
 """AI-powered cover letter generator using Claude or OpenAI."""
 
-import sys
+import hashlib
 import os
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from rich.console import Console
-
 # Import hashlib before kubernetes_asyncio can patch it
 # Use sha256 instead of md5 to avoid kubernetes_asyncio patching
-import hashlib
-
-_sha256 = hashlib.sha256
-
-# Load environment variables from .env file if present
-try:
-    from dotenv import load_dotenv
-
-    load_dotenv()
-except ImportError:
-    pass
-
-# Initialize console for output
-console = Console()
-
 try:
     import anthropic
 
@@ -41,11 +25,32 @@ except ImportError:
     OPENAI_AVAILABLE = False
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from rich.console import Console
 
 from ..utils.config import Config
 from ..utils.yaml_parser import ResumeYAML
 from .ai_judge import create_ai_judge
 from .template import TemplateGenerator
+
+# Load environment variables from .env file if present
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
+
+
+# Python 3.8 compatibility for hashlib
+def _sha256(data, usedforsecurity=True):
+    if sys.version_info < (3, 9):
+        # Python 3.8 and earlier don't support 'usedforsecurity'
+        return hashlib.sha256(data)
+    return hashlib.sha256(data, usedforsecurity=usedforsecurity)
+
+
+# Initialize console for output
+console = Console()
 
 
 class CoverLetterGenerator:

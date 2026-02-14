@@ -13,9 +13,7 @@ from rich.console import Console
 from rich.table import Table
 
 from . import __version__
-from .generators.template import TemplateGenerator
 from .utils.config import Config
-from .utils.schema import ResumeValidator
 from .utils.yaml_parser import ResumeYAML
 
 # Initialize rich console
@@ -98,6 +96,8 @@ def init(ctx, from_existing: bool):
 @click.pass_context
 def validate(ctx):
     """Validate resume.yaml schema and data."""
+    from .utils.schema import ResumeValidator
+
     yaml_path = ctx.obj["yaml_path"]
 
     if not yaml_path.exists():
@@ -165,6 +165,8 @@ def generate(
         job_description = Path(job_desc).read_text()
 
     try:
+        from .generators.template import TemplateGenerator
+
         # Determine output path
         if output:
             output_path = Path(output)

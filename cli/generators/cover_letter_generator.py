@@ -44,12 +44,15 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from ..utils.config import Config
 from ..utils.yaml_parser import ResumeYAML
+from ..utils.template_filters import latex_escape
 from .ai_judge import create_ai_judge
 from .template import TemplateGenerator
 
 
 class CoverLetterGenerator:
     """Generate personalized cover letters with AI."""
+
+    _ENV_CACHE = {}
 
     def __init__(self, yaml_path: Optional[Path] = None, config: Optional[Config] = None):
         """
@@ -67,48 +70,26 @@ class CoverLetterGenerator:
         # Set up template directory
         template_dir = Path(__file__).parent.parent.parent / "templates"
 
-        # Set up Jinja2 environment
-        self.env = Environment(
-            loader=FileSystemLoader(template_dir),
-            autoescape=select_autoescape(),
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
+        # Check cache
+        cache_key = str(template_dir.resolve())
+        if cache_key in self._ENV_CACHE:
+            self.env = self._ENV_CACHE[cache_key]
+        else:
+            # Set up Jinja2 environment
+            self.env = Environment(
+                loader=FileSystemLoader(template_dir),
+                autoescape=select_autoescape(),
+                trim_blocks=True,
+                lstrip_blocks=True,
+            )
 
-        # Add now() function for templates
-        self.env.globals["now"] = datetime.now
+            # Add now() function for templates
+            self.env.globals["now"] = datetime.now
 
-        # Add LaTeX escape filter (reuse from template_generator)
-        def latex_escape(text):
-            """Escape special LaTeX characters."""
-            if not text:
-                return text
-            replacements = {
-                "&": r"\&",
-                "%": r"\%",
-                "$": r"\$",
-                "#": r"\#",
-                "_": r"\_",
-                "{": r"\{",
-                "}": r"\}",
-                "~": r"\textasciitilde{}",
-                "^": r"\^{}",
-                "™": r"\textsuperscript{TM}",
-                "®": r"\textsuperscript{R}",
-                "©": r"\textcopyright{}",
-                "°": r"\textsuperscript{\textdegree}{}",
-                "±": r"$\pm$",
-                "≥": r"$\ge$",
-                "≤": r"$\le$",
-                "→": r"$\rightarrow$",
-                "—": r"---",  # em dash
-                "–": r"--",  # en dash
-            }
-            for old, new in replacements.items():
-                text = text.replace(old, new)
-            return text
+            # Add LaTeX escape filter (reuse from template_generator via template_filters)
+            self.env.filters["latex_escape"] = latex_escape
 
-        self.env.filters["latex_escape"] = latex_escape
+            self._ENV_CACHE[cache_key] = self.env
 
         # Initialize AI client (same as AIGenerator)
         provider = self.config.ai_provider

@@ -1,17 +1,16 @@
 """AI-powered cover letter generator using Claude or OpenAI."""
 
-import sys
+# Import hashlib before kubernetes_asyncio can patch it
+# Use sha256 instead of md5 to avoid kubernetes_asyncio patching
+import hashlib
 import os
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from rich.console import Console
-
-# Import hashlib before kubernetes_asyncio can patch it
-# Use sha256 instead of md5 to avoid kubernetes_asyncio patching
-import hashlib
 
 _sha256 = hashlib.sha256
 
@@ -43,8 +42,8 @@ except ImportError:
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from ..utils.config import Config
-from ..utils.yaml_parser import ResumeYAML
 from ..utils.template_filters import latex_escape
+from ..utils.yaml_parser import ResumeYAML
 from .ai_judge import create_ai_judge
 from .template import TemplateGenerator
 
@@ -510,7 +509,11 @@ Return ONLY valid JSON, nothing else."""
         # Create cache key from inputs
         qa = job_details.get("question_answers", {})
         cache_key_input = f"{job_description[:500]}{str(qa)}{variant}"
-        cache_key = _sha256(cache_key_input.encode(), usedforsecurity=False).hexdigest()
+        # usedforsecurity argument only available in Python 3.9+
+        if sys.version_info >= (3, 9):
+            cache_key = _sha256(cache_key_input.encode(), usedforsecurity=False).hexdigest()
+        else:
+            cache_key = _sha256(cache_key_input.encode()).hexdigest()
 
         # Check cache
         if cache_key in self._content_cache:

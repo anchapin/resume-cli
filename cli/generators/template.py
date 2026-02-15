@@ -9,8 +9,8 @@ from typing import Any, Dict, Optional
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from ..utils.config import Config
-from ..utils.yaml_parser import ResumeYAML
 from ..utils.template_filters import latex_escape, proper_title
+from ..utils.yaml_parser import ResumeYAML
 
 
 class TemplateGenerator:

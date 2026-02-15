@@ -529,7 +529,7 @@ Return ONLY valid JSON, nothing else."""
         # Create cache key from inputs
         qa = job_details.get("question_answers", {})
         cache_key_input = f"{job_description[:500]}{str(qa)}{variant}"
-        cache_key = _sha256(cache_key_input.encode(), usedforsecurity=False).hexdigest()
+        cache_key = _sha256(cache_key_input.encode()).hexdigest()
 
         # Check cache
         if cache_key in self._content_cache:

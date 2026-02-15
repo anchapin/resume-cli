@@ -40,7 +40,7 @@ def test_render_pdf(MockTemplateGenerator):
         response = client.post(
             "/v1/render/pdf",
             json={"resume_data": mock_resume_data, "variant": "base"},
-            headers=TEST_HEADERS
+            headers=TEST_HEADERS,
         )
 
     assert response.status_code == 200
@@ -57,7 +57,7 @@ def test_tailor_resume(MockAIGenerator):
         response = client.post(
             "/v1/tailor",
             json={"resume_data": mock_resume_data, "job_description": "Job desc"},
-            headers=TEST_HEADERS
+            headers=TEST_HEADERS,
         )
 
     assert response.status_code == 200
@@ -81,7 +81,7 @@ def test_render_pdf_missing_output_file(MockTemplateGenerator):
         response = client.post(
             "/v1/render/pdf",
             json={"resume_data": mock_resume_data, "variant": "base"},
-            headers=TEST_HEADERS
+            headers=TEST_HEADERS,
         )
 
     assert response.status_code == 500
@@ -105,7 +105,7 @@ def test_render_pdf_generation_exception(MockTemplateGenerator):
         response = client.post(
             "/v1/render/pdf",
             json={"resume_data": mock_resume_data, "variant": "base"},
-            headers=TEST_HEADERS
+            headers=TEST_HEADERS,
         )
 
     assert response.status_code == 500
@@ -232,7 +232,9 @@ def test_render_pdf_uses_default_variant_when_not_specified(MockTemplateGenerato
 
     with patch.dict(os.environ, TEST_ENV, clear=True):
         # Don't specify variant - should default to "base"
-        response = client.post("/v1/render/pdf", json={"resume_data": mock_resume_data}, headers=TEST_HEADERS)
+        response = client.post(
+            "/v1/render/pdf", json={"resume_data": mock_resume_data}, headers=TEST_HEADERS
+        )
 
     assert response.status_code == 200
 
@@ -240,7 +242,9 @@ def test_render_pdf_uses_default_variant_when_not_specified(MockTemplateGenerato
 def test_tailor_validation_error_missing_resume_data():
     """Test that /v1/tailor returns 422 when resume_data is missing."""
     with patch.dict(os.environ, TEST_ENV, clear=True):
-        response = client.post("/v1/tailor", json={"job_description": "Job desc"}, headers=TEST_HEADERS)
+        response = client.post(
+            "/v1/tailor", json={"job_description": "Job desc"}, headers=TEST_HEADERS
+        )
 
     assert response.status_code == 422
     body = response.json()
@@ -252,7 +256,9 @@ def test_tailor_validation_error_missing_resume_data():
 def test_tailor_validation_error_missing_job_description():
     """Test that /v1/tailor returns 422 when job_description is missing."""
     with patch.dict(os.environ, TEST_ENV, clear=True):
-        response = client.post("/v1/tailor", json={"resume_data": mock_resume_data}, headers=TEST_HEADERS)
+        response = client.post(
+            "/v1/tailor", json={"resume_data": mock_resume_data}, headers=TEST_HEADERS
+        )
 
     assert response.status_code == 422
     body = response.json()

@@ -10,17 +10,19 @@ on:
     - cron: '0 0 * * 0'
 
 jobs:
-  dependency-review:
-    name: Dependency Review
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+  # Dependency review is disabled because it requires Dependency Graph to be enabled on the repo,
+  # which we cannot ensure in this environment.
+  # dependency-review:
+  #   name: Dependency Review
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'pull_request'
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
 
-    - name: Dependency Review
-      uses: actions/dependency-review-action@v4
+  #   - name: Dependency Review
+  #     uses: actions/dependency-review-action@v4
 
   security-scan:
     name: Security Scan

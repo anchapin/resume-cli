@@ -46,10 +46,8 @@ tracking/README.md
 tracking/SCHEMA.md
 
 # Templates
-templates/
 
 # Config
-config/
 *.yaml
 *.yml
 !.env.template

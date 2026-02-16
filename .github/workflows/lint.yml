@@ -89,7 +89,7 @@ jobs:
 
     - name: Lint YAML files
       run: |
-        yamllint -c .github/workflows/.yamllint.yml config/ tests/ || echo "⚠️ YAML linting found issues"
+        yamllint -c .github/yamllint.yml config/ tests/ || echo "⚠️ YAML linting found issues"
 
     - name: Validate YAML schemas
       run: |

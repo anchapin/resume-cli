@@ -1,6 +1,5 @@
 """Template-based resume generator."""
 
-import re
 import subprocess
 import sys
 from datetime import datetime
@@ -10,11 +9,14 @@ from typing import Any, Dict, Optional
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from ..utils.config import Config
+from ..utils.template_filters import latex_escape, proper_title
 from ..utils.yaml_parser import ResumeYAML
 
 
 class TemplateGenerator:
     """Generate resumes from Jinja2 templates."""
+
+    _ENV_CACHE = {}
 
     def __init__(
         self,
@@ -40,106 +42,22 @@ class TemplateGenerator:
 
         self.template_dir = Path(template_dir)
 
-        # Set up Jinja2 environment
-        self.env = Environment(
-            loader=FileSystemLoader(self.template_dir),
-            autoescape=select_autoescape(),
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
+        # Set up Jinja2 environment (with caching)
+        cache_key = str(self.template_dir.resolve())
+        if cache_key in self._ENV_CACHE:
+            self.env = self._ENV_CACHE[cache_key]
+        else:
+            self.env = Environment(
+                loader=FileSystemLoader(self.template_dir),
+                autoescape=select_autoescape(),
+                trim_blocks=True,
+                lstrip_blocks=True,
+            )
+            # Add filters
+            self.env.filters["latex_escape"] = latex_escape
+            self.env.filters["proper_title"] = proper_title
 
-        # Add LaTeX escape filter
-        def latex_escape(text):
-            """Escape special LaTeX characters and convert Markdown bold to LaTeX."""
-            if not text:
-                return text
-
-            # First, convert Markdown bold (**text**) to LaTeX \textbf{text}
-            # This must happen before character escaping
-            text = re.sub(r"\*\*([^*]+)\*\*", r"\\textbf{\1}", text)
-
-            # Convert "degrees" to degree symbol first
-            text = text.replace("degrees", "°")
-
-            # Escape special characters
-            replacements = {
-                "&": r"\&",
-                "%": r"\%",
-                "$": r"\$",
-                "#": r"\#",
-                "_": r"\_",
-                "{": r"\{",
-                "}": r"\}",
-                "~": r"\textasciitilde{}",
-                "^": r"\^{}",
-                "™": r"\textsuperscript{TM}",
-                "®": r"\textsuperscript{R}",
-                "©": r"\textcopyright{}",
-                "°": r"\textsuperscript{\textdegree}{}",
-                "±": r"$\pm$",
-                "≥": r"$\ge$",
-                "≤": r"$\le$",
-                "→": r"$\rightarrow$",
-                "—": r"---",  # em dash
-                "–": r"--",  # en dash
-                # ASCII equivalents for math symbols and arrows
-                ">=": r"$\ge$",
-                "<=": r"$\le$",
-                "->": r"$\rightarrow$",
-            }
-            for old, new in replacements.items():
-                text = text.replace(old, new)
-
-            # Fix up LaTeX commands by unescaping their braces
-            # Pattern matches \command\{...\} and converts to \command{...}
-            # This handles \textbf, \textsuperscript, \textasciitilde, etc.
-            text = re.sub(r"\\([a-zA-Z]+)\\{(.+?)\\}", r"\\\1{\2}", text)
-
-            return text
-
-        self.env.filters["latex_escape"] = latex_escape
-
-        # Add proper title case filter (lowercase for small words)
-        def proper_title(text):
-            """Convert to title case with lowercase for small words (except first word)."""
-            if not text:
-                return text
-            # Words to keep lowercase unless they're the first word
-            small_words = {
-                "a",
-                "an",
-                "the",
-                "and",
-                "or",
-                "but",
-                "for",
-                "nor",
-                "so",
-                "yet",
-                "at",
-                "by",
-                "in",
-                "of",
-                "on",
-                "to",
-                "up",
-                "as",
-                "with",
-            }
-            words = text.replace("_", " ").split()
-            if not words:
-                return text
-            # Capitalize first word always
-            result = [words[0].capitalize()]
-            # Capitalize rest, except small words
-            for word in words[1:]:
-                if word.lower() in small_words:
-                    result.append(word.lower())
-                else:
-                    result.append(word.capitalize())
-            return " ".join(result)
-
-        self.env.filters["proper_title"] = proper_title
+            self._ENV_CACHE[cache_key] = self.env
 
     def generate(
         self,

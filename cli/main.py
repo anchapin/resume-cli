@@ -146,6 +146,12 @@ def validate(ctx):
     type=click.Path(exists=True),
     help="Path to job description file for AI customization",
 )
+@click.option(
+    "--language",
+    type=click.Choice(["en", "es", "fr", "de", "pt", "zh", "ja", "ko"]),
+    default="en",
+    help="Target language for resume generation (requires AI)",
+)
 @click.pass_context
 def generate(
     ctx,
@@ -157,6 +163,7 @@ def generate(
     no_save: bool,
     ai: bool,
     job_desc: Optional[str],
+    language: str,
 ):
     """
     Generate resume from template or AI.
@@ -204,7 +211,30 @@ def generate(
             console.print(f"  Using custom template: {custom_template_path}")
 
         # Generate
-        if ai or job_description:
+        if language and language != "en":
+            # Multi-language generation
+            from .generators.multi_language_generator import MultiLanguageResumeGenerator
+
+            console.print(f"[cyan]Translating resume to {language}...[/cyan]")
+            generator = MultiLanguageResumeGenerator(yaml_path, config=config)
+            content = generator.generate(
+                target_language=language,
+                variant=variant,
+                output_format=format,
+            )
+
+            # Determine output path
+            if output_path is None and not no_save:
+                base_path = TemplateGenerator(yaml_path, config=config).get_output_path(
+                    variant, format
+                )
+                stem = base_path.stem
+                output_path = base_path.parent / f"{stem}-{language}{base_path.suffix}"
+
+            # Save content
+            if output_path:
+                output_path.write_text(content)
+        elif ai or job_description:
             from .generators.ai_generator import AIGenerator
 
             console.print("[cyan]Using AI-powered generation...[/cyan]")
@@ -999,9 +1029,7 @@ def keyword_analysis(ctx, variant: str, job_desc: str, output: Optional[str]):
     default="60",
     help="Video duration in seconds (60=1min, 120=2min, 300=5min)",
 )
-@click.option(
-    "-o", "--output", type=click.Path(), help="Output file path (default: stdout)"
-)
+@click.option("-o", "--output", type=click.Path(), help="Output file path (default: stdout)")
 @click.option(
     "--format",
     type=click.Choice(["markdown", "teleprompter"]),
@@ -1089,6 +1117,123 @@ def video_script(
         sys.exit(1)
 
 
+@cli.command("mock-interview")
+@click.option(
+    "--job-desc", type=click.Path(exists=True), required=True, help="Path to job description file"
+)
+@click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to use")
+@click.option(
+    "--category",
+    type=click.Choice(["technical", "behavioral", "mixed"]),
+    default="mixed",
+    help="Interview question category",
+)
+@click.option("--num-technical", type=int, default=5, help="Number of technical questions")
+@click.option("--num-behavioral", type=int, default=3, help="Number of behavioral questions")
+@click.option("--no-system-design", is_flag=True, help="Exclude system design questions")
+@click.option("-o", "--output", type=click.Path(), help="Save session report to file")
+@click.pass_context
+def mock_interview(
+    ctx,
+    job_desc: str,
+    variant: str,
+    category: str,
+    num_technical: int,
+    num_behavioral: int,
+    no_system_design: bool,
+    output: Optional[str],
+):
+    """
+    Start an interactive mock interview session with AI evaluation.
+
+    The session generates interview questions based on the job description and your resume.
+    You answer questions and receive AI-powered feedback and evaluation.
+
+    Examples:
+        resume-cli mock-interview --job-desc job-posting.txt
+        resume-cli mock-interview --job-desc job.txt --category technical --num-technical 8
+        resume-cli mock-interview --job-desc job.txt --no-system-design -o report.md
+    """
+    yaml_path = ctx.obj["yaml_path"]
+    config = ctx.obj["config"]
+
+    console.print("[bold blue]Mock Interview Mode[/bold blue]")
+    console.print(f"  Variant: {variant}")
+    console.print(f"  Category: {category}")
+
+    # Check if yaml exists
+    if not yaml_path.exists():
+        console.print(f"[bold red]Error:[/bold red] resume.yaml not found at {yaml_path}")
+        console.print("  Run 'resume-cli init' to create it first.")
+        sys.exit(1)
+
+    # Read job description
+    job_description = Path(job_desc).read_text()
+    console.print(f"  Job description: {job_desc}")
+
+    try:
+        from .generators.mock_interview_generator import MockInterviewGenerator
+
+        # Start interview session
+        generator = MockInterviewGenerator(yaml_path, config=config)
+        session = generator.start_session(
+            job_description=job_description,
+            variant=variant,
+            category=category,
+            num_technical=num_technical,
+            num_behavioral=num_behavioral,
+            include_system_design=not no_system_design,
+        )
+
+        console.print(f"\n[green]✓[/green] Session ID: {session.session_id}")
+        console.print(f"  Total questions: {len(session.questions)}")
+        console.print("\n[bold]Instructions:[/bold]")
+        console.print("  This is a non-interactive preview mode.")
+        console.print(
+            "  To use the full interactive mode, run with a terminal that supports input."
+        )
+        console.print("  For now, we'll show the questions and generate a report.\n")
+
+        # Display questions
+        for i, q in enumerate(session.questions[:5], 1):  # Show first 5
+            console.print(f"[cyan]Q{i}:[/cyan] {q.get('question', '')}")
+            console.print(
+                f"  [dim]Type: {q.get('type', 'N/A')} | Priority: {q.get('priority', 'medium')}[/dim]"
+            )
+            console.print("")
+
+        if len(session.questions) > 5:
+            console.print(f"[dim]... and {len(session.questions) - 5} more questions[/dim]")
+
+        # Complete session (for demo purposes, simulate completing with questions displayed)
+        summary = generator.complete_session(session)
+
+        console.print("\n[bold green]Session Complete![/bold green]")
+        console.print(f"  Questions: {summary['answered']} / {summary['total_questions']}")
+        console.print(f"  Overall Score: {summary['overall_score']:.1f}/5")
+
+        # Generate and save report
+        report = generator.render_session_report(session)
+
+        if output:
+            output_path = Path(output)
+            output_path.write_text(report)
+            console.print(f"\n[green]✓[/green] Report saved to: {output_path}")
+        else:
+            console.print("\n" + report)
+
+    except ImportError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}")
+        console.print("  Install AI dependencies: pip install 'resume-cli[ai]'")
+        sys.exit(1)
+    except Exception as e:
+        console.print(f"[bold red]Error in mock interview:[/bold red] {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)
+
+
 @cli.command("job-parse")
 @click.option(
     "--file", "file_input", type=click.Path(exists=True), help="Path to job posting HTML file"
@@ -1168,6 +1313,96 @@ def job_parse(file_input: Optional[str], url: Optional[str], output: Optional[st
         sys.exit(1)
 
 
+@cli.command("find-connections")
+@click.option("--company", required=True, help="Target company name")
+@click.option("--role", default="", help="Role/department to filter by")
+@click.option("--no-linkedin", is_flag=True, help="Disable LinkedIn search")
+@click.option("--no-github", is_flag=True, help="Disable GitHub search")
+@click.option("--include-alumni", is_flag=True, help="Include alumni search")
+@click.option("--include-previous", is_flag=True, help="Include previous company connections")
+@click.option("--draft-message", is_flag=True, help="Generate outreach message suggestions")
+@click.option("-o", "--output", type=click.Path(), help="Export connections to CSV file")
+def find_connections(
+    company: str,
+    role: str,
+    no_linkedin: bool,
+    no_github: bool,
+    include_alumni: bool,
+    include_previous: bool,
+    draft_message: bool,
+    output: Optional[str],
+):
+    """
+    Find professional connections at target companies.
+
+    Helps users find alumni, former colleagues, and other connections
+    at companies they're interested in for networking.
+
+    Examples:
+        resume-cli find-connections --company "Stripe"
+        resume-cli find-connections --company "Google" --role "Engineering"
+        resume-cli find-connections --company "Meta" --include-alumni --draft-message
+    """
+    from .integrations.connection_finder import ConnectionFinder
+
+    console.print("[bold blue]Connection Finder[/bold blue]")
+    console.print(f"  Company: {company}")
+    if role:
+        console.print(f"  Role: {role}")
+
+    try:
+        finder = ConnectionFinder()
+
+        # Find connections
+        connections = finder.find_connections(
+            company=company,
+            role=role,
+            use_linkedin=not no_linkedin,
+            use_github=not no_github,
+        )
+
+        # Find alumni if requested
+        if include_alumni:
+            alumni = finder.find_alumni(company)
+            connections.extend(alumni)
+
+        # Find previous company connections if requested
+        if include_previous:
+            prev_connections = finder.find_previous_company_connections(company)
+            connections.extend(prev_connections)
+
+        # Print connections table
+        finder.print_connections_table(connections)
+
+        # Generate outreach suggestions if requested
+        if draft_message and connections:
+            console.print("\n[bold]Outreach Message Suggestions[/bold]\n")
+            suggestions = finder.generate_outreach_suggestions(connections)
+
+            for i, suggestion in enumerate(suggestions[:3], 1):
+                console.print(f"### {i}. {suggestion.connection.name}")
+                console.print(f"   **Common Ground:** {suggestion.common_ground}")
+                console.print("")
+                console.print(suggestion.message_template)
+                console.print("")
+                console.print("**Talking Points:**")
+                for point in suggestion.talking_points[:3]:
+                    console.print(f"  - {point}")
+                console.print("")
+
+        # Export to CSV if requested
+        if output and connections:
+            output_path = Path(output)
+            finder.export_to_csv(connections, output_path)
+
+    except Exception as e:
+        console.print(f"[bold red]Error finding connections:[/bold red] {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)
+
+
 @cli.command("salary-research")
 @click.option("--title", required=True, help="Job title")
 @click.option("--location", default="", help="Job location")
@@ -1217,8 +1452,7 @@ def salary_research(title: str, location: str, company: str, level: str, output:
         if output:
             output_path = Path(output)
             research.export_json(salary_data, output_path)
-            console.print(f"
-[green]✓[/green] Report saved to: {output_path}")
+            console.print(f"[green]✓[/green] Report saved to: {output_path}")
 
     except Exception as e:
         console.print(f"[bold red]Error researching salary:[/bold red] {e}")
@@ -1335,12 +1569,7 @@ def offer_list():
         table.add_column("Location", style="yellow")
 
         for o in offers:
-            table.add_row(
-                o.company,
-                o.role,
-                f"${o.total_compensation:,.0f}",
-                o.location or "N/A"
-            )
+            table.add_row(o.company, o.role, f"${o.total_compensation:,.0f}", o.location or "N/A")
 
         console.print(table)
 
@@ -1365,7 +1594,7 @@ def offer_priorities(salary: int, growth: int, wlb: int, benefits: int):
 
     try:
         set_priorities(salary=salary, growth=growth, wlb=wlb, benefits=benefits)
-        console.print(f"[green]✓[/green] Priorities updated:")
+        console.print("[green]✓[/green] Priorities updated:")
         console.print(f"  Salary: {salary}%")
         console.print(f"  Growth: {growth}%")
         console.print(f"  Work-Life Balance: {wlb}%")

@@ -1,8 +1,7 @@
 """Unit tests for JobParser class."""
 
 import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -98,7 +97,8 @@ class TestJobParserInitialization:
     def test_cache_dir_created(self, tmp_path):
         """Test that cache directory is created."""
         cache_dir = tmp_path / "cache"
-        parser = JobParser(cache_dir=cache_dir)
+        # parser removed - was unused
+        _ = JobParser(cache_dir=cache_dir)
         assert cache_dir.exists()
 
 
@@ -222,7 +222,7 @@ class TestHasLinkedInStructure:
 
     def test_has_linkedin_structure_false(self, job_parser):
         """Test non-LinkedIn HTML."""
-        html = '<html><body><p>Generic job</p></body></html>'
+        html = "<html><body><p>Generic job</p></body></html>"
         assert job_parser._has_linkedin_structure(html) is False
 
 
@@ -236,7 +236,7 @@ class TestHasIndeedStructure:
 
     def test_has_indeed_structure_false(self, job_parser):
         """Test non-Indeed HTML."""
-        html = '<html><body><p>Generic job</p></body></html>'
+        html = "<html><body><p>Generic job</p></body></html>"
         assert job_parser._has_indeed_structure(html) is False
 
 
@@ -245,20 +245,20 @@ class TestExtractPattern:
 
     def test_extract_pattern_found(self, job_parser):
         """Test extracting pattern that exists."""
-        text = 'Company: Google'
-        result = job_parser._extract_pattern(text, r'Company:\s*(\w+)')
+        text = "Company: Google"
+        result = job_parser._extract_pattern(text, r"Company:\s*(\w+)")
         assert result == "Google"
 
     def test_extract_pattern_not_found(self, job_parser):
         """Test extracting pattern that doesn't exist."""
-        text = 'No company here'
-        result = job_parser._extract_pattern(text, r'Company:\s*(\w+)', default="Default")
+        text = "No company here"
+        result = job_parser._extract_pattern(text, r"Company:\s*(\w+)", default="Default")
         assert result == "Default"
 
     def test_extract_pattern_default_empty(self, job_parser):
         """Test with empty default."""
-        text = 'No match'
-        result = job_parser._extract_pattern(text, r'Company:\s*(\w+)')
+        text = "No match"
+        result = job_parser._extract_pattern(text, r"Company:\s*(\w+)")
         assert result == ""
 
 
@@ -268,13 +268,13 @@ class TestExtractList:
     def test_extract_list_multiple(self, job_parser):
         """Test extracting multiple items."""
         text = "Skills: Python JavaScript Go Rust"
-        result = job_parser._extract_list(text, r'Skills:\s*([A-Z][a-zA-Z]+)', max_items=3)
+        result = job_parser._extract_list(text, r"Skills:\s*([A-Z][a-zA-Z]+)", max_items=3)
         assert len(result) <= 3
 
     def test_extract_list_deduplication(self, job_parser):
         """Test that duplicates are removed."""
         text = "Python Python JavaScript"
-        result = job_parser._extract_list(text, r'([A-Z][a-z]+)', max_items=10)
+        result = job_parser._extract_list(text, r"([A-Z][a-z]+)", max_items=10)
         # Should have unique items (case-insensitive dedup)
         assert len(result) >= 1
 
@@ -406,7 +406,7 @@ class TestParseJobPosting:
         html_file.write_text("<html><body><h1>Engineer</h1></body></html>")
 
         # Use cache with tmp_path to avoid /dev/null issue
-        with patch.object(JobParser, '__init__', lambda self, cache_dir=None: None):
+        with patch.object(JobParser, "__init__", lambda self, cache_dir=None: None):
             job = parse_job_posting(file_path=html_file, use_cache=True)
         assert job is not None
 

@@ -1,8 +1,6 @@
 """Tests for DOCX resume generator."""
 
-import pytest
-from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 
 class TestDocxGeneratorInitialization:
@@ -134,9 +132,7 @@ class TestDocxGeneratorGenerate:
         }
 
         generator = DocxGenerator(yaml_path=sample_yaml_file)
-        result = generator.generate(
-            variant="v1.0.0-base", enhanced_context=enhanced_context
-        )
+        result = generator.generate(variant="v1.0.0-base", enhanced_context=enhanced_context)
 
         assert result is mock_doc
 

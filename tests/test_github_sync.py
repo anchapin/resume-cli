@@ -12,11 +12,6 @@ from cli.integrations.github_sync import GitHubSync
 from cli.utils.config import Config
 
 
-@pytest.mark.skip(reason="Mock patching scope issues - needs refactoring")
-class TestGitHubSyncInitialization:
-    """Test GitHubSync initialization."""
-
-
 class TestGitHubSyncInitialization:
     """Test GitHubSync initialization."""
 

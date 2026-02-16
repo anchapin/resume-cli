@@ -52,6 +52,11 @@ tracking/SCHEMA.md
 *.yml
 !.env.template
 
+# Allow api directory (but exclude pycache)
+api/
+!api/
+!api/requirements.txt
+
 # Resume data
 resume.yaml
 resumes/

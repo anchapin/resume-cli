@@ -14,10 +14,11 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Install Python dependencies
-COPY requirements.txt api/requirements.txt ./
+COPY requirements.txt ./
+COPY api/requirements.txt ./api/
 RUN pip install --no-cache-dir --upgrade pip wheel && \
     pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r api/requirements.txt
+    pip install --no-cache-dir -r ./api/requirements.txt
 
 # =============================================================================
 # Stage 2: Runtime
@@ -48,7 +49,8 @@ COPY --from=builder /usr/local/bin/pip /usr/local/bin/pip
 # Set working directory
 WORKDIR /app
 
-# Copy application code
+# Copy application code and installation files
+COPY --chown=appuser:appgroup pyproject.toml setup.py ./
 COPY --chown=appuser:appgroup api/ api/
 COPY --chown=appuser:appgroup cli/ cli/
 COPY --chown=appuser:appgroup templates/ templates/

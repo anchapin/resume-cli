@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Development
+.env
+.env.local
+*.md
+LICENSE
+CLAUDE.md
+README.md
+QUICKSTART.md
+IMPLEMENTATION_PLAN.md
+pr_body.md
+
+# Docs
+docs/
+tracking/README.md
+tracking/SCHEMA.md
+
+# Templates
+templates/
+
+# Config
+config/
+*.yaml
+*.yml
+!.env.template
+
+# Resume data
+resume.yaml
+resumes/
+output/
+
+# Tracking
+tracking/*.csv
+
+# Tests
+tests/
+conftest.py
+
+# CI/CD
+.github/
+.flake8

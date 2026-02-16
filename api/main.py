@@ -30,6 +30,12 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Resume API", version="1.0.0")
 
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for container orchestration."""
+    return {"status": "healthy", "service": "resume-api"}
+
+
 @app.get("/v1/variants", dependencies=[Security(get_api_key)])
 async def get_variants():
     config = Config()  # Uses default config path logic

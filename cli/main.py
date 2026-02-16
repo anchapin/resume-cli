@@ -617,6 +617,12 @@ def analyze(ctx):
         sys.exit(1)
 
 
+# Add LinkedIn commands
+from .commands.linkedin import linkedin_import, linkedin_export
+cli.add_command(linkedin_import)
+cli.add_command(linkedin_export)
+
+
 @cli.command("ats-check")
 @click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to check")
 @click.option(
@@ -665,7 +671,8 @@ def ats_check(ctx, variant: str, job_desc: str, output: Optional[str]):
         if output:
             output_path = Path(output)
             generator.export_json(report, output_path)
-            console.print(f"\n[green]✓[/green] Report saved to: {output_path}")
+            console.print(f"
+[green]✓[/green] Report saved to: {output_path}")
 
     except Exception as e:
         console.print(f"[bold red]Error checking ATS score:[/bold red] {e}")
@@ -673,6 +680,7 @@ def ats_check(ctx, variant: str, job_desc: str, output: Optional[str]):
 
         traceback.print_exc()
         sys.exit(1)
+
 
 
 def main():

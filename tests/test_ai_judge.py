@@ -1,11 +1,8 @@
 """Unit tests for AIJudge class."""
 
-import json
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from cli.generators.ai_judge import AIJudge, create_ai_judge
 from cli.utils.config import Config

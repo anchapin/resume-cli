@@ -2,7 +2,7 @@
 
 import json
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -507,7 +507,6 @@ Please extract the keywords:"""
     def print_report(self, report: KeywordDensityReport) -> None:
         """Print formatted keyword density report to console."""
         # Header
-        title = f"Keyword Analysis for: {report.job_title} at {report.company}"
         score_color = (
             "green"
             if report.density_score >= 70

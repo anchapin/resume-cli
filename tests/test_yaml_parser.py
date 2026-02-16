@@ -1,9 +1,6 @@
 """Unit tests for ResumeYAML class."""
 
-import os
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -84,17 +81,17 @@ class TestResumeYAMLSave:
         handler.save(new_data)
 
         # Verify file was updated
-        with open(sample_yaml_file, "r") as f:
+        with open(sample_yaml_file) as f:
             loaded = yaml.safe_load(f)
         assert loaded == new_data
 
     def test_save_updates_timestamp(self, sample_yaml_file: Path):
         """Test that save updates last_updated timestamp."""
         handler = ResumeYAML(sample_yaml_file)
-        data = handler.load()
+        handler.load()
         handler.save()
 
-        with open(sample_yaml_file, "r") as f:
+        with open(sample_yaml_file) as f:
             loaded = yaml.safe_load(f)
         assert "last_updated" in loaded["meta"]
         # Should be in YYYY-MM-DD format

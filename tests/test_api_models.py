@@ -1,6 +1,5 @@
 """Unit tests for API models."""
 
-import pytest
 
 from api.models import ResumeRequest, TailorRequest
 

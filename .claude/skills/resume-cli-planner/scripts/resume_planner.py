@@ -6,9 +6,8 @@ import re
 import subprocess
 import sys
 from collections import defaultdict
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Dict, List, Optional, Set
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -301,11 +300,11 @@ def print_agent_commands(tracks: Dict[str, List[Issue]], max_issues_per_track: i
     for area, issues in tracks.items():
         for issue in issues[:max_issues_per_track]:
             worktree = generate_worktree_name(issue)
-            branch = generate_branch_name(issue)
+            generate_branch_name(issue)
 
             print(f"# Track: {area} | Issue #{issue.number}: {issue.title[:50]}")
             print(f"# cd {worktree} && # Work in this directory")
-            print(f"# Read the issue and implement the feature")
+            print("# Read the issue and implement the feature")
 
 
 def print_summary(tracks: Dict[str, List[Issue]], issues: List[Issue]):
@@ -321,7 +320,7 @@ def print_summary(tracks: Dict[str, List[Issue]], issues: List[Issue]):
         if issue.priority:
             priority_counts[issue.priority] += 1
 
-    print(f"\nAll open issues by priority:")
+    print("\nAll open issues by priority:")
     for priority in sorted(priority_counts.keys()):
         print(f"  {priority.upper()}: {priority_counts[priority]} issues")
 
@@ -331,7 +330,7 @@ def print_summary(tracks: Dict[str, List[Issue]], issues: List[Issue]):
         if issue.category:
             category_counts[issue.category] += 1
 
-    print(f"\nAll open issues by category:")
+    print("\nAll open issues by category:")
     for category in sorted(category_counts.keys()):
         print(f"  {category}: {category_counts[category]} issues")
 

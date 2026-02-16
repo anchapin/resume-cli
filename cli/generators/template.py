@@ -1,7 +1,6 @@
 """Template-based resume generator."""
 
 import subprocess
-import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional

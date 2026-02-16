@@ -12,7 +12,6 @@ Usage:
 """
 
 import argparse
-from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -50,7 +49,7 @@ class ResumeAnalyzer:
         total_versions = self.df["resume_version"].nunique()
         date_range = f"{self.df['date_applied'].min().strftime('%Y-%m-%d')} to {self.df['date_applied'].max().strftime('%Y-%m-%d')}"
 
-        print(f"\n📈 Overview:")
+        print("\n📈 Overview:")
         print(f"   Total Applications: {total_apps}")
         print(f"   Resume Versions: {total_versions}")
         print(f"   Date Range: {date_range}")
@@ -235,7 +234,7 @@ class ResumeAnalyzer:
             if best_ver:
                 print(f"\n   🏆 Top performer: {best_ver} ({best_rate:.1f}% response rate)")
                 print(
-                    f"      Consider using this version more frequently or using it as template for variants."
+                    "      Consider using this version more frequently or using it as template for variants."
                 )
 
     def generate_report(self, version: Optional[str] = None):

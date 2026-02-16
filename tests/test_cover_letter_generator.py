@@ -1,8 +1,5 @@
 """Unit tests for CoverLetterGenerator class."""
 
-import os
-import tempfile
-from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -41,7 +38,6 @@ class TestCoverLetterGeneratorInitialization:
         monkeypatch.setenv("AI_PROVIDER", "openai")
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         # Create config with openai provider
-        from cli.utils.config import Config
 
         config = Config()
         config.set("ai.provider", "openai")
@@ -56,7 +52,6 @@ class TestCoverLetterGeneratorInitialization:
         monkeypatch.setenv("AI_PROVIDER", "anthropic")
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
         # Create fresh config (default is anthropic)
-        from cli.utils.config import Config
 
         config = Config()
 
@@ -68,7 +63,6 @@ class TestCoverLetterGeneratorInitialization:
         monkeypatch.setenv("AI_PROVIDER", "openai")
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Create config with openai provider
-        from cli.utils.config import Config
 
         config = Config()
         config.set("ai.provider", "openai")
@@ -279,7 +273,6 @@ class TestGenerateSingleVersion:
         monkeypatch.setenv("AI_PROVIDER", "openai")
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Create config with openai provider
-        from cli.utils.config import Config
 
         config = Config()
         config.set("ai.provider", "openai")

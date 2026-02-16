@@ -1,13 +1,10 @@
 """Unit tests for ResumeValidator class."""
 
-import os
-from datetime import datetime
 from pathlib import Path
 
-import pytest
 import yaml
 
-from cli.utils.schema import RESUME_SCHEMA, ResumeValidator, ValidationError, validate_resume
+from cli.utils.schema import ResumeValidator, ValidationError, validate_resume
 
 
 class TestValidationError:

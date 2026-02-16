@@ -1,7 +1,6 @@
 """Tests for InterviewQuestionsGenerator."""
 
-from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -205,7 +204,7 @@ def test_extract_json():
                 # Create minimal valid config for testing
                 from cli.utils.config import Config
 
-                config = Config()
+                Config()
 
                 generator = InterviewQuestionsGenerator.__new__(InterviewQuestionsGenerator)
                 generator.provider = "anthropic"

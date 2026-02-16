@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 
 import yaml
-from fastapi import Depends, FastAPI, HTTPException, Response, Security
+from fastapi import FastAPI, HTTPException, Response, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 

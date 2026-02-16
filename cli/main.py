@@ -326,7 +326,7 @@ def generate_package(
     yaml_path = ctx.obj["yaml_path"]
     config = ctx.obj["config"]
 
-    console.print(f"[bold blue]Generating Application Package[/bold blue]")
+    console.print("[bold blue]Generating Application Package[/bold blue]")
 
     # Check if yaml exists
     if not yaml_path.exists():
@@ -497,7 +497,7 @@ def generate_package(
                 console.print(f"[green]✓[/green] Cover letter ({fmt.upper()}): {path}")
 
         # Summary
-        console.print(f"\n[bold green]Application package complete![/bold green]")
+        console.print("\n[bold green]Application package complete![/bold green]")
         console.print(f"[cyan]Package directory:[/cyan] {package_dir}")
         console.print("\n[cyan]Generated files:[/cyan]")
         for name, path in all_saved_paths.items():
@@ -784,7 +784,7 @@ def ats_check(ctx, variant: str, job_desc: str, output: Optional[str]):
     yaml_path = ctx.obj["yaml_path"]
     config = ctx.obj["config"]
 
-    console.print(f"[bold blue]Checking ATS Compatibility[/bold blue]")
+    console.print("[bold blue]Checking ATS Compatibility[/bold blue]")
     console.print(f"  Variant: {variant}")
 
     # Check if yaml exists
@@ -836,7 +836,6 @@ def diff(ctx, variant1: str, variant2: Optional[str], show_all: bool, output: Op
         resume-cli diff v1.0.0-base v1.2.0-ml_ai -o diff-report.md
         resume-cli diff --all
     """
-    import io
     from difflib import unified_diff
 
     from .generators.template import TemplateGenerator
@@ -875,7 +874,7 @@ def diff(ctx, variant1: str, variant2: Optional[str], show_all: bool, output: Op
             console.print(f"  Available variants: {', '.join(available_variants)}")
             sys.exit(1)
 
-    console.print(f"[bold blue]Comparing Resume Variants[/bold blue]\n")
+    console.print("[bold blue]Comparing Resume Variants[/bold blue]\n")
 
     try:
         generator = TemplateGenerator(yaml_path, config=config)
@@ -906,11 +905,11 @@ def diff(ctx, variant1: str, variant2: Optional[str], show_all: bool, output: Op
                 diff_output.append(f"\n## Diff: {base_variant} → {compare_variant}\n")
                 diff_output.append(diff_text)
 
-                console.print(f"[green]✓[/green] Found differences")
+                console.print("[green]✓[/green] Found differences")
             else:
                 diff_output.append(f"\n## Diff: {base_variant} → {compare_variant}\n")
                 diff_output.append("No differences found.\n")
-                console.print(f"[yellow]No differences found[/yellow]")
+                console.print("[yellow]No differences found[/yellow]")
 
         # Output results
         final_output = "".join(diff_output)
@@ -951,7 +950,7 @@ def keyword_analysis(ctx, variant: str, job_desc: str, output: Optional[str]):
     yaml_path = ctx.obj["yaml_path"]
     config = ctx.obj["config"]
 
-    console.print(f"[bold blue]Keyword Density Analysis[/bold blue]")
+    console.print("[bold blue]Keyword Density Analysis[/bold blue]")
     console.print(f"  Variant: {variant}")
 
     # Check if yaml exists
@@ -1042,12 +1041,12 @@ def job_parse(file_input: Optional[str], url: Optional[str], output: Optional[st
             console.print(f"  [cyan]Salary:[/cyan] {job_details.salary}")
 
         if job_details.requirements:
-            console.print(f"\n  [cyan]Requirements:[/cyan]")
+            console.print("\n  [cyan]Requirements:[/cyan]")
             for req in job_details.requirements[:5]:
                 console.print(f"    - {req}")
 
         if job_details.responsibilities:
-            console.print(f"\n  [cyan]Responsibilities:[/cyan]")
+            console.print("\n  [cyan]Responsibilities:[/cyan]")
             for resp in job_details.responsibilities[:5]:
                 console.print(f"    - {resp}")
 

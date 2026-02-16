@@ -1,12 +1,9 @@
 """Integration tests for CLI commands."""
 
-import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import List
 
-import pytest
 import yaml
 
 

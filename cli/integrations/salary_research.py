@@ -15,6 +15,7 @@ console = Console()
 @dataclass
 class SalaryData:
     """Salary data for a position."""
+
     title: str
     location: str
     company: str = ""
@@ -27,7 +28,7 @@ class SalaryData:
     equity_max: float = 0
     data_points: int = 0
     source: str = "Estimated"
-    
+
     def total_compensation(self) -> tuple[float, float]:
         """Return (min, max) total compensation."""
         min_total = self.min_salary + self.bonus_min + self.equity_min
@@ -37,7 +38,7 @@ class SalaryData:
 
 class SalaryResearch:
     """Salary research tool for job positions."""
-    
+
     # Sample salary ranges (in lieu of API access)
     # These are placeholder data that can be enhanced with real API integration
     BASE_SALARY_RANGES = {
@@ -98,7 +99,7 @@ class SalaryResearch:
             "principal": (220000, 350000),
         },
     }
-    
+
     # Company multipliers (for top companies)
     COMPANY_MULTIPLIERS = {
         "google": 1.25,
@@ -114,7 +115,7 @@ class SalaryResearch:
         "microsoft": 1.10,
         "adobe": 1.10,
     }
-    
+
     # Location multipliers
     LOCATION_MULTIPLIERS = {
         "san francisco": 1.25,
@@ -131,7 +132,7 @@ class SalaryResearch:
     def __init__(self):
         """Initialize salary research tool."""
         pass
-    
+
     def research(
         self,
         title: str,
@@ -141,36 +142,36 @@ class SalaryResearch:
     ) -> SalaryData:
         """
         Research salary for a position.
-        
+
         Args:
             title: Job title
             location: Job location
             company: Company name
             experience_level: entry, mid, senior, staff, principal
-        
+
         Returns:
             SalaryData object with salary information
         """
         # Normalize title
         title_lower = title.lower()
-        
+
         # Find matching title range
         title_range = None
         for key, ranges in self.BASE_SALARY_RANGES.items():
             if key in title_lower:
                 title_range = ranges
                 break
-        
+
         if title_range is None:
             # Default to software engineer range
             title_range = self.BASE_SALARY_RANGES["software engineer"]
-        
+
         # Get base salary range
         if experience_level not in title_range:
             experience_level = "mid"
-        
+
         min_salary, max_salary = title_range[experience_level]
-        
+
         # Apply location multiplier
         location_mult = 1.0
         if location:
@@ -179,10 +180,10 @@ class SalaryResearch:
                 if loc in location_lower:
                     location_mult = mult
                     break
-        
+
         min_salary *= location_mult
         max_salary *= location_mult
-        
+
         # Apply company multiplier
         company_mult = 1.0
         if company:
@@ -191,22 +192,22 @@ class SalaryResearch:
                 if comp in company_lower:
                     company_mult = mult
                     break
-        
+
         min_salary *= company_mult
         max_salary *= company_mult
-        
+
         # Estimate bonus and equity (as percentage of base)
         bonus_pct = 0.15 if experience_level in ("senior", "staff", "principal") else 0.10
         bonus_min = min_salary * bonus_pct * 0.5
         bonus_max = min_salary * bonus_pct * 1.5
-        
+
         equity_pct = 0.20 if experience_level in ("senior", "staff", "principal") else 0.10
         equity_min = min_salary * equity_pct * 0.5 if experience_level != "entry" else 0
         equity_max = min_salary * equity_pct * 2.0 if experience_level != "entry" else 0
-        
+
         # Calculate median
         median_salary = (min_salary + max_salary) / 2
-        
+
         return SalaryData(
             title=title,
             location=location,
@@ -221,44 +222,60 @@ class SalaryResearch:
             data_points=100,  # Estimated
             source="Market Estimates",
         )
-    
+
     def print_salary_report(self, salary_data: SalaryData) -> None:
         """Print salary report to console."""
         console.print("\n[bold blue]Salary Research Results[/bold blue]\n")
-        
+
         # Title and location
         console.print(f"[cyan]Position:[/cyan] {salary_data.title}")
         if salary_data.location:
             console.print(f"[cyan]Location:[/cyan] {salary_data.location}")
         if salary_data.company:
             console.print(f"[cyan]Company:[/cyan] {salary_data.company}")
-        console.print(f"[cyan]Source:[/cyan] {salary_data.source} ({salary_data.data_points} data points)")
+        console.print(
+            f"[cyan]Source:[/cyan] {salary_data.source} ({salary_data.data_points} data points)"
+        )
         console.print("")
-        
+
         # Salary table
         table = Table(title="Compensation Breakdown")
         table.add_column("Component", style="cyan")
         table.add_column("Min", style="green", justify="right")
         table.add_column("Max", style="green", justify="right")
-        
-        table.add_row("Base Salary", f"${salary_data.min_salary:,.0f}", f"${salary_data.max_salary:,.0f}")
-        table.add_row("Annual Bonus", f"${salary_data.bonus_min:,.0f}", f"${salary_data.bonus_max:,.0f}")
-        
+
+        table.add_row(
+            "Base Salary", f"${salary_data.min_salary:,.0f}", f"${salary_data.max_salary:,.0f}"
+        )
+        table.add_row(
+            "Annual Bonus", f"${salary_data.bonus_min:,.0f}", f"${salary_data.bonus_max:,.0f}"
+        )
+
         if salary_data.equity_min > 0:
-            table.add_row("Equity/yr", f"${salary_data.equity_min:,.0f}", f"${salary_data.equity_max:,.0f}")
-        
+            table.add_row(
+                "Equity/yr", f"${salary_data.equity_min:,.0f}", f"${salary_data.equity_max:,.0f}"
+            )
+
         total_min, total_max = salary_data.total_compensation()
-        table.add_row("[bold]Total Comp[/bold]", f"[bold]${total_min:,.0f}[/bold]", f"[bold]${total_max:,.0f}[/bold]")
-        
+        table.add_row(
+            "[bold]Total Comp[/bold]",
+            f"[bold]${total_min:,.0f}[/bold]",
+            f"[bold]${total_max:,.0f}[/bold]",
+        )
+
         console.print(table)
-        
+
         # Yearly breakdown
         console.print(f"\n[cyan]Median Base Salary:[/cyan] ${salary_data.median_salary:,.0f}")
-        console.print(f"[cyan]Estimated Total:[/cyan] ${(total_min + total_max) / 2:,.0f} - ${(total_min + total_max) / 2 + 30000:,.0f}")
-        
+        console.print(
+            f"[cyan]Estimated Total:[/cyan] ${(total_min + total_max) / 2:,.0f} - ${(total_min + total_max) / 2 + 30000:,.0f}"
+        )
+
         console.print("\n[yellow]Note:[/yellow] These are estimates based on market data.")
-        console.print("Actual salaries may vary based on specific skills, interviews, and negotiation.")
-    
+        console.print(
+            "Actual salaries may vary based on specific skills, interviews, and negotiation."
+        )
+
     def export_json(self, salary_data: SalaryData, output_path: Path) -> None:
         """Export salary data to JSON."""
         data = {
@@ -288,13 +305,13 @@ def research_salary(
 ) -> SalaryData:
     """
     Research salary for a position.
-    
+
     Args:
         title: Job title
         location: Job location
         company: Company name
         experience_level: entry, mid, senior, staff, principal
-    
+
     Returns:
         SalaryData object
     """

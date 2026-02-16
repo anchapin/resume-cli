@@ -44,6 +44,7 @@ from .template import TemplateGenerator
 @dataclass
 class InterviewResponse:
     """A user's response to an interview question."""
+
     question: str
     question_type: str  # technical, behavioral, system_design
     response: str
@@ -55,6 +56,7 @@ class InterviewResponse:
 @dataclass
 class InterviewSession:
     """A mock interview session."""
+
     session_id: str
     job_description: str
     questions: List[Dict[str, Any]]
@@ -63,7 +65,7 @@ class InterviewSession:
     started_at: str = field(default_factory=lambda: datetime.now().isoformat())
     completed_at: Optional[str] = None
     overall_score: Optional[float] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
@@ -86,9 +88,9 @@ class InterviewSession:
             "completed_at": self.completed_at,
             "overall_score": self.overall_score,
         }
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'InterviewSession':
+    def from_dict(cls, data: Dict[str, Any]) -> "InterviewSession":
         """Create from dictionary."""
         responses = [
             InterviewResponse(
@@ -128,14 +130,14 @@ class MockInterviewGenerator:
         self.yaml_path = yaml_path
         self.yaml_handler = ResumeYAML(yaml_path)
         self.template_generator = TemplateGenerator(yaml_path, config=config)
-        
+
         # Initialize interview questions generator
         self.questions_generator = InterviewQuestionsGenerator(yaml_path, config=config)
-        
+
         # Storage for sessions
         self.sessions_dir = Path.home() / ".resume-cli" / "interview_sessions"
         self.sessions_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Initialize AI client
         provider = self.config.ai_provider
 
@@ -211,7 +213,7 @@ class MockInterviewGenerator:
         elif category == "behavioral":
             num_technical = 0
             include_system_design = False
-        
+
         # Generate questions
         questions_data = self.questions_generator.generate(
             job_description=job_description,
@@ -220,52 +222,59 @@ class MockInterviewGenerator:
             num_behavioral=num_behavioral,
             include_system_design=include_system_design,
         )
-        
+
         # Build questions list
         questions = []
-        
+
         # Add technical questions
         for q in questions_data.get("technical_questions", []):
-            questions.append({
-                "question": q.get("question", ""),
-                "type": "technical",
-                "category": q.get("category", ""),
-                "priority": q.get("priority", "medium"),
-                "context": q.get("context", ""),
-                "reference": q.get("reference", ""),
-                "answer": q.get("answer", ""),  # Ideal answer for reference
-                "tips": q.get("tips", []),
-            })
-        
+            questions.append(
+                {
+                    "question": q.get("question", ""),
+                    "type": "technical",
+                    "category": q.get("category", ""),
+                    "priority": q.get("priority", "medium"),
+                    "context": q.get("context", ""),
+                    "reference": q.get("reference", ""),
+                    "answer": q.get("answer", ""),  # Ideal answer for reference
+                    "tips": q.get("tips", []),
+                }
+            )
+
         # Add behavioral questions
         for q in questions_data.get("behavioral_questions", []):
-            questions.append({
-                "question": q.get("question", ""),
-                "type": "behavioral",
-                "framework": q.get("framework", "STAR Method"),
-                "priority": q.get("priority", "medium"),
-                "context": q.get("context", ""),
-                "reference": q.get("reference", ""),
-                "answer": q.get("answer", ""),
-                "tips": q.get("tips", []),
-            })
-        
+            questions.append(
+                {
+                    "question": q.get("question", ""),
+                    "type": "behavioral",
+                    "framework": q.get("framework", "STAR Method"),
+                    "priority": q.get("priority", "medium"),
+                    "context": q.get("context", ""),
+                    "reference": q.get("reference", ""),
+                    "answer": q.get("answer", ""),
+                    "tips": q.get("tips", []),
+                }
+            )
+
         # Add system design questions
         for q in questions_data.get("system_design_questions", []):
-            questions.append({
-                "question": q.get("question", ""),
-                "type": "system_design",
-                "complexity": q.get("complexity", "medium"),
-                "key_areas": q.get("key_areas", []),
-                "context": q.get("context", ""),
-                "reference": q.get("reference", ""),
-                "talking_points": q.get("talking_points", []),
-            })
-        
+            questions.append(
+                {
+                    "question": q.get("question", ""),
+                    "type": "system_design",
+                    "complexity": q.get("complexity", "medium"),
+                    "key_areas": q.get("key_areas", []),
+                    "context": q.get("context", ""),
+                    "reference": q.get("reference", ""),
+                    "talking_points": q.get("talking_points", []),
+                }
+            )
+
         # Shuffle questions for variety
         import random
+
         random.shuffle(questions)
-        
+
         # Create session
         session = InterviewSession(
             session_id=str(uuid.uuid4())[:8],
@@ -273,12 +282,12 @@ class MockInterviewGenerator:
             questions=questions,
             category=category,
         )
-        
+
         # Save session
         self._save_session(session)
-        
+
         console.print(f"[green]✓[/green] Session started with {len(questions)} questions")
-        
+
         return session
 
     def evaluate_response(
@@ -300,16 +309,16 @@ class MockInterviewGenerator:
         """
         if question_index >= len(session.questions):
             raise ValueError(f"Question index {question_index} out of range")
-        
+
         question = session.questions[question_index]
-        
+
         # Get evaluation from AI
         evaluation = self._evaluate_with_ai(
             question=question,
             user_response=user_response,
             question_type=question.get("type", "technical"),
         )
-        
+
         # Create response object
         response = InterviewResponse(
             question=question.get("question", ""),
@@ -318,13 +327,13 @@ class MockInterviewGenerator:
             evaluation=evaluation,
             rating=evaluation.get("rating", 3),
         )
-        
+
         # Add to session
         session.responses.append(response)
-        
+
         # Save updated session
         self._save_session(session)
-        
+
         return response
 
     def _evaluate_with_ai(
@@ -335,17 +344,17 @@ class MockInterviewGenerator:
     ) -> Dict[str, Any]:
         """Evaluate response using AI."""
         prompt = self._build_evaluation_prompt(question, user_response, question_type)
-        
+
         try:
             if self.provider == "anthropic":
                 response = self._call_anthropic(prompt)
             else:
                 response = self._call_openai(prompt)
-            
+
             # Extract evaluation from response
             evaluation = self._parse_evaluation(response)
             return evaluation
-            
+
         except Exception as e:
             console.print(f"[yellow]Warning:[/yellow] AI evaluation failed: {str(e)}")
             return {
@@ -368,7 +377,7 @@ class MockInterviewGenerator:
         question_type: str,
     ) -> str:
         """Build prompt for response evaluation."""
-        
+
         if question_type == "technical":
             prompt = f"""You are an expert technical interviewer. Evaluate the candidate's response to the following technical interview question.
 
@@ -407,7 +416,7 @@ Return ONLY valid JSON with this exact structure:
 }}
 
 Return ONLY the JSON:"""
-        
+
         elif question_type == "behavioral":
             framework = question.get("framework", "STAR Method")
             prompt = f"""You are an expert behavioral interviewer. Evaluate the candidate's response to the following behavioral interview question using the {framework} framework.
@@ -449,7 +458,7 @@ Return ONLY valid JSON with this exact structure:
 }}
 
 Return ONLY the JSON:"""
-        
+
         else:  # system_design
             prompt = f"""You are an expert system design interviewer. Evaluate the candidate's response to the following system design question.
 
@@ -486,13 +495,13 @@ Return ONLY valid JSON with this exact structure:
 }}
 
 Return ONLY the JSON:"""
-        
+
         return prompt
 
     def _parse_evaluation(self, response: str) -> Dict[str, Any]:
         """Parse AI evaluation response."""
         import re
-        
+
         # Try to extract JSON
         code_block_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", response, re.DOTALL)
         if code_block_match:
@@ -500,7 +509,7 @@ Return ONLY the JSON:"""
                 return json.loads(code_block_match.group(1))
             except json.JSONDecodeError:
                 pass
-        
+
         # Try to find JSON object
         obj_match = re.search(r"\{[^{}]*\}", response, re.DOTALL)
         if obj_match:
@@ -508,7 +517,7 @@ Return ONLY the JSON:"""
                 return json.loads(obj_match.group(0))
             except json.JSONDecodeError:
                 pass
-        
+
         # Default evaluation if parsing fails
         return {
             "rating": 3,
@@ -529,25 +538,25 @@ Return ONLY the JSON:"""
             Summary dict with overall statistics
         """
         session.completed_at = datetime.now().isoformat()
-        
+
         # Calculate overall score
         if session.responses:
             total_rating = sum(r.rating or 0 for r in session.responses)
             session.overall_score = total_rating / len(session.responses)
-        
+
         # Save final session
         self._save_session(session)
-        
+
         # Generate summary
         summary = self.generate_session_summary(session)
-        
+
         return summary
 
     def generate_session_summary(self, session: InterviewSession) -> Dict[str, Any]:
         """Generate summary statistics for a session."""
         total_questions = len(session.questions)
         answered = len(session.responses)
-        
+
         if not session.responses:
             return {
                 "session_id": session.session_id,
@@ -556,12 +565,12 @@ Return ONLY the JSON:"""
                 "overall_score": 0,
                 "category": session.category,
             }
-        
+
         # Calculate category-specific scores
         technical_scores = []
         behavioral_scores = []
         system_design_scores = []
-        
+
         for response in session.responses:
             if response.rating:
                 if response.question_type == "technical":
@@ -570,15 +579,21 @@ Return ONLY the JSON:"""
                     behavioral_scores.append(response.rating)
                 elif response.question_type == "system_design":
                     system_design_scores.append(response.rating)
-        
+
         return {
             "session_id": session.session_id,
             "total_questions": total_questions,
             "answered": answered,
             "overall_score": session.overall_score or 0,
-            "technical_score": sum(technical_scores) / len(technical_scores) if technical_scores else 0,
-            "behavioral_score": sum(behavioral_scores) / len(behavioral_scores) if behavioral_scores else 0,
-            "system_design_score": sum(system_design_scores) / len(system_design_scores) if system_design_scores else 0,
+            "technical_score": (
+                sum(technical_scores) / len(technical_scores) if technical_scores else 0
+            ),
+            "behavioral_score": (
+                sum(behavioral_scores) / len(behavioral_scores) if behavioral_scores else 0
+            ),
+            "system_design_score": (
+                sum(system_design_scores) / len(system_design_scores) if system_design_scores else 0
+            ),
             "category": session.category,
             "started_at": session.started_at,
             "completed_at": session.completed_at,
@@ -587,108 +602,112 @@ Return ONLY the JSON:"""
     def render_session_report(self, session: InterviewSession) -> str:
         """Render session results as Markdown report."""
         lines = []
-        
+
         lines.append(f"# Mock Interview Session Report")
         lines.append(f"**Session ID:** {session.session_id}")
         lines.append(f"**Date:** {session.started_at[:10]}")
         lines.append(f"**Category:** {session.category.title()}")
         lines.append("")
-        
+
         # Summary stats
         summary = self.generate_session_summary(session)
-        
+
         lines.append("## Summary")
         lines.append("")
-        lines.append(f"- **Questions Answered:** {summary['answered']} / {summary['total_questions']}")
+        lines.append(
+            f"- **Questions Answered:** {summary['answered']} / {summary['total_questions']}"
+        )
         lines.append(f"- **Overall Score:** {summary['overall_score']:.1f}/5")
         lines.append("")
-        
-        if summary['technical_score'] > 0:
+
+        if summary["technical_score"] > 0:
             lines.append(f"- **Technical Score:** {summary['technical_score']:.1f}/5")
-        if summary['behavioral_score'] > 0:
+        if summary["behavioral_score"] > 0:
             lines.append(f"- **Behavioral Score:** {summary['behavioral_score']:.1f}/5")
-        if summary['system_design_score'] > 0:
+        if summary["system_design_score"] > 0:
             lines.append(f"- **System Design Score:** {summary['system_design_score']:.1f}/5")
-        
+
         lines.append("")
-        
+
         # Detailed responses
         lines.append("## Detailed Responses")
         lines.append("")
-        
+
         for i, response in enumerate(session.responses, 1):
             question = session.questions[i - 1] if i <= len(session.questions) else {}
-            
+
             lines.append(f"### Question {i}: {response.question_type.title()}")
             lines.append("")
             lines.append(f"**Q:** {response.question}")
             lines.append("")
             lines.append(f"**Your Answer:** {response.response}")
             lines.append("")
-            
+
             if response.evaluation:
                 lines.append(f"**Rating:** {response.rating}/5")
                 lines.append("")
-                
+
                 if response.evaluation.get("strengths"):
                     lines.append("**Strengths:**")
                     for s in response.evaluation["strengths"]:
                         lines.append(f"- {s}")
                     lines.append("")
-                
+
                 if response.evaluation.get("improvements"):
                     lines.append("**Areas for Improvement:**")
                     for imp in response.evaluation["improvements"]:
                         lines.append(f"- {imp}")
                     lines.append("")
-                
+
                 if response.evaluation.get("suggestions"):
                     lines.append("**Suggestions:**")
                     for sug in response.evaluation["suggestions"]:
                         lines.append(f"- {sug}")
                     lines.append("")
-                
+
                 # Show ideal answer for reference
                 if question.get("answer") and question.get("type") != "system_design":
                     lines.append("**Ideal Answer:**")
                     lines.append(question["answer"])
                     lines.append("")
-            
+
             lines.append("---")
             lines.append("")
-        
+
         return "\n".join(lines)
 
     def list_sessions(self) -> List[Dict[str, Any]]:
         """List all saved interview sessions."""
         sessions = []
-        
+
         for file in self.sessions_dir.glob("*.json"):
             try:
                 data = json.loads(file.read_text())
-                sessions.append({
-                    "session_id": data.get("session_id"),
-                    "date": data.get("started_at", "")[:10],
-                    "category": data.get("category", "mixed"),
-                    "questions": len(data.get("questions", [])),
-                    "responses": len(data.get("responses", [])),
-                    "overall_score": data.get("overall_score"),
-                })
+                sessions.append(
+                    {
+                        "session_id": data.get("session_id"),
+                        "date": data.get("started_at", "")[:10],
+                        "category": data.get("category", "mixed"),
+                        "questions": len(data.get("questions", [])),
+                        "responses": len(data.get("responses", [])),
+                        "overall_score": data.get("overall_score"),
+                    }
+                )
             except (json.JSONDecodeError, KeyError):
                 continue
-        
+
         # Sort by date descending
         sessions.sort(key=lambda x: x["date"], reverse=True)
-        
+
         return sessions
 
     def load_session(self, session_id: str) -> Optional[InterviewSession]:
         """Load a specific session by ID."""
         session_file = self.sessions_dir / f"{session_id}.json"
-        
+
         if not session_file.exists():
             return None
-        
+
         try:
             data = json.loads(session_file.read_text())
             return InterviewSession.from_dict(data)

@@ -222,7 +222,7 @@ def generate(
                 variant=variant,
                 output_format=format,
             )
-            
+
             # Determine output path
             if output_path is None and not no_save:
                 base_path = TemplateGenerator(yaml_path, config=config).get_output_path(
@@ -230,7 +230,7 @@ def generate(
                 )
                 stem = base_path.stem
                 output_path = base_path.parent / f"{stem}-{language}{base_path.suffix}"
-            
+
             # Save content
             if output_path:
                 output_path.write_text(content)
@@ -1029,9 +1029,7 @@ def keyword_analysis(ctx, variant: str, job_desc: str, output: Optional[str]):
     default="60",
     help="Video duration in seconds (60=1min, 120=2min, 300=5min)",
 )
-@click.option(
-    "-o", "--output", type=click.Path(), help="Output file path (default: stdout)"
-)
+@click.option("-o", "--output", type=click.Path(), help="Output file path (default: stdout)")
 @click.option(
     "--format",
     type=click.Choice(["markdown", "teleprompter"]),
@@ -1191,13 +1189,17 @@ def mock_interview(
         console.print(f"  Total questions: {len(session.questions)}")
         console.print("\n[bold]Instructions:[/bold]")
         console.print("  This is a non-interactive preview mode.")
-        console.print("  To use the full interactive mode, run with a terminal that supports input.")
+        console.print(
+            "  To use the full interactive mode, run with a terminal that supports input."
+        )
         console.print("  For now, we'll show the questions and generate a report.\n")
 
         # Display questions
         for i, q in enumerate(session.questions[:5], 1):  # Show first 5
             console.print(f"[cyan]Q{i}:[/cyan] {q.get('question', '')}")
-            console.print(f"  [dim]Type: {q.get('type', 'N/A')} | Priority: {q.get('priority', 'medium')}[/dim]")
+            console.print(
+                f"  [dim]Type: {q.get('type', 'N/A')} | Priority: {q.get('priority', 'medium')}[/dim]"
+            )
             console.print("")
 
         if len(session.questions) > 5:
@@ -1350,7 +1352,7 @@ def find_connections(
 
     try:
         finder = ConnectionFinder()
-        
+
         # Find connections
         connections = finder.find_connections(
             company=company,
@@ -1358,25 +1360,25 @@ def find_connections(
             use_linkedin=not no_linkedin,
             use_github=not no_github,
         )
-        
+
         # Find alumni if requested
         if include_alumni:
             alumni = finder.find_alumni(company)
             connections.extend(alumni)
-        
+
         # Find previous company connections if requested
         if include_previous:
             prev_connections = finder.find_previous_company_connections(company)
             connections.extend(prev_connections)
-        
+
         # Print connections table
         finder.print_connections_table(connections)
-        
+
         # Generate outreach suggestions if requested
         if draft_message and connections:
             console.print("\n[bold]Outreach Message Suggestions[/bold]\n")
             suggestions = finder.generate_outreach_suggestions(connections)
-            
+
             for i, suggestion in enumerate(suggestions[:3], 1):
                 console.print(f"### {i}. {suggestion.connection.name}")
                 console.print(f"   **Common Ground:** {suggestion.common_ground}")
@@ -1387,7 +1389,7 @@ def find_connections(
                 for point in suggestion.talking_points[:3]:
                     console.print(f"  - {point}")
                 console.print("")
-        
+
         # Export to CSV if requested
         if output and connections:
             output_path = Path(output)
@@ -1450,8 +1452,7 @@ def salary_research(title: str, location: str, company: str, level: str, output:
         if output:
             output_path = Path(output)
             research.export_json(salary_data, output_path)
-            console.print(f"
-[green]✓[/green] Report saved to: {output_path}")
+            console.print(f"[green]✓[/green] Report saved to: {output_path}")
 
     except Exception as e:
         console.print(f"[bold red]Error researching salary:[/bold red] {e}")
@@ -1568,12 +1569,7 @@ def offer_list():
         table.add_column("Location", style="yellow")
 
         for o in offers:
-            table.add_row(
-                o.company,
-                o.role,
-                f"${o.total_compensation:,.0f}",
-                o.location or "N/A"
-            )
+            table.add_row(o.company, o.role, f"${o.total_compensation:,.0f}", o.location or "N/A")
 
         console.print(table)
 

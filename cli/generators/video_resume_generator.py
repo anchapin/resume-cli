@@ -66,9 +66,9 @@ class VideoResumeGenerator:
     """Generate personalized video resume scripts based on job description and resume."""
 
     # Duration presets
-    DURATION_SHORT = 60   # 60 seconds
+    DURATION_SHORT = 60  # 60 seconds
     DURATION_MEDIUM = 120  # 2 minutes
-    DURATION_LONG = 300    # 5 minutes
+    DURATION_LONG = 300  # 5 minutes
 
     # Timing breakdowns (in seconds)
     TIMING_SHORT = {
@@ -399,11 +399,13 @@ Please generate the video resume script JSON:"""
         # Parse achievements
         if "key_achievements" in data:
             for ach in data["key_achievements"]:
-                script.key_achievements.append({
-                    "achievement": ach.get("achievement", ""),
-                    "script": ach.get("script", ""),
-                    "visual": ach.get("visual", ""),
-                })
+                script.key_achievements.append(
+                    {
+                        "achievement": ach.get("achievement", ""),
+                        "script": ach.get("script", ""),
+                        "visual": ach.get("visual", ""),
+                    }
+                )
                 script.teleprompter_text += f"[Achievement]\n{ach.get('teleprompter', '')}\n\n"
 
         # Parse skills
@@ -459,7 +461,9 @@ Please generate the video resume script JSON:"""
         company_ref = f" at {company_name}" if company_name else ""
 
         # Introduction
-        script.introduction = f"Hi, I'm {name}. Thank you for considering my application{company_ref}."
+        script.introduction = (
+            f"Hi, I'm {name}. Thank you for considering my application{company_ref}."
+        )
 
         # Achievements
         script.key_achievements = [
@@ -477,7 +481,9 @@ Please generate the video resume script JSON:"""
         contact_info = f"{email}"
         if github:
             contact_info += f" or check out my work at {github}"
-        script.call_to_action = f"I'd love to bring my experience to your team. Reach me at {contact_info}. Thank you!"
+        script.call_to_action = (
+            f"I'd love to bring my experience to your team. Reach me at {contact_info}. Thank you!"
+        )
 
         # Visual suggestions
         script.visual_suggestions = [
@@ -577,7 +583,9 @@ Please generate the video resume script JSON:"""
             for i, ach in enumerate(script.key_achievements):
                 start_time = 10 + i * (ach_duration // max(len(script.key_achievements), 1))
                 lines.append(f"### Achievement {i + 1}")
-                lines.append(f"**Time:** 0:{start_time:02d} - 0:{start_time + ach_duration // len(script.key_achievements):02d}")
+                lines.append(
+                    f"**Time:** 0:{start_time:02d} - 0:{start_time + ach_duration // len(script.key_achievements):02d}"
+                )
                 lines.append("")
                 lines.append(f"**Achievement:** {ach.get('achievement', '')}")
                 lines.append(f"**Script:** {ach.get('script', '')}")
@@ -659,7 +667,9 @@ Please generate the video resume script JSON:"""
             ach_per_section = timing["achievements"] // max(len(script.key_achievements), 1)
             current_time = timing["introduction"]
             for i, ach in enumerate(script.key_achievements):
-                lines.append(f"[0:{current_time:02d} - 0:{current_time + ach_per_section:02d}] ACHIEVEMENT {i + 1}")
+                lines.append(
+                    f"[0:{current_time:02d} - 0:{current_time + ach_per_section:02d}] ACHIEVEMENT {i + 1}"
+                )
                 lines.append("-" * 30)
                 lines.append(ach.get("script", ""))
                 lines.append("")

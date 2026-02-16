@@ -134,9 +134,7 @@ class TestDocxGeneratorGenerate:
         }
 
         generator = DocxGenerator(yaml_path=sample_yaml_file)
-        result = generator.generate(
-            variant="v1.0.0-base", enhanced_context=enhanced_context
-        )
+        result = generator.generate(variant="v1.0.0-base", enhanced_context=enhanced_context)
 
         assert result is mock_doc
 

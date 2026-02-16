@@ -9,7 +9,6 @@ from click.testing import CliRunner
 
 from cli.main import cli
 
-
 # Sample minimal resume.yaml for testing - must have all required fields
 SAMPLE_YAML_CONTENT = """\
 contact:
@@ -292,7 +291,9 @@ tracking:
         )
 
         # Should handle missing data gracefully
-        assert "No tracking data" in result.output or "Error" in result.output or result.exit_code == 0
+        assert (
+            "No tracking data" in result.output or "Error" in result.output or result.exit_code == 0
+        )
 
 
 class TestCLIATSCheck:

@@ -36,7 +36,6 @@ from ..utils.config import Config
 from ..utils.yaml_parser import ResumeYAML
 from .template import TemplateGenerator
 
-
 # Supported languages
 SUPPORTED_LANGUAGES = {
     "en": {"name": "English", "native_name": "English", "code": "en"},
@@ -144,7 +143,9 @@ class MultiLanguageResumeGenerator:
                 f"Supported languages: {', '.join(SUPPORTED_LANGUAGES.keys())}"
             )
 
-        console.print(f"[bold blue]Generating resume in {SUPPORTED_LANGUAGES[target_language]['name']}...[/bold blue]")
+        console.print(
+            f"[bold blue]Generating resume in {SUPPORTED_LANGUAGES[target_language]['name']}...[/bold blue]"
+        )
 
         # Generate English resume first
         english_content = self.template_generator.generate(

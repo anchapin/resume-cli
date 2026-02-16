@@ -971,6 +971,82 @@ def keyword_analysis(ctx, variant: str, job_desc: str, output: Optional[str]):
         sys.exit(1)
 
 
+@cli.command("job-parse")
+@click.option("--file", "file_input", type=click.Path(exists=True), help="Path to job posting HTML file")
+@click.option("--url", type=str, help="URL to job posting (requires HTTP client)")
+@click.option("-o", "--output", type=click.Path(), help="Save parsed data as JSON")
+@click.option("--no-cache", is_flag=True, help="Disable caching of parsed job postings")
+def job_parse(file_input: Optional[str], url: Optional[str], output: Optional[str], no_cache: bool):
+    """
+    Parse job posting from LinkedIn, Indeed, or other sources.
+
+    Extracts structured data (company, position, requirements, responsibilities)
+    for use with AI resume tailoring.
+
+    Examples:
+        resume-cli job-parse --file job-posting.html
+        resume-cli job-parse --file job.html --output job-data.json
+    """
+    console.print("[bold blue]Parsing Job Posting[/bold blue]")
+
+    if not file_input and not url:
+        console.print("[bold red]Error:[/bold red] Either --file or --url must be provided")
+        console.print("  Use --file for local HTML files")
+        console.print("  Use --url for web URLs (future feature)")
+        sys.exit(1)
+
+    try:
+        from .generators.job_parser import JobParser
+
+        parser = JobParser()
+        
+        if file_input:
+            console.print(f"  File: {file_input}")
+            job_details = parser.parse_from_file(Path(file_input))
+        elif url:
+            console.print(f"  URL: {url}")
+            job_details = parser.parse_from_url(url)
+
+        # Display results
+        console.print("\n[bold green]Parsed Job Details:[/bold green]\n")
+        console.print(f"  [cyan]Company:[/cyan] {job_details.company}")
+        console.print(f"  [cyan]Position:[/cyan] {job_details.position}")
+        
+        if job_details.location:
+            console.print(f"  [cyan]Location:[/cyan] {job_details.location}")
+        
+        if job_details.remote is not None:
+            remote_text = "Yes" if job_details.remote else "No"
+            console.print(f"  [cyan]Remote:[/cyan] {remote_text}")
+        
+        if job_details.salary:
+            console.print(f"  [cyan]Salary:[/cyan] {job_details.salary}")
+
+        if job_details.requirements:
+            console.print(f"\n  [cyan]Requirements:[/cyan]")
+            for req in job_details.requirements[:5]:
+                console.print(f"    - {req}")
+
+        if job_details.responsibilities:
+            console.print(f"\n  [cyan]Responsibilities:[/cyan]")
+            for resp in job_details.responsibilities[:5]:
+                console.print(f"    - {resp}")
+
+        # Save to output file
+        if output:
+            output_path = Path(output)
+            output_path.write_text(job_details.to_json())
+            console.print(f"\n[green]✓[/green] Saved to: {output_path}")
+
+    except NotImplementedError as e:
+        console.print(f"[yellow]Note:[/yellow] {e}")
+    except Exception as e:
+        console.print(f"[bold red]Error parsing job posting:[/bold red] {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
 def main():
     """Main entry point."""
     cli(obj={})

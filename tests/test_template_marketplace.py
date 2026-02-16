@@ -14,7 +14,9 @@ class TestTemplateMetadata:
 
     def test_init_default_values(self):
         """Test initialization with default values."""
-        metadata = TemplateMetadata(name="test_template", description="Test", category="professional")
+        metadata = TemplateMetadata(
+            name="test_template", description="Test", category="professional"
+        )
 
         assert metadata.name == "test_template"
         assert metadata.description == "Test"

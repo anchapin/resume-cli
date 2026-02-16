@@ -39,6 +39,7 @@ setup(
         "pandas>=2.0.0",
         "python-dateutil>=2.8.0",
         "python-dotenv>=1.0.0",
+        "python-docx>=0.8.11",
     ],
     extras_require={
         "ai": [

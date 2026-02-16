@@ -1066,6 +1066,65 @@ def job_parse(file_input: Optional[str], url: Optional[str], output: Optional[st
         sys.exit(1)
 
 
+@cli.command("salary-research")
+@click.option("--title", required=True, help="Job title")
+@click.option("--location", default="", help="Job location")
+@click.option("--company", default="", help="Company name")
+@click.option(
+    "--level",
+    type=click.Choice(["entry", "mid", "senior", "staff", "principal"]),
+    default="mid",
+    help="Experience level",
+)
+@click.option("-o", "--output", type=click.Path(), help="Save report as JSON file")
+def salary_research(title: str, location: str, company: str, level: str, output: Optional[str]):
+    """
+    Research salary data for a position.
+
+    Provides estimated salary ranges based on job title, location, company,
+    and experience level. Uses market data to generate estimates.
+
+    Examples:
+        resume-cli salary-research --title \"Senior Backend Engineer\" --location \"San Francisco\"
+        resume-cli salary-research --title \"Product Manager\" --company \"Google\" --level senior
+        resume-cli salary-research --title \"ML Engineer\" --location \"New York\" --company \"Stripe\" -o salary.json
+    """
+    from .integrations.salary_research import SalaryResearch
+
+    console.print("[bold blue]Salary Research[/bold blue]")
+    console.print(f"  Title: {title}")
+    if location:
+        console.print(f"  Location: {location}")
+    if company:
+        console.print(f"  Company: {company}")
+    console.print(f"  Level: {level}")
+
+    try:
+        research = SalaryResearch()
+        salary_data = research.research(
+            title=title,
+            location=location,
+            company=company,
+            experience_level=level,
+        )
+
+        # Print report
+        research.print_salary_report(salary_data)
+
+        # Export to JSON if requested
+        if output:
+            output_path = Path(output)
+            research.export_json(salary_data, output_path)
+            console.print(f"\n[green]✓[/green] Report saved to: {output_path}")
+
+    except Exception as e:
+        console.print(f"[bold red]Error researching salary:[/bold red] {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)
+
+
 def main():
     """Main entry point."""
     cli(obj={})

@@ -7,7 +7,6 @@ LinkedIn, Indeed, and generic job boards.
 """
 
 import json
-import requests
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -563,7 +562,7 @@ class TestCacheOperations:
         parser._save_to_cache(cache_key, cached_job)
 
         # Mock requests to avoid actual HTTP call
-        with patch("requests.get") as mock_get:
+        with patch("cli.integrations.job_parser.requests.get") as mock_get:
             mock_get.side_effect = Exception("Should not be called")
 
             # Should return cached data without making HTTP request

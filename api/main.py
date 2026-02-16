@@ -359,6 +359,7 @@ async def generate_cover_letter(request: CoverLetterRequest):
 # Analytics Endpoints for Dashboard
 # =========================================================================
 
+
 @app.get(
     "/v1/analytics/overview",
     dependencies=[Security(get_api_key)],

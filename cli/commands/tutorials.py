@@ -21,7 +21,7 @@ TUTORIALS = {
                 "title": "Understanding resume.yaml",
                 "content": """resume.yaml is the single source of truth for your resume data.
 
-All your resume variants are generated from this single file, keeping your data organized and easy to maintain."""
+All your resume variants are generated from this single file, keeping your data organized and easy to maintain.""",
             },
             {
                 "title": "Running initialization",
@@ -29,7 +29,7 @@ All your resume variants are generated from this single file, keeping your data 
 
     resume-cli init --from-existing
 
-This will parse your existing resume files and create a structured YAML file."""
+This will parse your existing resume files and create a structured YAML file.""",
             },
             {
                 "title": "Validating your data",
@@ -37,9 +37,9 @@ This will parse your existing resume files and create a structured YAML file."""
 
     resume-cli validate
 
-This checks for required fields, proper formatting, and data consistency."""
-            }
-        ]
+This checks for required fields, proper formatting, and data consistency.""",
+            },
+        ],
     },
     "generate": {
         "title": "Generate Your First Resume",
@@ -51,7 +51,7 @@ This checks for required fields, proper formatting, and data consistency."""
 
     resume-cli generate -v v1.0.0-base -f md
 
-This creates a resume using the base variant in Markdown format."""
+This creates a resume using the base variant in Markdown format.""",
             },
             {
                 "title": "Using variants",
@@ -60,7 +60,7 @@ This creates a resume using the base variant in Markdown format."""
     resume-cli variants
 
 Lists all available variants. Try:
-    resume-cli generate -v v1.1.0-backend -f md"""
+    resume-cli generate -v v1.1.0-backend -f md""",
             },
             {
                 "title": "PDF generation",
@@ -68,9 +68,9 @@ Lists all available variants. Try:
 
     resume-cli generate -v v1.0.0-base -f pdf
 
-Note: Requires LaTeX to be installed on your system."""
-            }
-        ]
+Note: Requires LaTeX to be installed on your system.""",
+            },
+        ],
     },
     "variants": {
         "title": "Using Variants",
@@ -83,7 +83,7 @@ Note: Requires LaTeX to be installed on your system."""
 For example:
 - v1.0.0-base: General purpose
 - v1.1.0-backend: Backend engineering
-- v1.2.0-ml_ai: Machine learning/AI roles"""
+- v1.2.0-ml_ai: Machine learning/AI roles""",
             },
             {
                 "title": "Listing variants",
@@ -91,16 +91,16 @@ For example:
 
     resume-cli variants
 
-This shows each variant's description, summary, and skills."""
+This shows each variant's description, summary, and skills.""",
             },
             {
                 "title": "Creating variants",
                 "content": """To create a new variant:
 1. Add a new entry to variants: in resume.yaml
 2. Define which skills and experience to emphasize
-3. Use the variant with: resume-cli generate -v YOUR-VARIANT"""
-            }
-        ]
+3. Use the variant with: resume-cli generate -v YOUR-VARIANT""",
+            },
+        ],
     },
     "ai": {
         "title": "AI-Powered Generation",
@@ -114,7 +114,7 @@ This shows each variant's description, summary, and skills."""
     # Edit .env and add your ANTHROPIC_API_KEY
 
 Or export directly:
-    export ANTHROPIC_API_KEY=your_key_here"""
+    export ANTHROPIC_API_KEY=your_key_here""",
             },
             {
                 "title": "Generating with AI",
@@ -125,7 +125,7 @@ Or export directly:
 AI will:
 - Extract keywords from the job description
 - Reorder bullets to emphasize relevant experience
-- Highlight matching skills"""
+- Highlight matching skills""",
             },
             {
                 "title": "Generate package",
@@ -133,9 +133,9 @@ AI will:
 
     resume-cli generate-package --job-desc job-posting.txt --variant v1.1.0-backend
 
-This generates both resume and cover letter, tailored to the job."""
-            }
-        ]
+This generates both resume and cover letter, tailored to the job.""",
+            },
+        ],
     },
     "package": {
         "title": "Generate Application Package",
@@ -147,7 +147,7 @@ This generates both resume and cover letter, tailored to the job."""
 - AI-customized resume (MD + PDF)
 - Tailored cover letter (MD + PDF)
 
-All files are organized in a single directory."""
+All files are organized in a single directory.""",
             },
             {
                 "title": "Basic package generation",
@@ -155,7 +155,7 @@ All files are organized in a single directory."""
 
     resume-cli generate-package --job-desc job-posting.txt --variant v1.1.0-backend
 
-Output goes to: output/{company}-{date}/"""
+Output goes to: output/{company}-{date}/""",
             },
             {
                 "title": "Non-interactive mode",
@@ -163,9 +163,9 @@ Output goes to: output/{company}-{date}/"""
 
     resume-cli generate-package --job-desc job.txt --company "Acme Corp" --non-interactive
 
-AI will make smart guesses for the cover letter."""
-            }
-        ]
+AI will make smart guesses for the cover letter.""",
+            },
+        ],
     },
     "track": {
         "title": "Track Applications",
@@ -177,7 +177,7 @@ AI will make smart guesses for the cover letter."""
 
     resume-cli apply AcmeCorp applied -r "Senior Engineer"
 
-Status options: applied, interview, offer, rejected, withdrawn"""
+Status options: applied, interview, offer, rejected, withdrawn""",
             },
             {
                 "title": "Viewing statistics",
@@ -185,9 +185,9 @@ Status options: applied, interview, offer, rejected, withdrawn"""
 
     resume-cli analyze
 
-Shows total applications, response rate, interview rate, etc."""
-            }
-        ]
+Shows total applications, response rate, interview rate, etc.""",
+            },
+        ],
     },
     "github": {
         "title": "Sync GitHub Projects",
@@ -199,7 +199,7 @@ Shows total applications, response rate, interview rate, etc."""
 
     gh auth login
 
-This allows resume-cli to access your repositories."""
+This allows resume-cli to access your repositories.""",
             },
             {
                 "title": "Syncing projects",
@@ -207,7 +207,7 @@ This allows resume-cli to access your repositories."""
 
     resume-cli sync-github --months 3
 
-Shows projects from the last 3 months."""
+Shows projects from the last 3 months.""",
             },
             {
                 "title": "Updating resume",
@@ -215,17 +215,17 @@ Shows projects from the last 3 months."""
 
     resume-cli sync-github --months 3 --write
 
-Creates a backup first. Use --no-backup to skip."""
-            }
-        ]
-    }
+Creates a backup first. Use --no-backup to skip.""",
+            },
+        ],
+    },
 }
 
 
 def list_tutorials():
     """List all available tutorials."""
     console.print("\n[bold cyan]Available Tutorials[/bold cyan]\n")
-    
+
     for key, tutorial in TUTORIALS.items():
         console.print(f"  [cyan]{key:12}[/cyan] - {tutorial['title']}")
         console.print(f"               {tutorial['description']}")
@@ -239,24 +239,26 @@ def run_tutorial(tutorial_key: str):
         console.print("\nAvailable tutorials:")
         list_tutorials()
         return
-    
+
     tutorial = TUTORIALS[tutorial_key]
-    
-    console.print(Panel(
-        f"[bold cyan]{tutorial['title']}[/bold cyan]\n\n{tutorial['description']}",
-        title="Tutorial"
-    ))
+
+    console.print(
+        Panel(
+            f"[bold cyan]{tutorial['title']}[/bold cyan]\n\n{tutorial['description']}",
+            title="Tutorial",
+        )
+    )
     console.print()
-    
+
     for i, step in enumerate(tutorial["steps"], 1):
         console.print(f"\n[bold yellow]Step {i}: {step['title']}[/bold yellow]\n")
-        
+
         md = Markdown(step["content"])
         console.print(md)
-        
+
         if i < len(tutorial["steps"]):
             Prompt.ask("\n[dim]Press Enter to continue...[/dim]", default="")
-    
+
     console.print("\n[bold green]Tutorial complete![/bold green]")
 
 

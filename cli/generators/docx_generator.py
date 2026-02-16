@@ -90,7 +90,9 @@ class DocxGenerator:
         # Get resume data
         contact = self.yaml_handler.get_contact()
         summary = self.yaml_handler.get_summary(summary_key)
-        skills = self.yaml_handler.get_skills(variant, prioritize_technologies=prioritize_technologies)
+        skills = self.yaml_handler.get_skills(
+            variant, prioritize_technologies=prioritize_technologies
+        )
         experience = self.yaml_handler.get_experience(variant)
         education = self.yaml_handler.get_education(variant)
         publications = self.yaml_handler.data.get("publications", [])

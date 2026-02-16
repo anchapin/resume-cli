@@ -1,7 +1,6 @@
 """Tests for TXT resume generator."""
 
 
-
 class TestTxtGeneratorInitialization:
     """Tests for TxtGenerator initialization."""
 

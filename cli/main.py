@@ -1238,36 +1238,38 @@ def mock_interview(
 @click.option(
     "--file", "file_input", type=click.Path(exists=True), help="Path to job posting HTML file"
 )
-@click.option("--url", type=str, help="URL to job posting (requires HTTP client)")
+@click.option("--url", type=str, help="URL to job posting")
 @click.option("-o", "--output", type=click.Path(), help="Save parsed data as JSON")
 @click.option("--no-cache", is_flag=True, help="Disable caching of parsed job postings")
 def job_parse(file_input: Optional[str], url: Optional[str], output: Optional[str], no_cache: bool):
     """
     Parse job posting from LinkedIn, Indeed, or other sources.
 
-    Extracts structured data (company, position, requirements, responsibilities)
-    for use with AI resume tailoring.
+    Extracts structured data (company, position, requirements, responsibilities,
+    salary, remote status) for use with AI resume tailoring.
 
     Examples:
+        resume-cli job-parse --url https://linkedin.com/jobs/view/12345
         resume-cli job-parse --file job-posting.html
-        resume-cli job-parse --file job.html --output job-data.json
+        resume-cli job-parse --url URL --output job-data.json
     """
     console.print("[bold blue]Parsing Job Posting[/bold blue]")
 
     if not file_input and not url:
         console.print("[bold red]Error:[/bold red] Either --file or --url must be provided")
         console.print("  Use --file for local HTML files")
-        console.print("  Use --url for web URLs (future feature)")
+        console.print("  Use --url for web URLs")
         sys.exit(1)
 
     try:
-        from .generators.job_parser import JobParser
+        from .integrations.job_parser import JobParser
 
-        parser = JobParser()
+        cache_dir = None if no_cache else None
+        parser = JobParser(cache_dir=cache_dir)
 
         if file_input:
             console.print(f"  File: {file_input}")
-            job_details = parser.parse_from_file(Path(file_input))
+            job_details = parser.parse_from_file(Path(file_input), url=url)
         elif url:
             console.print(f"  URL: {url}")
             job_details = parser.parse_from_url(url)
@@ -1287,15 +1289,30 @@ def job_parse(file_input: Optional[str], url: Optional[str], output: Optional[st
         if job_details.salary:
             console.print(f"  [cyan]Salary:[/cyan] {job_details.salary}")
 
+        if job_details.job_type:
+            console.print(f"  [cyan]Job Type:[/cyan] {job_details.job_type}")
+
+        if job_details.experience_level:
+            console.print(f"  [cyan]Experience Level:[/cyan] {job_details.experience_level}")
+
         if job_details.requirements:
             console.print("\n  [cyan]Requirements:[/cyan]")
             for req in job_details.requirements[:5]:
                 console.print(f"    - {req}")
+            if len(job_details.requirements) > 5:
+                console.print(f"    ... and {len(job_details.requirements) - 5} more")
 
         if job_details.responsibilities:
             console.print("\n  [cyan]Responsibilities:[/cyan]")
             for resp in job_details.responsibilities[:5]:
                 console.print(f"    - {resp}")
+            if len(job_details.responsibilities) > 5:
+                console.print(f"    ... and {len(job_details.responsibilities) - 5} more")
+
+        if job_details.benefits:
+            console.print("\n  [cyan]Benefits:[/cyan]")
+            for benefit in job_details.benefits[:3]:
+                console.print(f"    - {benefit}")
 
         # Save to output file
         if output:

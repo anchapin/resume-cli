@@ -19,7 +19,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from bs4 import BeautifulSoup, Tag
 
@@ -571,7 +571,7 @@ class JobParser:
 
         return None
 
-    def _extract_sections_from_description(self, description: str) -> tuple[List[str], List[str]]:
+    def _extract_sections_from_description(self, description: str) -> Tuple[List[str], List[str]]:
         """
         Extract requirements and responsibilities from job description.
 

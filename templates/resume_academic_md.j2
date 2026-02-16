@@ -1,0 +1,85 @@
+{# Academic Resume Template #}
+{# Focus on publications and research, education section prominent, academic style formatting #}
+
+**{{ contact.name }}**
+
+{% if contact.credentials %}{% for cred in contact.credentials %}{{ cred }}{% if not loop.last %}, {% endif %}{% endfor %}
+
+{% endif %}{{ contact.email }} | {{ contact.phone }}
+{{ contact.location.city }}, {{ contact.location.state }}
+{% if contact.urls.linkedin %}{{ contact.urls.linkedin }}{% endif %}
+
+---
+
+## Education
+
+{% for edu in education %}
+### {{ edu.institution }}
+**{{ edu.degree }}{% if edu.field %}, {{ edu.field }}{% endif %}** ({{ edu.graduation_date }})
+{% if edu.gpa %}GPA: {{ edu.gpa }}{% endif %}
+{% if edu.thesis %}Thesis: "{{ edu.thesis }}"{% endif %}
+{% if edu.advisor %}Advisor: {{ edu.advisor }}{% endif %}
+
+{% endfor %}
+
+---
+
+## Research Interests
+
+{{ summary }}
+
+---
+
+## Publications
+
+{% if publications %}
+{% for pub in publications %}
+### {{ pub.title }}
+{% if pub.type == 'journal' %}
+*{{ pub.journal }}*{% if pub.volume %}, Vol. {{ pub.volume }}{% endif %}{% if pub.pages %}, pp. {{ pub.pages }}{% endif %}{% if pub.year %}, {{ pub.year }}{% endif %}
+{% elif pub.type == 'conference' %}
+*In {{ pub.conference }}*{% if pub.location %}, {{ pub.location }}{% endif %}{% if pub.year %}, {{ pub.year }}{% endif %}
+{% else %}
+{% if pub.year %}({{ pub.year }}){% endif %}
+{% endif %}
+{% if pub.authors %}Authors: {{ pub.authors }}{% endif %}
+{% if pub.doi %}[DOI](https://doi.org/{{ pub.doi }}){% endif %}
+
+{% endfor %}
+{% endif %}
+
+---
+
+## Experience
+
+{% for job in experience %}
+### {{ job.title }}
+{{ job.company }}{% if job.location %}, {{ job.location }}{% endif %}
+
+{{ job.start_date|replace('-','–') }}{% if job.end_date %} – {{ job.end_date|replace('-','–') }}{% else %} – Present{% endif %}
+
+{% for bullet in job.bullets %}
+- {{ bullet.text }}
+{% endfor %}
+
+{% endfor %}
+
+---
+
+## Skills
+
+{% for section_name, skills in skills.items() %}
+**{{ section_name|replace('_',' ')|title }}:** {% for skill in skills %}{% if skill.name %}{{ skill.name }}{% else %}{{ skill }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+
+{% endfor %}
+
+---
+
+## Certifications
+
+{% if certifications %}
+{% for cert in certifications %}
+- {{ cert.name }}{% if cert.issuer %} - {{ cert.issuer }}{% endif %}{% if cert.date %} ({{ cert.date }}){% endif %}
+
+{% endfor %}
+{% endif %}

@@ -118,7 +118,13 @@ def validate(ctx):
 @cli.command()
 @click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to generate")
 @click.option(
-    "-f", "--format", type=click.Choice(["md", "tex", "pdf"]), default="md", help="Output format"
+    "-f", "--format", type=click.Choice(["md", "tex", "pdf", "txt", "docx"]), default="md", help="Output format"
+)
+@click.option(
+    "-t", "--template",
+    type=click.Choice(["base", "modern", "minimalist", "academic", "tech"]),
+    default="base",
+    help="Resume template style"
 )
 @click.option(
     "-o", "--output", type=click.Path(), help="Output file path (default: auto-generated)"
@@ -135,6 +141,7 @@ def generate(
     ctx,
     variant: str,
     format: str,
+    template: str,
     output: Optional[str],
     no_save: bool,
     ai: bool,
@@ -146,6 +153,7 @@ def generate(
     Examples:
         resume-cli generate -v v1.0.0-base -f md
         resume-cli generate -v v1.1.0-backend -f pdf -o my-resume.pdf
+        resume-cli generate -t modern -f md
         resume-cli generate --ai --job-desc job-posting.txt
     """
     # Lazy import for performance
@@ -156,6 +164,7 @@ def generate(
 
     console.print(f"[bold blue]Generating resume: {variant}[/bold blue]")
     console.print(f"  Format: {format.upper()}")
+    console.print(f"  Template: {template}")
 
     # Check if yaml exists
     if not yaml_path.exists():
@@ -202,9 +211,18 @@ def generate(
             if output_path is None and not no_save:
                 output_path = generator.get_output_path(variant, format)
 
-            content = generator.generate(
-                variant=variant, output_format=format, output_path=output_path
-            )
+            # Handle template selection (for non-AI generation)
+            if template != "base":
+                content = generator.generate(
+                    variant=variant, 
+                    output_format=format, 
+                    output_path=output_path,
+                    template=template
+                )
+            else:
+                content = generator.generate(
+                    variant=variant, output_format=format, output_path=output_path
+                )
 
         if no_save:
             console.print("\n" + "-" * 80)

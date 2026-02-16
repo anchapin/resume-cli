@@ -65,6 +65,7 @@ class TemplateGenerator:
         output_format: str = "md",
         output_path: Optional[Path] = None,
         enhanced_context: Optional[Dict[str, Any]] = None,
+        template: str = "base",
         **kwargs,
     ) -> str:
         """
@@ -76,6 +77,7 @@ class TemplateGenerator:
             output_path: Optional output file path
             enhanced_context: Optional dict with AI-enhanced data to merge into context
                             (e.g., {"projects": {...}, "summary": "...", "skills": {...}})
+            template: Template style (base, modern, minimalist, academic, tech)
             **kwargs: Additional template variables
 
         Returns:
@@ -147,9 +149,15 @@ class TemplateGenerator:
                     # Replace non-dict values (e.g., summary)
                     context[key] = value
 
-        # Select template (PDF uses TEX template)
+        # Select template (PDF uses TEX template, other formats use the selected style)
         template_format = "tex" if output_format == "pdf" else output_format
-        template_name = f"resume_{template_format}.j2"
+        
+        # For MD format, use template-specific template; otherwise use base
+        if output_format == "md" and template != "base":
+            template_name = f"resume_{template}_{template_format}.j2"
+        else:
+            template_name = f"resume_{template_format}.j2"
+        
         try:
             template = self.env.get_template(template_name)
         except Exception:

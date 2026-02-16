@@ -190,10 +190,7 @@ class AIJudge:
         return versions[0], "Judge unable to decide. Using first version."
 
     def judge_interview_questions(
-        self,
-        versions: List[Dict[str, Any]],
-        job_description: str,
-        resume_context: str
+        self, versions: List[Dict[str, Any]], job_description: str, resume_context: str
     ) -> Dict[str, Any]:
         """
         Evaluate and select best interview questions generation.
@@ -234,7 +231,9 @@ class AIJudge:
 
         except Exception as e:
             # On judge failure, return first version
-            console.print(f"[yellow]Judge evaluation failed: {str(e)}. Using first version.[/yellow]")
+            console.print(
+                f"[yellow]Judge evaluation failed: {str(e)}. Using first version.[/yellow]"
+            )
             return versions[0]
 
         # Fallback to first version
@@ -405,10 +404,7 @@ Return ONLY valid JSON, nothing else."""
         return prompt
 
     def _create_interview_questions_judge_prompt(
-        self,
-        versions: List[Dict[str, Any]],
-        job_description: str,
-        resume_context: str
+        self, versions: List[Dict[str, Any]], job_description: str, resume_context: str
     ) -> str:
         """Create prompt for judging interview questions generation versions."""
         prompt = f"""You are an expert technical interviewer and career coach. Your task is to judge which of 3 AI-generated interview question sets is best.

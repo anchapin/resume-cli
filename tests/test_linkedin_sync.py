@@ -11,6 +11,7 @@ from cli.utils.config import Config
 
 class MockConfig:
     """Mock config object for testing."""
+
     def get(self, key, default=None):
         return default
 
@@ -30,14 +31,11 @@ def sample_linkedin_data():
             "lastName": "Doe",
             "email": "john.doe@example.com",
             "phone": "+1-555-0123",
-            "location": {
-                "city": "San Francisco",
-                "region": "California"
-            },
+            "location": {"city": "San Francisco", "region": "California"},
             "website": "https://johndoe.dev",
             "linkedinUrl": "https://linkedin.com/in/johndoe",
             "headline": "Senior Software Engineer",
-            "summary": "Experienced software engineer with 10+ years of experience."
+            "summary": "Experienced software engineer with 10+ years of experience.",
         },
         "skills": [
             {"name": "Python"},
@@ -45,7 +43,7 @@ def sample_linkedin_data():
             {"name": "Docker"},
             {"name": "Kubernetes"},
             {"name": "AWS"},
-            {"name": "PostgreSQL"}
+            {"name": "PostgreSQL"},
         ],
         "experience": [
             {
@@ -54,7 +52,7 @@ def sample_linkedin_data():
                 "startDate": "2020-01",
                 "endDate": "2023-12",
                 "location": "San Francisco, CA",
-                "description": "• Built microservices using Python and FastAPI\n• Reduced API latency by 40%\n• Led team of 5 engineers"
+                "description": "• Built microservices using Python and FastAPI\n• Reduced API latency by 40%\n• Led team of 5 engineers",
             },
             {
                 "company": "Startup Inc",
@@ -62,8 +60,8 @@ def sample_linkedin_data():
                 "startDate": "2018-06",
                 "endDate": "2019-12",
                 "location": "New York, NY",
-                "description": "Developed React frontend applications"
-            }
+                "description": "Developed React frontend applications",
+            },
         ],
         "education": [
             {
@@ -72,23 +70,23 @@ def sample_linkedin_data():
                 "fieldOfStudy": "Computer Science",
                 "startDate": "2016-09",
                 "endDate": "2018-05",
-                "schoolLocation": "Cambridge, MA"
+                "schoolLocation": "Cambridge, MA",
             },
             {
                 "school": "State University",
                 "degree": "Bachelor of Science",
                 "fieldOfStudy": "Computer Science",
-                "endDate": "2016-05"
-            }
+                "endDate": "2016-05",
+            },
         ],
         "certifications": [
             {
                 "name": "AWS Certified Solutions Architect",
                 "authority": "Amazon Web Services",
                 "startDate": "2021-03",
-                "url": "https://aws.amazon.com/certification/"
+                "url": "https://aws.amazon.com/certification/",
             }
-        ]
+        ],
     }
 
 
@@ -96,28 +94,18 @@ def sample_linkedin_data():
 def sample_resume_data():
     """Sample resume.yaml data."""
     return {
-        "meta": {
-            "version": "2.0.0",
-            "last_updated": "2024-01-01",
-            "author": "John Doe"
-        },
+        "meta": {"version": "2.0.0", "last_updated": "2024-01-01", "author": "John Doe"},
         "contact": {
             "name": "John Doe",
             "email": "john.doe@example.com",
             "phone": "+1-555-0123",
-            "location": {
-                "city": "San Francisco",
-                "state": "California"
-            }
+            "location": {"city": "San Francisco", "state": "California"},
         },
         "professional_summary": {
             "base": "Software engineer with experience in Python and JavaScript.",
-            "variants": {}
+            "variants": {},
         },
-        "skills": {
-            "languages": ["Python", "JavaScript"],
-            "frameworks": ["Django", "React"]
-        },
+        "skills": {"languages": ["Python", "JavaScript"], "frameworks": ["Django", "React"]},
         "experience": [
             {
                 "company": "Tech Corp",
@@ -125,9 +113,7 @@ def sample_resume_data():
                 "start_date": "2020-01",
                 "end_date": "2023-12",
                 "location": "San Francisco, CA",
-                "bullets": [
-                    {"text": "Built microservices", "skills": [], "emphasize_for": []}
-                ]
+                "bullets": [{"text": "Built microservices", "skills": [], "emphasize_for": []}],
             }
         ],
         "education": [
@@ -135,7 +121,7 @@ def sample_resume_data():
                 "institution": "MIT",
                 "degree": "Master of Science",
                 "graduation_date": "2018-05",
-                "field": "Computer Science"
+                "field": "Computer Science",
             }
         ],
         "certifications": [],
@@ -143,9 +129,9 @@ def sample_resume_data():
         "variants": {
             "v1.0.0-base": {
                 "description": "Base variant",
-                "skill_sections": ["languages", "frameworks"]
+                "skill_sections": ["languages", "frameworks"],
             }
-        }
+        },
     }
 
 
@@ -161,7 +147,9 @@ class TestLinkedInSync:
     def test_import_from_url_raises_error(self, mock_config):
         """Test that import_from_url raises NotImplementedError."""
         sync = LinkedInSync(mock_config)
-        with pytest.raises(NotImplementedError, match="Direct LinkedIn URL import is not supported"):
+        with pytest.raises(
+            NotImplementedError, match="Direct LinkedIn URL import is not supported"
+        ):
             sync.import_from_url("https://linkedin.com/in/username")
 
     def test_import_from_json_file_not_found(self, mock_config):
@@ -256,8 +244,20 @@ class TestLinkedInSync:
         """Test skill categorization."""
         sync = LinkedInSync(mock_config)
 
-        skills = ["Python", "JavaScript", "Docker", "Kubernetes", "AWS", "PostgreSQL",
-                   "Django", "React", "MongoDB", "Redis", "Git", "Jenkins"]
+        skills = [
+            "Python",
+            "JavaScript",
+            "Docker",
+            "Kubernetes",
+            "AWS",
+            "PostgreSQL",
+            "Django",
+            "React",
+            "MongoDB",
+            "Redis",
+            "Git",
+            "Jenkins",
+        ]
 
         categorized = sync._categorize_skills(skills)
 
@@ -287,7 +287,7 @@ class TestLinkedInSync:
         sync = LinkedInSync(mock_config)
 
         # Write sample data to temp file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(sample_linkedin_data, f)
             temp_path = Path(f.name)
 

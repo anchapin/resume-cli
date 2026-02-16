@@ -26,9 +26,7 @@ class TestInitFromExisting:
         )
 
         revised_resume = temp_dir / "REVISED.md"
-        revised_resume.write_text(
-            "John Doe, San Francisco, CA 94102\nhttps://github.com/johndoe"
-        )
+        revised_resume.write_text("John Doe, San Francisco, CA 94102\nhttps://github.com/johndoe")
 
         output_path = temp_dir / "resume.yaml"
 

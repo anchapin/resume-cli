@@ -61,7 +61,8 @@ class TestParseFromFile:
     def test_parse_linkedin_html(self, temp_dir: Path):
         """Test parsing LinkedIn job posting HTML."""
         html_file = temp_dir / "job.html"
-        html_file.write_text("""
+        html_file.write_text(
+            """
         <html>
         <body>
         <h1>Senior Software Engineer</h1>
@@ -74,7 +75,8 @@ class TestParseFromFile:
         <p>This is a remote position.</p>
         </body>
         </html>
-        """)
+        """
+        )
 
         parser = JobParser()
         job = parser.parse_from_file(html_file)
@@ -85,7 +87,8 @@ class TestParseFromFile:
     def test_parse_indeed_html(self, temp_dir: Path):
         """Test parsing Indeed job posting HTML."""
         html_file = temp_dir / "job.html"
-        html_file.write_text("""
+        html_file.write_text(
+            """
         <html>
         <body>
         <h1>Backend Developer</h1>
@@ -95,7 +98,8 @@ class TestParseFromFile:
         <p>Salary: $100,000 per year</p>
         </body>
         </html>
-        """)
+        """
+        )
 
         parser = JobParser()
         job = parser.parse_from_file(html_file)
@@ -105,7 +109,8 @@ class TestParseFromFile:
     def test_parse_generic_html(self, temp_dir: Path):
         """Test parsing generic job posting HTML."""
         html_file = temp_dir / "job.html"
-        html_file.write_text("""
+        html_file.write_text(
+            """
         <html>
         <body>
         <h1>Software Engineer</h1>
@@ -123,7 +128,8 @@ class TestParseFromFile:
         </ul>
         </body>
         </html>
-        """)
+        """
+        )
 
         parser = JobParser()
         job = parser.parse_from_file(html_file)
@@ -244,14 +250,16 @@ class TestParseJobPosting:
     def test_parse_job_posting_from_file(self, temp_dir: Path):
         """Test parse_job_posting with file input."""
         html_file = temp_dir / "job.html"
-        html_file.write_text("""
+        html_file.write_text(
+            """
         <html>
         <body>
         <h1>Developer</h1>
         <div>company: Test Corp</div>
         </body>
         </html>
-        """)
+        """
+        )
 
         result = parse_job_posting(file_path=html_file, use_cache=True)
 
@@ -270,7 +278,8 @@ class TestRemoteDetection:
         """Test remote detection from HTML content."""
         html_file = temp_dir / "job.html"
         # Use explicit remote keyword that the parser looks for
-        html_file.write_text("""
+        html_file.write_text(
+            """
         <html>
         <body>
         <h1>Developer</h1>
@@ -278,7 +287,8 @@ class TestRemoteDetection:
         <p>This is a remote position.</p>
         </body>
         </html>
-        """)
+        """
+        )
 
         parser = JobParser()
         job = parser.parse_from_file(html_file)
@@ -290,7 +300,8 @@ class TestRemoteDetection:
     def test_detect_not_remote(self, temp_dir: Path):
         """Test non-remote job detection."""
         html_file = temp_dir / "job.html"
-        html_file.write_text("""
+        html_file.write_text(
+            """
         <html>
         <body>
         <h1>Developer</h1>
@@ -298,7 +309,8 @@ class TestRemoteDetection:
         <p>Work from our office.</p>
         </body>
         </html>
-        """)
+        """
+        )
 
         parser = JobParser()
         job = parser.parse_from_file(html_file)

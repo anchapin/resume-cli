@@ -101,12 +101,7 @@ class TestKeywords:
                 "cloud": ["AWS"],
             },
             "experience": [
-                {
-                    "company": "Test",
-                    "bullets": [
-                        {"text": "Built APIs with Python and FastAPI"}
-                    ]
-                }
+                {"company": "Test", "bullets": [{"text": "Built APIs with Python and FastAPI"}]}
             ],
             "summary": "Experienced Python developer",
         }
@@ -195,7 +190,7 @@ class TestReadability:
                     "bullets": [
                         {"text": "Increased sales by 30%"},
                         {"text": "Built scalable APIs"},
-                    ]
+                    ],
                 }
             ],
             "summary": "Led team",
@@ -208,12 +203,7 @@ class TestReadability:
     def test_readability_poor_content(self, ats_generator):
         """Test readability with poor content."""
         resume_data = {
-            "experience": [
-                {
-                    "company": "Test",
-                    "bullets": []
-                }
-            ],
+            "experience": [{"company": "Test", "bullets": []}],
             "summary": "",
         }
 
@@ -243,12 +233,7 @@ class TestKeywordExtraction:
                 "cloud": ["AWS", "GCP"],
             },
             "experience": [
-                {
-                    "company": "Test",
-                    "bullets": [
-                        {"text": "Built REST APIs with FastAPI"}
-                    ]
-                }
+                {"company": "Test", "bullets": [{"text": "Built REST APIs with FastAPI"}]}
             ],
             "summary": "Experienced Python developer",
         }
@@ -364,13 +349,7 @@ class TestGetAllText:
         resume_data = {
             "contact": {"name": "John", "email": "john@test.com"},
             "experience": [
-                {
-                    "company": "Tech Corp",
-                    "title": "Engineer",
-                    "bullets": [
-                        {"text": "Built APIs"}
-                    ]
-                }
+                {"company": "Tech Corp", "title": "Engineer", "bullets": [{"text": "Built APIs"}]}
             ],
             "skills": {"programming": ["Python"]},
         }

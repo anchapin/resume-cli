@@ -13,7 +13,9 @@ class TestTemplateMetadata:
 
     def test_init_default_values(self):
         """Test initialization with default values."""
-        metadata = TemplateMetadata(name="test_template", description="Test", category="professional")
+        metadata = TemplateMetadata(
+            name="test_template", description="Test", category="professional"
+        )
 
         assert metadata.name == "test_template"
         assert metadata.description == "Test"
@@ -294,7 +296,9 @@ class TestTemplateMarketplaceInstall:
         template_file = temp_dir / "test.j2"
         template_file.write_text("Test content")
 
-        installed_path = marketplace.install_template(template_file, name="custom_name")  # noqa: F841
+        installed_path = marketplace.install_template(
+            template_file, name="custom_name"
+        )  # noqa: F841
 
         assert "custom_name" in marketplace.registry["templates"]
         assert marketplace.registry["templates"]["custom_name"]["name"] == "custom_name"

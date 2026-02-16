@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -14,9 +13,7 @@ class TestTemplateMetadata:
 
     def test_init_default_values(self):
         """Test initialization with default values."""
-        metadata = TemplateMetadata(
-            name="test_template", description="Test", category="professional"
-        )
+        metadata = TemplateMetadata(name="test_template", description="Test", category="professional")
 
         assert metadata.name == "test_template"
         assert metadata.description == "Test"
@@ -117,7 +114,7 @@ class TestTemplateMarketplaceInitialization:
         registry_path = temp_dir / "registry.json"
         user_templates_dir = temp_dir / "user_templates"
 
-        marketplace = TemplateMarketplace(
+        marketplace = TemplateMarketplace(  # noqa: F841
             registry_path=registry_path, user_templates_dir=user_templates_dir
         )
 
@@ -131,7 +128,7 @@ class TestTemplateMarketplaceInitialization:
         registry_path = temp_dir / "nested" / "registry.json"
         user_templates_dir = temp_dir / "nested" / "templates"
 
-        marketplace = TemplateMarketplace(
+        marketplace = TemplateMarketplace(  # noqa: F841
             registry_path=registry_path, user_templates_dir=user_templates_dir
         )
 
@@ -272,7 +269,7 @@ class TestTemplateMarketplaceInstall:
 
     def test_install_template(self, temp_dir: Path):
         """Test installing a template from file."""
-        marketplace = TemplateMarketplace(
+        marketplace = TemplateMarketplace(  # noqa: F841
             registry_path=temp_dir / "registry.json",
             user_templates_dir=temp_dir / "user_templates",
         )
@@ -289,7 +286,7 @@ class TestTemplateMarketplaceInstall:
 
     def test_install_template_with_custom_name(self, temp_dir: Path):
         """Test installing a template with custom name."""
-        marketplace = TemplateMarketplace(
+        marketplace = TemplateMarketplace(  # noqa: F841
             registry_path=temp_dir / "registry.json",
             user_templates_dir=temp_dir / "user_templates",
         )
@@ -297,14 +294,14 @@ class TestTemplateMarketplaceInstall:
         template_file = temp_dir / "test.j2"
         template_file.write_text("Test content")
 
-        installed_path = marketplace.install_template(template_file, name="custom_name")
+        installed_path = marketplace.install_template(template_file, name="custom_name")  # noqa: F841
 
         assert "custom_name" in marketplace.registry["templates"]
         assert marketplace.registry["templates"]["custom_name"]["name"] == "custom_name"
 
     def test_install_template_with_metadata(self, temp_dir: Path):
         """Test installing a template with custom metadata."""
-        marketplace = TemplateMarketplace(
+        marketplace = TemplateMarketplace(  # noqa: F841
             registry_path=temp_dir / "registry.json",
             user_templates_dir=temp_dir / "user_templates",
         )
@@ -328,7 +325,7 @@ class TestTemplateMarketplaceInstall:
 
     def test_install_template_file_not_found(self, temp_dir: Path):
         """Test installing a non-existent template file."""
-        marketplace = TemplateMarketplace(
+        marketplace = TemplateMarketplace(  # noqa: F841
             registry_path=temp_dir / "registry.json",
             user_templates_dir=temp_dir / "user_templates",
         )
@@ -338,7 +335,7 @@ class TestTemplateMarketplaceInstall:
 
     def test_install_template_wrong_extension(self, temp_dir: Path):
         """Test installing a template with wrong extension."""
-        marketplace = TemplateMarketplace(
+        marketplace = TemplateMarketplace(  # noqa: F841
             registry_path=temp_dir / "registry.json",
             user_templates_dir=temp_dir / "user_templates",
         )
@@ -355,7 +352,7 @@ class TestTemplateMarketplaceUninstall:
 
     def test_uninstall_user_template(self, temp_dir: Path):
         """Test uninstalling a user template."""
-        marketplace = TemplateMarketplace(
+        marketplace = TemplateMarketplace(  # noqa: F841
             registry_path=temp_dir / "registry.json",
             user_templates_dir=temp_dir / "user_templates",
         )
@@ -537,7 +534,7 @@ class TestTemplateMarketplaceRegistryPersistence:
     def test_registry_saved_after_install(self, temp_dir: Path):
         """Test registry is saved after installing template."""
         registry_path = temp_dir / "registry.json"
-        marketplace = TemplateMarketplace(
+        marketplace = TemplateMarketplace(  # noqa: F841
             registry_path=registry_path,
             user_templates_dir=temp_dir / "user_templates",
         )

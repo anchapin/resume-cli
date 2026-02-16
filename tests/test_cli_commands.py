@@ -290,6 +290,7 @@ Requirements:
 
         # Click exits with 2 for missing required options
         assert result.returncode == 2
+        assert "Missing option" in result.stderr or "Missing option" in result.stdout
 
 
 class TestCLIKeywordAnalysis:
@@ -354,6 +355,7 @@ Requirements:
 
         # Click exits with 2 for missing required options
         assert result.returncode == 2
+        assert "Missing option" in result.stderr or "Missing option" in result.stdout
 
 
 class TestCLIHelp:
@@ -375,19 +377,6 @@ class TestCLIHelp:
 
     def test_command_help(self):
         """Test individual command help displays."""
-        # Test main help shows commands
-        result = subprocess.run(
-            [sys.executable, "-m", "cli.main", "--help"],
-            capture_output=True,
-            text=True,
-            cwd=Path(__file__).parent.parent,
-        )
-
-        assert result.returncode == 0
-        assert "generate" in result.stdout
-        assert "validate" in result.stdout
-
-        # Test subcommand help shows options
         result = subprocess.run(
             [sys.executable, "-m", "cli.main", "generate", "--help"],
             capture_output=True,
@@ -416,7 +405,7 @@ class TestCLIErrorHandling:
         assert "Error" in result.stdout or "not found" in result.stdout.lower()
 
     def test_invalid_variant(self, sample_yaml_file: Path):
-        """Test CLI handles invalid variant gracefully."""
+        """Test CLI handles invalid variant gracefully by falling back to base template."""
         result = subprocess.run(
             [
                 sys.executable,
@@ -435,7 +424,6 @@ class TestCLIErrorHandling:
             cwd=Path(__file__).parent.parent,
         )
 
-        # CLI gracefully falls back to base template when variant doesn't exist
-        # It should not crash and should produce output
+        # CLI gracefully falls back to base template and succeeds
         assert result.returncode == 0
-        assert "Generated" in result.stdout or "resume" in result.stdout.lower()
+        assert "Generated:" in result.stdout

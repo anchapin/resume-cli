@@ -15,7 +15,6 @@ import pytest
 
 from cli.integrations.job_parser import JobDetails, JobParser, parse_job_posting
 
-
 # Sample LinkedIn job posting HTML
 LINKEDIN_SAMPLE_HTML = """
 <!DOCTYPE html>

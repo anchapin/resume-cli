@@ -217,9 +217,7 @@ class JobParser:
         try:
             import requests
 
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            }
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
             response = requests.get(url, headers=headers, timeout=30)
             response.raise_for_status()
 
@@ -310,7 +308,9 @@ class JobParser:
 
         # Extract description
         description_elem = self._find_by_selectors(soup, self.LINKEDIN_SELECTORS["description"])
-        description = description_elem.get_text(separator="\n", strip=True) if description_elem else ""
+        description = (
+            description_elem.get_text(separator="\n", strip=True) if description_elem else ""
+        )
 
         # Extract salary
         salary = self._extract_by_selectors(soup, self.LINKEDIN_SELECTORS["salary"])
@@ -356,9 +356,7 @@ class JobParser:
         company = self._extract_by_selectors(soup, self.INDEED_SELECTORS["company"])
         if not company:
             # Fallback patterns
-            company = self._extract_text_by_pattern(
-                html, r'company["\s:]+([^"<>\n]+)'
-            )
+            company = self._extract_text_by_pattern(html, r'company["\s:]+([^"<>\n]+)')
 
         # Extract position
         position = self._extract_by_selectors(soup, self.INDEED_SELECTORS["position"])
@@ -371,7 +369,9 @@ class JobParser:
 
         # Extract description
         description_elem = self._find_by_selectors(soup, self.INDEED_SELECTORS["description"])
-        description = description_elem.get_text(separator="\n", strip=True) if description_elem else ""
+        description = (
+            description_elem.get_text(separator="\n", strip=True) if description_elem else ""
+        )
 
         # Extract salary
         salary = self._extract_by_selectors(soup, self.INDEED_SELECTORS["salary"])
@@ -436,9 +436,7 @@ class JobParser:
                 position = re.sub(r"\s*[-|]\s*.*$", "", title)
 
         # Extract location
-        location = self._extract_text_by_pattern(
-            html, r'(?:location|based|office)[:\s]+([^<>\n]+)'
-        )
+        location = self._extract_text_by_pattern(html, r"(?:location|based|office)[:\s]+([^<>\n]+)")
 
         # Extract salary
         salary = self._extract_salary_from_text(html)
@@ -447,7 +445,7 @@ class JobParser:
         requirements = []
         req_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
-            string=re.compile(r"requirements|qualifications|skills", re.IGNORECASE)
+            string=re.compile(r"requirements|qualifications|skills", re.IGNORECASE),
         )
         if req_heading:
             # Get the next sibling element(s) containing the list
@@ -462,7 +460,7 @@ class JobParser:
         responsibilities = []
         resp_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
-            string=re.compile(r"responsibilities|duties|what you", re.IGNORECASE)
+            string=re.compile(r"responsibilities|duties|what you", re.IGNORECASE),
         )
         if resp_heading:
             next_elem = resp_heading.find_next_sibling(["ul", "ol", "div", "p"])
@@ -509,9 +507,7 @@ class JobParser:
                     return text
         return None
 
-    def _find_by_selectors(
-        self, soup: BeautifulSoup, selectors: List[str]
-    ) -> Optional[Tag]:
+    def _find_by_selectors(self, soup: BeautifulSoup, selectors: List[str]) -> Optional[Tag]:
         """
         Find element using multiple CSS selectors.
 
@@ -575,9 +571,7 @@ class JobParser:
 
         return None
 
-    def _extract_sections_from_description(
-        self, description: str
-    ) -> tuple[List[str], List[str]]:
+    def _extract_sections_from_description(self, description: str) -> tuple[List[str], List[str]]:
         """
         Extract requirements and responsibilities from job description.
 
@@ -654,10 +648,23 @@ class JobParser:
         # Section header keywords to exclude - only match when line STARTS with these
         # (not when they appear in the middle of a sentence)
         section_header_starts = [
-            "requirements", "qualifications", "responsibilities", "duties",
-            "what you", "what we", "your impact", "key responsibilities",
-            "benefits", "compensation", "perks", "about the", "about us",
-            "company", "team", "our team", "the company"
+            "requirements",
+            "qualifications",
+            "responsibilities",
+            "duties",
+            "what you",
+            "what we",
+            "your impact",
+            "key responsibilities",
+            "benefits",
+            "compensation",
+            "perks",
+            "about the",
+            "about us",
+            "company",
+            "team",
+            "our team",
+            "the company",
         ]
 
         # Match bullet points
@@ -682,8 +689,10 @@ class JobParser:
                     continue
                 line_lower = line.lower()
                 # Skip lines that start with section header keywords
-                if any(line_lower.startswith(header) or line_lower.startswith(header + ":")
-                       for header in section_header_starts):
+                if any(
+                    line_lower.startswith(header) or line_lower.startswith(header + ":")
+                    for header in section_header_starts
+                ):
                     continue
                 # Skip lines that look like headers (all caps or very short)
                 if line.isupper() and len(line) < 50:

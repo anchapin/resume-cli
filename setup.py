@@ -40,6 +40,8 @@ setup(
         "python-dateutil>=2.8.0",
         "python-dotenv>=1.0.0",
         "python-docx>=0.8.11",
+        "beautifulsoup4>=4.12.0",
+        "lxml>=4.9.0",
     ],
     extras_require={
         "ai": [

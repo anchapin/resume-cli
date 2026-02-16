@@ -675,8 +675,7 @@ def ats_check(ctx, variant: str, job_desc: str, output: Optional[str]):
         if output:
             output_path = Path(output)
             generator.export_json(report, output_path)
-            console.print(f"
-[green]✓[/green] Report saved to: {output_path}")
+            console.print(f"[green]✓[/green] Report saved to: {output_path}")
 
     except Exception as e:
         console.print(f"[bold red]Error checking ATS score:[/bold red] {e}")

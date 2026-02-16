@@ -43,6 +43,19 @@ cover_letter:
   tone: professional
   max_length: 400
 
+interview_prep:
+  enabled: true
+  output_directory: output
+  default_num_technical: 10
+  default_num_behavioral: 5
+  include_system_design: true
+  flashcard_answer_max_length: 150  # characters for concise answers
+  frameworks:
+    - "STAR Method"
+    - "PARLA"
+    - "Situation-Action-Result"
+
+
 github:
   username: anchapin
   sync_months: 3

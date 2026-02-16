@@ -30,6 +30,8 @@ ignore =
     E402,
     # F811 redefinition of unused (in schema.py)
     F811,
+    # E722 do not use bare 'except'
+    E722,
 
 # Show complexity
 max-complexity = 10

@@ -522,7 +522,10 @@ def templates():
 
 @templates.command("list")
 @click.option(
-    "-c", "--category", type=click.Choice(TemplateMarketplace.CATEGORIES + ["custom"]), help="Filter by category"
+    "-c",
+    "--category",
+    type=click.Choice(TemplateMarketplace.CATEGORIES + ["custom"]),
+    help="Filter by category",
 )
 @click.option("-t", "--tag", type=str, help="Filter by tag")
 @click.pass_context
@@ -548,7 +551,11 @@ def list_templates(ctx, category: Optional[str], tag: Optional[str]):
         table.add_row(
             template.name,
             template.category,
-            template.description[:50] + "..." if len(template.description) > 50 else template.description,
+            (
+                template.description[:50] + "..."
+                if len(template.description) > 50
+                else template.description
+            ),
             rating_str,
             str(template.downloads),
         )
@@ -655,9 +662,7 @@ def uninstall_template_cmd(ctx, name: str, yes: bool):
         click.get_current_context().exit(1)
 
     if template.source == "builtin":
-        console.print(
-            f"[bold red]Error:[/bold red] Cannot uninstall builtin template '{name}'"
-        )
+        console.print(f"[bold red]Error:[/bold red] Cannot uninstall builtin template '{name}'")
         click.get_current_context().exit(1)
 
     if not yes:
@@ -744,7 +749,7 @@ def show_reviews(ctx, name: str):
 
     console.print("\n")
     for i, review in enumerate(reviews, 1):
-        stars = '★' * int(review['rating']) + '☆' * (5 - int(review['rating']))
+        stars = "★" * int(review["rating"]) + "☆" * (5 - int(review["rating"]))
         console.print(f"[bold]{i}. {stars}[/bold] ({review['date']})")
         console.print(f"   {review['review']}")
         console.print()
@@ -776,7 +781,11 @@ def search_templates(ctx, query: str):
         table.add_row(
             template.name,
             template.category,
-            template.description[:50] + "..." if len(template.description) > 50 else template.description,
+            (
+                template.description[:50] + "..."
+                if len(template.description) > 50
+                else template.description
+            ),
             rating_str,
         )
 

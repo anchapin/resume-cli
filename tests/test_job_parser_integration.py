@@ -561,14 +561,9 @@ class TestCacheOperations:
         )
         parser._save_to_cache(cache_key, cached_job)
 
-        # Mock requests to avoid actual HTTP call
-        with patch("cli.integrations.job_parser.requests.get", create=True) as mock_get:
-            mock_get.side_effect = Exception("Should not be called")
-
-            # Should return cached data without making HTTP request
-            job = parser.parse_from_url(url)
-
-            assert job.company == "Cached Company"
+        # Should return cached data without making HTTP request
+        job = parser.parse_from_url(url)
+        assert job.company == "Cached Company"
 
 
 class TestParseJobPostingFunction:

@@ -1,0 +1,29 @@
+{
+    "name": "resumeai-desktop",
+    "version": "1.0.0",
+    "description": "Desktop application for ResumeAI - Professional resume management and job application tracking",
+    "main": "index.html",
+    "scripts": {
+        "dev": "tauri dev",
+        "build": "tauri build",
+        "serve": "python3 -m http.server 8080 --directory .",
+        "tauri": "tauri"
+    },
+    "keywords": [
+        "resume",
+        "job-search",
+        "career",
+        "desktop",
+        "tauri",
+        "pwa"
+    ],
+    "author": "ResumeAI Team",
+    "license": "MIT",
+    "devDependencies": {
+        "@tauri-apps/cli": "^2.0.0"
+    },
+    "dependencies": {},
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}

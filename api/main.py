@@ -355,7 +355,200 @@ async def generate_cover_letter(request: CoverLetterRequest):
         raise HTTPException(status_code=500, detail="Cover letter generation failed")
 
 
+# =========================================================================
+# Analytics Endpoints for Dashboard
+# =========================================================================
+
+
+@app.get(
+    "/v1/analytics/overview",
+    dependencies=[Security(get_api_key)],
+    summary="Get dashboard overview metrics",
+    description="Returns key metrics for the dashboard overview including response rate, interview rate, offer rate, and total counts.",
+    response_description="JSON object containing overview metrics",
+    responses={
+        200: {"description": "Successfully retrieved overview metrics"},
+        401: {"description": "Invalid or missing API key"},
+    },
+)
+async def get_analytics_overview():
+    """Get overview metrics for the dashboard."""
+    try:
+        from cli.integrations.tracking import TrackingIntegration
+
+        config = Config()
+        tracker = TrackingIntegration(config)
+        return tracker.get_response_rate_gauge()
+    except Exception as e:
+        logger.exception("Error getting analytics overview", exc_info=e)
+        return {
+            "response_rate": 0,
+            "interview_rate": 0,
+            "offer_rate": 0,
+            "total_applications": 0,
+            "interviews": 0,
+            "offers": 0,
+        }
+
+
+@app.get(
+    "/v1/analytics/by-status",
+    dependencies=[Security(get_api_key)],
+    summary="Get applications by status",
+    description="Returns application counts grouped by status (applied, interview, offer, rejected, etc.). Useful for pie chart visualization.",
+    response_description="JSON object mapping status to count",
+    responses={
+        200: {"description": "Successfully retrieved status breakdown"},
+        401: {"description": "Invalid or missing API key"},
+    },
+)
+async def get_analytics_by_status():
+    """Get application counts by status."""
+    try:
+        from cli.integrations.tracking import TrackingIntegration
+
+        config = Config()
+        tracker = TrackingIntegration(config)
+        return tracker.get_applications_by_status()
+    except Exception as e:
+        logger.exception("Error getting analytics by status", exc_info=e)
+        return {}
+
+
+@app.get(
+    "/v1/analytics/timeline",
+    dependencies=[Security(get_api_key)],
+    summary="Get applications timeline",
+    description="Returns daily application counts for the specified time period. Useful for line chart visualization.",
+    response_description="Array of objects with date and count",
+    responses={
+        200: {"description": "Successfully retrieved timeline data"},
+        401: {"description": "Invalid or missing API key"},
+    },
+)
+async def get_analytics_timeline(days: int = 90):
+    """
+    Get application timeline data.
+
+    Args:
+        days: Number of days to look back (default: 90)
+    """
+    try:
+        from cli.integrations.tracking import TrackingIntegration
+
+        config = Config()
+        tracker = TrackingIntegration(config)
+        return tracker.get_applications_timeline(days=days)
+    except Exception as e:
+        logger.exception("Error getting analytics timeline", exc_info=e)
+        return []
+
+
+@app.get(
+    "/v1/analytics/variants",
+    dependencies=[Security(get_api_key)],
+    summary="Get variant performance metrics",
+    description="Returns performance metrics for each resume variant including response rate, interview rate, and offer rate. Useful for bar chart comparison.",
+    response_description="Array of variant performance objects",
+    responses={
+        200: {"description": "Successfully retrieved variant performance data"},
+        401: {"description": "Invalid or missing API key"},
+    },
+)
+async def get_analytics_variants():
+    """Get performance metrics by resume variant."""
+    try:
+        from cli.integrations.tracking import TrackingIntegration
+
+        config = Config()
+        tracker = TrackingIntegration(config)
+        return tracker.get_variant_performance()
+    except Exception as e:
+        logger.exception("Error getting variant analytics", exc_info=e)
+        return []
+
+
+@app.get(
+    "/v1/analytics/companies",
+    dependencies=[Security(get_api_key)],
+    summary="Get company analytics",
+    description="Returns analytics grouped by company including application counts, statuses, and roles.",
+    response_description="Array of company analytics objects",
+    responses={
+        200: {"description": "Successfully retrieved company analytics"},
+        401: {"description": "Invalid or missing API key"},
+    },
+)
+async def get_analytics_companies():
+    """Get analytics by company."""
+    try:
+        from cli.integrations.tracking import TrackingIntegration
+
+        config = Config()
+        tracker = TrackingIntegration(config)
+        return tracker.get_company_analytics()
+    except Exception as e:
+        logger.exception("Error getting company analytics", exc_info=e)
+        return []
+
+
+@app.get(
+    "/v1/analytics/sources",
+    dependencies=[Security(get_api_key)],
+    summary="Get application source breakdown",
+    description="Returns application counts by source (LinkedIn, Direct, Referral, etc.).",
+    response_description="Array of source breakdown objects",
+    responses={
+        200: {"description": "Successfully retrieved source breakdown"},
+        401: {"description": "Invalid or missing API key"},
+    },
+)
+async def get_analytics_sources():
+    """Get application counts by source."""
+    try:
+        from cli.integrations.tracking import TrackingIntegration
+
+        config = Config()
+        tracker = TrackingIntegration(config)
+        return tracker.get_source_breakdown()
+    except Exception as e:
+        logger.exception("Error getting source analytics", exc_info=e)
+        return []
+
+
+@app.get(
+    "/v1/analytics/dashboard",
+    dependencies=[Security(get_api_key)],
+    summary="Get complete dashboard data",
+    description="Returns all dashboard metrics in a single response including overview, status breakdown, timeline, variant performance, company analytics, and source breakdown.",
+    response_description="Comprehensive dashboard data object",
+    responses={
+        200: {"description": "Successfully retrieved complete dashboard data"},
+        401: {"description": "Invalid or missing API key"},
+    },
+)
+async def get_dashboard_data():
+    """Get complete dashboard data."""
+    try:
+        from cli.integrations.tracking import TrackingIntegration
+
+        config = Config()
+        tracker = TrackingIntegration(config)
+        return tracker.get_dashboard_data()
+    except Exception as e:
+        logger.exception("Error getting dashboard data", exc_info=e)
+        return {
+            "overview": {},
+            "by_status": {},
+            "timeline": [],
+            "variant_performance": [],
+            "company_analytics": [],
+            "source_breakdown": [],
+        }
+
+
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # nosec: B104 - Binding to all interfaces is required for Docker container access
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # nosec: B104

@@ -437,3 +437,297 @@ class TestGetFieldnames:
         assert "cover_letter" in fieldnames
         assert "package_path" in fieldnames
         assert len(fieldnames) == 11
+
+
+# =========================================================================
+# Tests for Analytics Methods (Dashboard Feature)
+# =========================================================================
+
+
+class TestGetApplicationsByStatus:
+    """Test get_applications_by_status method."""
+
+    def test_by_status_empty(self, mock_config: Config, temp_dir: Path):
+        """Test by_status with empty CSV."""
+        csv_path = temp_dir / "empty.csv"
+        config = Config()
+        config.set("tracking.csv_path", str(csv_path))
+
+        tracking = TrackingIntegration(config)
+        by_status = tracking.get_applications_by_status()
+
+        assert by_status == {}
+
+    def test_by_status_with_data(self, mock_config: Config, temp_dir: Path):
+        """Test by_status calculates correct counts."""
+        csv_path = temp_dir / "by_status.csv"
+        config = Config()
+        config.set("tracking.csv_path", str(csv_path))
+
+        tracking = TrackingIntegration(config)
+
+        # Add various applications
+        tracking.log_application(company="A", role="R1", status="applied")
+        tracking.log_application(company="B", role="R2", status="applied")
+        tracking.log_application(company="C", role="R3", status="interview")
+        tracking.log_application(company="D", role="R4", status="offer")
+        tracking.log_application(company="E", role="R5", status="rejected")
+
+        by_status = tracking.get_applications_by_status()
+
+        assert by_status["applied"] == 2
+        assert by_status["interview"] == 1
+        assert by_status["offer"] == 1
+        assert by_status["rejected"] == 1
+
+
+class TestGetApplicationsTimeline:
+    """Test get_applications_timeline method."""
+
+    def test_timeline_empty(self, mock_config: Config, temp_dir: Path):
+        """Test timeline with empty CSV."""
+        csv_path = temp_dir / "empty.csv"
+        config = Config()
+        config.set("tracking.csv_path", str(csv_path))
+
+        tracking = TrackingIntegration(config)
+        timeline = tracking.get_applications_timeline(days=30)
+
+        # Should return timeline with all dates but zero counts
+        assert len(timeline) == 31  # 30 days + today
+        assert all(entry["count"] == 0 for entry in timeline)
+
+    def test_timeline_with_data(self, mock_config: Config, temp_dir: Path):
+        """Test timeline includes application counts."""
+        csv_path = temp_dir / "timeline.csv"
+        config = Config()
+        config.set("tracking.csv_path", str(csv_path))
+
+        tracking = TrackingIntegration(config)
+
+        # Add application with today's date
+        from datetime import datetime
+
+        today = datetime.now().strftime("%Y-%m-%d")
+
+        tracking.log_application(company="A", role="R1", status="applied")
+
+        timeline = tracking.get_applications_timeline(days=7)
+
+        # Find today's entry
+        today_entry = next((e for e in timeline if e["date"] == today), None)
+        assert today_entry is not None
+        assert today_entry["count"] >= 1
+
+
+class TestGetVariantPerformance:
+    """Test get_variant_performance method."""
+
+    def test_variant_performance_empty(self, mock_config: Config, temp_dir: Path):
+        """Test variant performance with empty CSV."""
+        csv_path = temp_dir / "empty.csv"
+        config = Config()
+        config.set("tracking.csv_path", str(csv_path))
+
+        tracking = TrackingIntegration(config)
+        performance = tracking.get_variant_performance()
+
+        assert performance == []
+
+    def test_variant_performance_with_data(self, mock_config: Config, temp_dir: Path):
+        """Test variant performance calculates correct metrics."""
+        csv_path = temp_dir / "variant.csv"
+        config = Config()
+        config.set("tracking.csv_path", str(csv_path))
+
+        tracking = TrackingIntegration(config)
+
+        # Add applications for two variants
+        for _ in range(4):
+            tracking.log_application(company="A", role="R", status="applied", variant="v1.0.0-base")
+        tracking.log_application(company="B", role="R", status="interview", variant="v1.0.0-base")
+        tracking.log_application(company="C", role="R", status="offer", variant="v1.0.0-base")
+
+        for _ in range(2):
+            tracking.log_application(
+                company="D", role="R", status="applied", variant="v1.1.0-backend"
+            )
+        tracking.log_application(company="E", role="R", status="rejected", variant="v1.1.0-backend")
+
+        # Manually set responses
+        entries = tracking._read_csv()
+        for entry in entries:
+            if entry["status"] in ["interview", "offer", "rejected"]:
+                entry["response"] = "1"
+        tracking._write_csv(entries)
+
+        performance = tracking.get_variant_performance()
+
+        assert len(performance) == 2
+
+        # Find base variant
+        base_perf = next((p for p in performance if p["variant"] == "v1.0.0-base"), None)
+        assert base_perf is not None
+        assert base_perf["total_applications"] == 6
+        assert base_perf["interviews"] == 1
+        assert base_perf["offers"] == 1
+
+
+class TestGetCompanyAnalytics:
+    """Test get_company_analytics method."""
+
+    def test_company_analytics_empty(self, mock_config: Config, temp_dir: Path):
+        """Test company analytics with empty CSV."""
+        csv_path = temp_dir / "empty.csv"
+        config = Config()
+        config.set("tracking.csv_path", str(csv_path))
+
+        tracking = TrackingIntegration(config)
+        analytics = tracking.get_company_analytics()
+
+        assert analytics == []
+
+    def test_company_analytics_with_data(self, mock_config: Config, temp_dir: Path):
+        """Test company analytics groups correctly."""
+        csv_path = temp_dir / "company.csv"
+        config = Config()
+        config.set("tracking.csv_path", str(csv_path))
+
+        tracking = TrackingIntegration(config)
+
+        # Add multiple applications for same company
+        tracking.log_application(
+            company="Acme", role="Engineer", status="applied", source="LinkedIn"
+        )
+        tracking.log_application(
+            company="Acme", role="Senior Engineer", status="interview", source="Referral"
+        )
+        tracking.log_application(
+            company="Startup", role="Developer", status="applied", source="Direct"
+        )
+
+        analytics = tracking.get_company_analytics()
+
+        assert len(analytics) == 2
+
+        # Find Acme
+        acme = next((c for c in analytics if c["company"] == "Acme"), None)
+        assert acme is not None
+        assert acme["total_applications"] == 2
+        assert "Engineer" in acme["roles"]
+        assert "Senior Engineer" in acme["roles"]
+
+
+class TestGetResponseRateGauge:
+    """Test get_response_rate_gauge method."""
+
+    def test_gauge_empty(self, mock_config: Config, temp_dir: Path):
+        """Test gauge with empty CSV."""
+        csv_path = temp_dir / "empty.csv"
+        config = Config()
+        config.set("tracking.csv_path", str(csv_path))
+
+        tracking = TrackingIntegration(config)
+        gauge = tracking.get_response_rate_gauge()
+
+        assert gauge["response_rate"] == 0
+        assert gauge["total_applications"] == 0
+
+    def test_gauge_with_data(self, mock_config: Config, temp_dir: Path):
+        """Test gauge calculates correct rates."""
+        csv_path = temp_dir / "gauge.csv"
+        config = Config()
+        config.set("tracking.csv_path", str(csv_path))
+
+        tracking = TrackingIntegration(config)
+
+        # Add 10 applications: 5 applied, 3 interview, 2 offer
+        for _ in range(5):
+            tracking.log_application(company="A", role="R", status="applied")
+        for _ in range(3):
+            tracking.log_application(company="B", role="R", status="interview")
+        for _ in range(2):
+            tracking.log_application(company="C", role="R", status="offer")
+
+        # Set responses
+        entries = tracking._read_csv()
+        for entry in entries:
+            if entry["status"] in ["interview", "offer"]:
+                entry["response"] = "1"
+        tracking._write_csv(entries)
+
+        gauge = tracking.get_response_rate_gauge()
+
+        assert gauge["total_applications"] == 10
+        assert gauge["interviews"] == 3
+        assert gauge["offers"] == 2
+        assert gauge["response_rate"] == 50.0  # 5 out of 10 got response
+
+
+class TestGetSourceBreakdown:
+    """Test get_source_breakdown method."""
+
+    def test_source_breakdown_empty(self, mock_config: Config, temp_dir: Path):
+        """Test source breakdown with empty CSV."""
+        csv_path = temp_dir / "empty.csv"
+        config = Config()
+        config.set("tracking.csv_path", str(csv_path))
+
+        tracking = TrackingIntegration(config)
+        breakdown = tracking.get_source_breakdown()
+
+        assert breakdown == []
+
+    def test_source_breakdown_with_data(self, mock_config: Config, temp_dir: Path):
+        """Test source breakdown groups correctly."""
+        csv_path = temp_dir / "source.csv"
+        config = Config()
+        config.set("tracking.csv_path", str(csv_path))
+
+        tracking = TrackingIntegration(config)
+
+        tracking.log_application(company="A", role="R", status="applied", source="LinkedIn")
+        tracking.log_application(company="B", role="R", status="applied", source="LinkedIn")
+        tracking.log_application(company="C", role="R", status="applied", source="LinkedIn")
+        tracking.log_application(company="D", role="R", status="applied", source="Referral")
+        tracking.log_application(company="E", role="R", status="applied", source="Direct")
+
+        breakdown = tracking.get_source_breakdown()
+
+        assert len(breakdown) == 3
+
+        # LinkedIn should be first
+        assert breakdown[0]["source"] == "LinkedIn"
+        assert breakdown[0]["count"] == 3
+
+
+class TestGetDashboardData:
+    """Test get_dashboard_data method."""
+
+    def test_dashboard_data_structure(self, mock_config: Config, temp_dir: Path):
+        """Test dashboard data returns correct structure."""
+        csv_path = temp_dir / "dashboard.csv"
+        config = Config()
+        config.set("tracking.csv_path", str(csv_path))
+
+        tracking = TrackingIntegration(config)
+
+        # Add some data
+        tracking.log_application(company="A", role="R", status="applied", source="LinkedIn")
+        tracking.log_application(company="B", role="R", status="interview", source="Referral")
+
+        dashboard = tracking.get_dashboard_data()
+
+        assert "overview" in dashboard
+        assert "by_status" in dashboard
+        assert "timeline" in dashboard
+        assert "variant_performance" in dashboard
+        assert "company_analytics" in dashboard
+        assert "source_breakdown" in dashboard
+
+        # Verify overview has required fields
+        overview = dashboard["overview"]
+        assert "response_rate" in overview
+        assert "interview_rate" in overview
+        assert "offer_rate" in overview
+        assert "total_applications" in overview

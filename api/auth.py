@@ -21,9 +21,7 @@ def get_api_key(api_key: str = Security(api_key_header)):
         )
 
     if not api_key:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="API Key missing"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="API Key missing")
 
     if secrets.compare_digest(api_key, expected_api_key):
         return api_key

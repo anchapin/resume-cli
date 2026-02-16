@@ -288,7 +288,8 @@ Requirements:
             cwd=Path(__file__).parent.parent,
         )
 
-        assert result.returncode == 1
+        # Click exits with 2 for missing required options
+        assert result.returncode == 2
 
 
 class TestCLIKeywordAnalysis:
@@ -351,7 +352,8 @@ Requirements:
             cwd=Path(__file__).parent.parent,
         )
 
-        assert result.returncode == 1
+        # Click exits with 2 for missing required options
+        assert result.returncode == 2
 
 
 class TestCLIHelp:
@@ -373,8 +375,21 @@ class TestCLIHelp:
 
     def test_command_help(self):
         """Test individual command help displays."""
+        # Test main help shows commands
         result = subprocess.run(
             [sys.executable, "-m", "cli.main", "--help"],
+            capture_output=True,
+            text=True,
+            cwd=Path(__file__).parent.parent,
+        )
+
+        assert result.returncode == 0
+        assert "generate" in result.stdout
+        assert "validate" in result.stdout
+
+        # Test subcommand help shows options
+        result = subprocess.run(
+            [sys.executable, "-m", "cli.main", "generate", "--help"],
             capture_output=True,
             text=True,
             cwd=Path(__file__).parent.parent,
@@ -420,5 +435,7 @@ class TestCLIErrorHandling:
             cwd=Path(__file__).parent.parent,
         )
 
-        # Should either error or gracefully handle
-        assert "Error" in result.stdout or result.returncode != 0
+        # CLI gracefully falls back to base template when variant doesn't exist
+        # It should not crash and should produce output
+        assert result.returncode == 0
+        assert "Generated" in result.stdout or "resume" in result.stdout.lower()

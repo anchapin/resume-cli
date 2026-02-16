@@ -218,8 +218,8 @@ class ResumeValidator:
         """Get actionable guidance for an error."""
         key = path
         # Try to get guidance for this path and error type
-        if key in self.ERROR_GUIDANCE:
-            template = self.ERROR_GUIDANCE[key].get(error_type, "")
+        if key in ValidationError.ERROR_GUIDANCE:
+            template = ValidationError.ERROR_GUIDANCE[key].get(error_type, "")
             if template:
                 if value and "{value}" in template:
                     return template.replace("{value}", value)
@@ -228,8 +228,8 @@ class ResumeValidator:
                 return template
 
         # Try just the path as the key
-        if path in self.ERROR_GUIDANCE:
-            template = self.ERROR_GUIDANCE[path].get(error_type, "")
+        if path in ValidationError.ERROR_GUIDANCE:
+            template = ValidationError.ERROR_GUIDANCE[path].get(error_type, "")
             if template:
                 if value and "{value}" in template:
                     return template.replace("{value}", value)

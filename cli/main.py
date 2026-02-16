@@ -744,8 +744,12 @@ def sync_github(ctx, months: int, write: bool, no_backup: bool, dry_run: bool):
 
 
 @cli.command()
-@click.option("--days", type=int, default=90, help="Number of days to show in timeline (default: 90)")
-@click.option("--top-companies", type=int, default=5, help="Number of top companies to show (default: 5)")
+@click.option(
+    "--days", type=int, default=90, help="Number of days to show in timeline (default: 90)"
+)
+@click.option(
+    "--top-companies", type=int, default=5, help="Number of top companies to show (default: 5)"
+)
 @click.option("--simple", is_flag=True, help="Show simple statistics only (no charts)")
 @click.pass_context
 def analyze(ctx, days: int, top_companies: int, simple: bool):
@@ -851,7 +855,9 @@ def _print_overview_gauges(console, dashboard_data: dict):
     offer_bar = _create_progress_bar(offer_rate, width=30)
     console.print(f"  Offer Rate:     {offer_bar} {offer_rate:.1f}%")
 
-    console.print(f"\n  [dim]Total Applications: {total} | Interviews: {overview.get('interviews', 0)} | Offers: {overview.get('offers', 0)}[/dim]")
+    console.print(
+        f"\n  [dim]Total Applications: {total} | Interviews: {overview.get('interviews', 0)} | Offers: {overview.get('offers', 0)}[/dim]"
+    )
 
 
 def _create_progress_bar(percentage: float, width: int = 30) -> str:

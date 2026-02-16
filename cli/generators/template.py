@@ -123,8 +123,15 @@ class TemplateGenerator:
                     prioritize_technologies = list(all_techs)
 
         # Prepare template context
+        contact = self.yaml_handler.get_contact()
+        # Ensure contact.location exists with default values for templates that expect it
+        if "location" not in contact:
+            contact["location"] = {"city": "", "state": "", "zip": ""}
+        if "urls" not in contact:
+            contact["urls"] = {"city": "", "state": "", "zip": ""}
+        
         context = {
-            "contact": self.yaml_handler.get_contact(),
+            "contact": contact,
             "summary": self.yaml_handler.get_summary(summary_key),
             "skills": self.yaml_handler.get_skills(
                 variant, prioritize_technologies=prioritize_technologies

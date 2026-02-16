@@ -322,6 +322,54 @@ class TestLinkedInSync:
         assert sync._format_date_range("2020-01", "Present") == "Jan 2020 - Present"
         assert sync._format_date_range("2020-01", None) == "Jan 2020 - Present"
 
+    def test_import_from_csv(self, mock_config):
+        """Test importing from CSV file."""
+        sync = LinkedInSync(mock_config)
+
+        # Create a temporary CSV file with LinkedIn profile data
+        csv_content = """First Name,Last Name,Maiden Name,Address,Birth Date,Headline,Summary,Industry,Zip Code,Geo Location,Twitter Handles,Websites,Instant Messengers
+John,Doe,,,Jan 1,"Software Engineer at Tech Corp","Experienced software engineer.","Software Development,12345,"San Francisco, California",,https://johndoe.dev,"""
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
+            f.write(csv_content)
+            temp_path = Path(f.name)
+
+        try:
+            # Import CSV
+            resume_data = sync.import_from_json(temp_path)
+
+            # Verify structure
+            assert "meta" in resume_data
+            assert "contact" in resume_data
+            assert "professional_summary" in resume_data
+
+            # Verify content
+            assert resume_data["contact"]["name"] == "John Doe"
+            assert resume_data["professional_summary"]["base"] == "Experienced software engineer."
+            assert resume_data["professional_summary"]["variants"] == {}
+
+        finally:
+            temp_path.unlink()
+
+    def test_import_csv_with_invalid_json_provides_helpful_error(self, mock_config):
+        """Test that invalid JSON files give helpful error message about CSV."""
+        sync = LinkedInSync(mock_config)
+
+        # Create a temporary file with CSV content but .json extension
+        csv_content = "First Name,Last Name\nJohn,Doe"
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write(csv_content)
+            temp_path = Path(f.name)
+
+        try:
+            # Import should fail with helpful message
+            with pytest.raises(ValueError, match="appears to be in CSV format"):
+                sync.import_from_json(temp_path)
+
+        finally:
+            temp_path.unlink()
+
 
 class TestLinkedInMerge:
     """Test cases for merging LinkedIn data with existing resume data."""

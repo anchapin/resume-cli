@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 
-
 class TrackingIntegration:
     """Handle application tracking CSV integration."""
 

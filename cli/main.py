@@ -28,7 +28,7 @@ DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config" / "default.yaml"
 @click.version_option(version=__version__)
 @click.option(
     "--yaml-path",
-    type=click.Path(exists=True),
+    type=click.Path(),
     default=str(DEFAULT_YAML_PATH),
     help="Path to resume.yaml file",
 )

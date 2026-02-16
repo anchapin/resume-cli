@@ -685,6 +685,64 @@ def ats_check(ctx, variant: str, job_desc: str, output: Optional[str]):
         sys.exit(1)
 
 
+@cli.command("keyword-analysis")
+@click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to analyze")
+@click.option(
+    "--job-desc", type=click.Path(exists=True), required=True, help="Path to job description file"
+)
+@click.option("--output", type=click.Path(), help="Save report as JSON file")
+@click.pass_context
+def keyword_analysis(ctx, variant: str, job_desc: str, output: Optional[str]):
+    """
+    Analyze keyword density between resume and job description.
+
+    Shows which keywords from the job posting are present in your resume
+    and provides suggestions for improvement.
+
+    Examples:
+        resume-cli keyword-analysis -v v1.1.0-backend --job-desc job-posting.txt
+        resume-cli keyword-analysis --job-desc job.txt --output keyword-report.json
+    """
+    yaml_path = ctx.obj["yaml_path"]
+    config = ctx.obj["config"]
+
+    console.print(f"[bold blue]Keyword Density Analysis[/bold blue]")
+    console.print(f"  Variant: {variant}")
+
+    # Check if yaml exists
+    if not yaml_path.exists():
+        console.print(f"[bold red]Error:[/bold red] resume.yaml not found at {yaml_path}")
+        console.print("  Run 'resume-cli init' to create it first.")
+        sys.exit(1)
+
+    # Read job description
+    job_description = Path(job_desc).read_text()
+    console.print(f"  Job description: {job_desc}")
+
+    try:
+        from .generators.keyword_density import KeywordDensityGenerator
+
+        # Generate keyword density report
+        generator = KeywordDensityGenerator(yaml_path, config=config)
+        report = generator.generate_report(job_description, variant)
+
+        # Print report
+        generator.print_report(report)
+
+        # Export to JSON if requested
+        if output:
+            output_path = Path(output)
+            generator.export_json(report, output_path)
+            console.print(f"[green]✓[/green] Report saved to: {output_path}")
+
+    except Exception as e:
+        console.print(f"[bold red]Error analyzing keywords:[/bold red] {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)
+
+
 
 def main():
     """Main entry point."""

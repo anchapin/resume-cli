@@ -274,7 +274,8 @@ class JobParser:
         """Generate cache key from URL."""
         import hashlib
 
-        return hashlib.md5(url.encode()).hexdigest()
+        # Note: MD5 is used for cache keys only, not for security purposes
+        return hashlib.md5(url.encode()).hexdigest()  # nosec
 
     def _get_from_cache(self, cache_key: str) -> Optional[JobDetails]:
         """Get cached job details."""

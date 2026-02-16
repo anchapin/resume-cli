@@ -19,9 +19,15 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from bs4 import BeautifulSoup, Tag
+
+# Optional import for URL fetching
+try:
+    import requests
+except ImportError:
+    requests = None
 
 
 @dataclass
@@ -215,7 +221,6 @@ class JobParser:
 
         # Fetch and parse
         try:
-            import requests
 
             headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
             response = requests.get(url, headers=headers, timeout=30)
@@ -571,7 +576,7 @@ class JobParser:
 
         return None
 
-    def _extract_sections_from_description(self, description: str) -> tuple[List[str], List[str]]:
+    def _extract_sections_from_description(self, description: str) -> Tuple[List[str], List[str]]:
         """
         Extract requirements and responsibilities from job description.
 
@@ -844,7 +849,8 @@ class JobParser:
         Returns:
             Hash string for caching
         """
-        return hashlib.md5(url.encode()).hexdigest()
+        # Note: MD5 is used for cache keys only, not for security purposes
+        return hashlib.md5(url.encode()).hexdigest()  # nosec
 
     def _get_from_cache(self, cache_key: str) -> Optional[JobDetails]:
         """

@@ -9,7 +9,6 @@ LinkedIn, Indeed, and generic job boards.
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -39,7 +38,7 @@ LINKEDIN_SAMPLE_HTML = """
     <div class="job-details__main-content" data-test-job-description>
         <h2>About the Role</h2>
         <p>We are looking for a Senior Backend Engineer to join our growing team.</p>
-        
+
         <h3>Requirements</h3>
         <ul>
             <li>5+ years of Python experience</li>
@@ -49,7 +48,7 @@ LINKEDIN_SAMPLE_HTML = """
             <li>RESTful API development</li>
             <li>Microservices architecture</li>
         </ul>
-        
+
         <h3>Responsibilities</h3>
         <ul>
             <li>Design and implement scalable APIs</li>
@@ -58,7 +57,7 @@ LINKEDIN_SAMPLE_HTML = """
             <li>Collaborate with product team</li>
             <li>Optimize system performance</li>
         </ul>
-        
+
         <h3>Benefits</h3>
         <ul>
             <li>Health, dental, and vision insurance</li>
@@ -92,7 +91,7 @@ INDEED_SAMPLE_HTML = """
     </div>
     <div id="jobDescriptionText" data-tn-element="jobDescription">
         <p>Join our team as a Software Engineer.</p>
-        
+
         <p><b>Requirements:</b></p>
         <ul>
             <li>Bachelor's degree in Computer Science or related field</li>
@@ -101,7 +100,7 @@ INDEED_SAMPLE_HTML = """
             <li>Experience with distributed systems</li>
             <li>Strong problem-solving skills</li>
         </ul>
-        
+
         <p><b>Responsibilities:</b></p>
         <ul>
             <li>Develop and maintain large-scale systems</li>
@@ -109,7 +108,7 @@ INDEED_SAMPLE_HTML = """
             <li>Collaborate with cross-functional teams</li>
             <li>Debug and resolve technical issues</li>
         </ul>
-        
+
         <p><b>Benefits:</b></p>
         <ul>
             <li>Competitive salary and equity</li>
@@ -133,7 +132,7 @@ GENERIC_SAMPLE_HTML = """
     <p>Company: StartupXYZ</p>
     <p>Location: New York, NY (Hybrid)</p>
     <p>Salary: $120,000 - $160,000 per year</p>
-    
+
     <h2>Requirements</h2>
     <ul>
         <li>3+ years of JavaScript experience</li>
@@ -141,7 +140,7 @@ GENERIC_SAMPLE_HTML = """
         <li>SQL and NoSQL databases</li>
         <li>Git version control</li>
     </ul>
-    
+
     <h2>Responsibilities</h2>
     <ul>
         <li>Build and maintain web applications</li>
@@ -160,10 +159,10 @@ REMOTE_SAMPLE_HTML = """
     <h1>Remote Python Developer</h1>
     <p>Company: RemoteFirst Inc</p>
     <p>Location: 100% Remote - Work from Home</p>
-    
+
     <h2>About This Position</h2>
     <p>This is a fully remote position. We are a remote-first company.</p>
-    
+
     <h2>Requirements</h2>
     <ul>
         <li>Python 3.8+</li>
@@ -282,7 +281,7 @@ class TestJobParserInitialization:
     def test_cache_dir_created_if_not_exists(self, tmp_path):
         """Test that cache directory is created if it doesn't exist."""
         cache_dir = tmp_path / "new_cache"
-        parser = JobParser(cache_dir=cache_dir)
+        JobParser(cache_dir=cache_dir)
         assert cache_dir.exists()
 
 
@@ -561,14 +560,9 @@ class TestCacheOperations:
         )
         parser._save_to_cache(cache_key, cached_job)
 
-        # Mock requests to avoid actual HTTP call
-        with patch("requests.get") as mock_get:
-            mock_get.side_effect = Exception("Should not be called")
-
-            # Should return cached data without making HTTP request
-            job = parser.parse_from_url(url)
-
-            assert job.company == "Cached Company"
+        # Should return cached data without making HTTP request
+        job = parser.parse_from_url(url)
+        assert job.company == "Cached Company"
 
 
 class TestParseJobPostingFunction:

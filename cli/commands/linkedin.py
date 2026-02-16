@@ -52,7 +52,7 @@ def linkedin_import(
     """
     import yaml
 
-    from ..integrations.linkedin_sync import LinkedInSync
+    from ..integrations.linkedin import LinkedInSync
     from ..utils.yaml_parser import ResumeYAML
 
     config = ctx.obj["config"]
@@ -201,7 +201,7 @@ def linkedin_export(ctx, variant: str, output: Optional[str], format: str):
     console.print(f"  Output: {output_path}")
 
     try:
-        from ..integrations.linkedin_sync import LinkedInSync
+        from ..integrations.linkedin import LinkedInSync
 
         sync = LinkedInSync(config)
 

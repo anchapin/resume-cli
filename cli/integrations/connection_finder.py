@@ -243,7 +243,7 @@ class ConnectionFinder:
             if conn.connection_degree == "alumni":
                 message = f"""Hi {conn.name}!
 
-I noticed we're both alumni of {conn.school}, and I'm very interested in learning more about your experience at {conn.company}. 
+I noticed we're both alumni of {conn.school}, and I'm very interested in learning more about your experience at {conn.company}.
 
 I'm currently exploring opportunities in the {conn.role} space and would love to connect for a brief chat about how you landed at {conn.company} and what the culture is like.
 

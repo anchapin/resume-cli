@@ -747,6 +747,11 @@ from .commands.linkedin import linkedin_import, linkedin_export
 cli.add_command(linkedin_import)
 cli.add_command(linkedin_export)
 
+# Add tutorial command
+from .commands.tutorials import tutorial as tutorial_group
+
+cli.add_command(tutorial_group, name="tutorial")
+
 
 @cli.command("ats-check")
 @click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to check")

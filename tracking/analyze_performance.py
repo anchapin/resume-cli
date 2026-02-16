@@ -11,11 +11,12 @@ Usage:
     python analyze_performance.py --version v1.0.0-base
 """
 
-import pandas as pd
 import argparse
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
+
+import pandas as pd
 
 
 class ResumeAnalyzer:

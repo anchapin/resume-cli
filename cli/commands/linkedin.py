@@ -50,9 +50,10 @@ def linkedin_import(
         # Import to custom path
         resume-cli linkedin-import --data-file linkedin_data.json --output my-resume.yaml
     """
+    import yaml
+
     from ..integrations.linkedin_sync import LinkedInSync
     from ..utils.yaml_parser import ResumeYAML
-    import yaml
 
     config = ctx.obj["config"]
     yaml_path = ctx.obj["yaml_path"]

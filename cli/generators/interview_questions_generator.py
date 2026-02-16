@@ -3,7 +3,7 @@
 import json
 import re
 from pathlib import Path
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from rich.console import Console
 
@@ -32,10 +32,10 @@ try:
 except ImportError:
     OPENAI_AVAILABLE = False
 
-from .template import TemplateGenerator
-from ..utils.yaml_parser import ResumeYAML
 from ..utils.config import Config
+from ..utils.yaml_parser import ResumeYAML
 from .ai_judge import create_ai_judge
+from .template import TemplateGenerator
 
 
 class InterviewQuestionsGenerator:

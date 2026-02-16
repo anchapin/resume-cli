@@ -1,8 +1,9 @@
 """Tests for InterviewQuestionsGenerator."""
 
-import pytest
 from pathlib import Path
 from unittest.mock import Mock, patch
+
+import pytest
 
 from cli.generators.interview_questions_generator import InterviewQuestionsGenerator
 

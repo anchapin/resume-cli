@@ -9,8 +9,8 @@ from rich.progress import (
     Progress,
     SpinnerColumn,
     TextColumn,
-    TimeRemainingColumn,
     TimeElapsedColumn,
+    TimeRemainingColumn,
 )
 
 # Initialize console for output

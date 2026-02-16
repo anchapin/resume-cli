@@ -5,10 +5,10 @@ import json
 import re
 import subprocess
 import sys
-from pathlib import Path
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import List, Dict, Set, Optional
+from pathlib import Path
+from typing import Dict, List, Optional, Set
 
 
 @dataclass

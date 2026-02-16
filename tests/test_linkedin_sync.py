@@ -3,6 +3,7 @@
 import json
 import tempfile
 from pathlib import Path
+
 import pytest
 
 from cli.integrations.linkedin_sync import LinkedInSync

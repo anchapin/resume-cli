@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from docx import Document
-from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Inches, Pt, RGBColor
 
 from ..utils.config import Config
 from ..utils.yaml_parser import ResumeYAML

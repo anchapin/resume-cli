@@ -6,9 +6,9 @@ Parses job postings from LinkedIn, Indeed, and other sources to extract structur
 
 import json
 import re
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional
 
 from rich.console import Console
 

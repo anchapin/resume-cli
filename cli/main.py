@@ -752,7 +752,7 @@ def analyze(ctx):
 
 
 # Add LinkedIn commands
-from .commands.linkedin import linkedin_import, linkedin_export
+from .commands.linkedin import linkedin_export, linkedin_import
 
 cli.add_command(linkedin_import)
 cli.add_command(linkedin_export)
@@ -836,9 +836,10 @@ def diff(ctx, variant1: str, variant2: Optional[str], show_all: bool, output: Op
         resume-cli diff v1.0.0-base v1.2.0-ml_ai -o diff-report.md
         resume-cli diff --all
     """
-    from .generators.template import TemplateGenerator
-    from difflib import unified_diff
     import io
+    from difflib import unified_diff
+
+    from .generators.template import TemplateGenerator
 
     yaml_path = ctx.obj["yaml_path"]
     config = ctx.obj["config"]

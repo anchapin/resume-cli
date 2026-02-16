@@ -39,6 +39,10 @@ setup(
         "pandas>=2.0.0",
         "python-dateutil>=2.8.0",
         "python-dotenv>=1.0.0",
+        "python-docx>=0.8.11",
+        "beautifulsoup4>=4.12.0",
+        "lxml>=4.9.0",
+        "python-docx>=0.8.11",
     ],
     extras_require={
         "ai": [
@@ -49,6 +53,7 @@ setup(
             "pytest>=7.0.0",
             "pytest-cov>=4.0.0",
             "pytest-mock>=3.10.0",
+            "requests>=2.31.0",
             "fastapi>=0.100.0",
             "pydantic>=2.0.0",
             "uvicorn>=0.23.0",

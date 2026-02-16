@@ -1,7 +1,5 @@
 """Tests for TXT resume generator."""
 
-from unittest.mock import MagicMock, patch
-
 
 class TestTxtGeneratorInitialization:
     """Tests for TxtGenerator initialization."""

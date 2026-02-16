@@ -355,10 +355,16 @@ async def generate_cover_letter(request: CoverLetterRequest):
         raise HTTPException(status_code=500, detail="Cover letter generation failed")
 
 
+
+>>>>>>> origin/main
+------- REPLACE
 # =========================================================================
 # Analytics Endpoints for Dashboard
 # =========================================================================
 
+=======
+
+>>>>>>> origin/main
 @app.get(
     "/v1/analytics/overview",
     dependencies=[Security(get_api_key)],
@@ -549,4 +555,5 @@ async def get_dashboard_data():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # nosec: B104 - Binding to all interfaces is required for Docker container access
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # nosec: B104

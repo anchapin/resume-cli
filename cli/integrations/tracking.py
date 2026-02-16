@@ -244,10 +244,7 @@ class TrackingIntegration:
         current_date = cutoff_date
         while current_date <= datetime.now():
             date_str = current_date.strftime("%Y-%m-%d")
-            timeline.append({
-                "date": date_str,
-                "count": date_counts.get(date_str, 0)
-            })
+            timeline.append({"date": date_str, "count": date_counts.get(date_str, 0)})
             current_date += timedelta(days=1)
 
         return timeline
@@ -262,14 +259,16 @@ class TrackingIntegration:
         entries = self._read_csv()
 
         # Group by variant
-        variant_data = defaultdict(lambda: {
-            "total": 0,
-            "applied": 0,
-            "interview": 0,
-            "offer": 0,
-            "rejected": 0,
-            "responses": 0
-        })
+        variant_data = defaultdict(
+            lambda: {
+                "total": 0,
+                "applied": 0,
+                "interview": 0,
+                "offer": 0,
+                "rejected": 0,
+                "responses": 0,
+            }
+        )
 
         for entry in entries:
             variant = entry.get("resume_version", "unknown")
@@ -294,17 +293,19 @@ class TrackingIntegration:
         result = []
         for variant, data in variant_data.items():
             total = data["total"]
-            result.append({
-                "variant": variant,
-                "total_applications": total,
-                "response_rate": (data["responses"] / total * 100) if total > 0 else 0,
-                "interview_rate": (data["interview"] / total * 100) if total > 0 else 0,
-                "offer_rate": (data["offer"] / total * 100) if total > 0 else 0,
-                "rejection_rate": (data["rejected"] / total * 100) if total > 0 else 0,
-                "interviews": data["interview"],
-                "offers": data["offer"],
-                "rejected": data["rejected"],
-            })
+            result.append(
+                {
+                    "variant": variant,
+                    "total_applications": total,
+                    "response_rate": (data["responses"] / total * 100) if total > 0 else 0,
+                    "interview_rate": (data["interview"] / total * 100) if total > 0 else 0,
+                    "offer_rate": (data["offer"] / total * 100) if total > 0 else 0,
+                    "rejection_rate": (data["rejected"] / total * 100) if total > 0 else 0,
+                    "interviews": data["interview"],
+                    "offers": data["offer"],
+                    "rejected": data["rejected"],
+                }
+            )
 
         # Sort by total applications descending
         result.sort(key=lambda x: x["total_applications"], reverse=True)
@@ -320,10 +321,7 @@ class TrackingIntegration:
         entries = self._read_csv()
 
         # Group by company
-        company_data = defaultdict(lambda: {
-            "applications": [],
-            "statuses": defaultdict(int)
-        })
+        company_data = defaultdict(lambda: {"applications": [], "statuses": defaultdict(int)})
 
         for entry in entries:
             company = entry.get("company", "Unknown")
@@ -346,15 +344,17 @@ class TrackingIntegration:
             # Get sources
             sources = list(set(app.get("source", "") for app in apps))
 
-            result.append({
-                "company": company,
-                "total_applications": len(apps),
-                "roles": roles,
-                "latest_application": latest_date,
-                "statuses": dict(statuses),
-                "sources": sources,
-                "has_response": any(app.get("response") == "1" for app in apps),
-            })
+            result.append(
+                {
+                    "company": company,
+                    "total_applications": len(apps),
+                    "roles": roles,
+                    "latest_application": latest_date,
+                    "statuses": dict(statuses),
+                    "sources": sources,
+                    "has_response": any(app.get("response") == "1" for app in apps),
+                }
+            )
 
         # Sort by total applications descending
         result.sort(key=lambda x: x["total_applications"], reverse=True)
@@ -370,8 +370,16 @@ class TrackingIntegration:
         stats = self.get_statistics()
         return {
             "response_rate": stats.get("response_rate", 0),
-            "interview_rate": (stats.get("interview", 0) / stats.get("total", 1) * 100) if stats.get("total", 0) > 0 else 0,
-            "offer_rate": (stats.get("offer", 0) / stats.get("total", 1) * 100) if stats.get("total", 0) > 0 else 0,
+            "interview_rate": (
+                (stats.get("interview", 0) / stats.get("total", 1) * 100)
+                if stats.get("total", 0) > 0
+                else 0
+            ),
+            "offer_rate": (
+                (stats.get("offer", 0) / stats.get("total", 1) * 100)
+                if stats.get("total", 0) > 0
+                else 0
+            ),
             "total_applications": stats.get("total", 0),
             "interviews": stats.get("interview", 0),
             "offers": stats.get("offer", 0),
@@ -391,19 +399,22 @@ class TrackingIntegration:
             source = entry.get("source", "unknown")
             source_counts[source] += 1
 
-        result = [
-            {"source": source, "count": count}
-            for source, count in source_counts.items()
-        ]
+        result = [{"source": source, "count": count} for source, count in source_counts.items()]
         result.sort(key=lambda x: x["count"], reverse=True)
         return result
 
     def get_dashboard_data(self) -> Dict[str, Any]:
         """
-        Get comprehensive dashboard data.
+        Get comprehensive dashboard data for analytics.
 
         Returns:
-            Dictionary containing all dashboard metrics
+            Dictionary with dashboard data including:
+            - overview: response_rate, interview_rate, offer_rate, total_applications, interviews, offers
+            - by_status: breakdown by application status
+            - timeline: applications over time
+            - variant_performance: performance by resume variant
+            - company_analytics: analytics grouped by company
+            - source_breakdown: breakdown by application source
         """
         return {
             "overview": self.get_response_rate_gauge(),

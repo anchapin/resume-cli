@@ -443,6 +443,7 @@ class TestGetFieldnames:
 # Tests for Analytics Methods (Dashboard Feature)
 # =========================================================================
 
+
 class TestGetApplicationsByStatus:
     """Test get_applications_by_status method."""
 
@@ -506,6 +507,7 @@ class TestGetApplicationsTimeline:
 
         # Add application with today's date
         from datetime import datetime
+
         today = datetime.now().strftime("%Y-%m-%d")
 
         tracking.log_application(company="A", role="R1", status="applied")
@@ -547,7 +549,9 @@ class TestGetVariantPerformance:
         tracking.log_application(company="C", role="R", status="offer", variant="v1.0.0-base")
 
         for _ in range(2):
-            tracking.log_application(company="D", role="R", status="applied", variant="v1.1.0-backend")
+            tracking.log_application(
+                company="D", role="R", status="applied", variant="v1.1.0-backend"
+            )
         tracking.log_application(company="E", role="R", status="rejected", variant="v1.1.0-backend")
 
         # Manually set responses
@@ -592,9 +596,15 @@ class TestGetCompanyAnalytics:
         tracking = TrackingIntegration(config)
 
         # Add multiple applications for same company
-        tracking.log_application(company="Acme", role="Engineer", status="applied", source="LinkedIn")
-        tracking.log_application(company="Acme", role="Senior Engineer", status="interview", source="Referral")
-        tracking.log_application(company="Startup", role="Developer", status="applied", source="Direct")
+        tracking.log_application(
+            company="Acme", role="Engineer", status="applied", source="LinkedIn"
+        )
+        tracking.log_application(
+            company="Acme", role="Senior Engineer", status="interview", source="Referral"
+        )
+        tracking.log_application(
+            company="Startup", role="Developer", status="applied", source="Direct"
+        )
 
         analytics = tracking.get_company_analytics()
 

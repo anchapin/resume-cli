@@ -1,6 +1,5 @@
 """Unit tests for API models."""
 
-
 from api.models import ResumeRequest, TailorRequest
 
 

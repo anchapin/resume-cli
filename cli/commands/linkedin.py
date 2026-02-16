@@ -219,7 +219,6 @@ def linkedin_export(ctx, variant: str, output: Optional[str], format: str):
             with open(output_path, "w", encoding="utf-8") as f:
                 yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
 
-
         console.print("\n[green]✓[/green] Export complete!")
         console.print(f"  File: {output_path}")
 

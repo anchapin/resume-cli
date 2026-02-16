@@ -203,7 +203,6 @@ class TestGenerateMethod:
         # Suppress the RuntimeError that would normally be raised
         import cli.generators.template as template_module
 
-
         def mock_compile_pdf(self, output_path, tex_content):
             # Create the .tex file
             tex_path = output_path.with_suffix(".tex")

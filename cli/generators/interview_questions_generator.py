@@ -296,7 +296,8 @@ class InterviewQuestionsGenerator:
             else ("Provide detailed, comprehensive answers with multiple talking points.")
         )
 
-        system_design_section = f"""
+        system_design_section = (
+            f"""
 **System Design Questions:**
 Generate {3 if include_system_design else 0} system design questions relevant to the role and technologies.
 
@@ -307,7 +308,10 @@ For each system design question:
 - reference: Specific resume experience relevant to this design challenge
 - talking_points: 4-6 key points to cover in the answer
 - complexity: Difficulty level (easy, medium, hard)
-""" if include_system_design else ""
+"""
+            if include_system_design
+            else ""
+        )
 
         prompt = f"""You are an expert technical interviewer and career coach. Generate relevant interview questions based on a job description and candidate's resume.
 

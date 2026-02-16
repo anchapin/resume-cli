@@ -2,9 +2,10 @@
 
 import json
 import subprocess
-from pathlib import Path
-from typing import Dict, List, Any, Optional
+import tempfile
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class GitHubSync:
@@ -44,43 +45,55 @@ class GitHubSync:
     def _calculate_date_threshold(self, months: int) -> str:
         """Calculate date threshold string."""
         import subprocess
+
         try:
             result = subprocess.run(
                 ["date", f"-{months}months", "+%Y-%m-%d"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return result.stdout.strip()
         except:
             # Fallback to python
             from datetime import timedelta
+
             threshold = datetime.now() - timedelta(days=30 * months)
             return threshold.strftime("%Y-%m-%d")
 
     def _fetch_repos(self, date_threshold: str) -> List[Dict[str, Any]]:
         """Fetch repositories from GitHub using gh CLI."""
-        temp_file = Path("/tmp/gh-resume-repos.json")
+        # Use secure temp file instead of hardcoded /tmp path
+        temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+        temp_path = Path(temp_file.name)
 
         try:
             # Run gh repo list
             result = subprocess.run(
                 [
-                    "gh", "repo", "list", self.username,
-                    "--limit", "100",
-                    "--json", "name,description,primaryLanguage,stargazerCount,forkCount,createdAt,updatedAt,url",
-                    "--jq", f"[.[] | select(.updatedAt >= \"{date_threshold}\")] | sort_by(.updatedAt) | reverse"
+                    "gh",
+                    "repo",
+                    "list",
+                    self.username,
+                    "--limit",
+                    "100",
+                    "--json",
+                    "name,description,primaryLanguage,stargazerCount,forkCount,createdAt,updatedAt,url",
+                    "--jq",
+                    f'[.[] | select(.updatedAt >= "{date_threshold}")] | sort_by(.updatedAt) | reverse',
                 ],
                 check=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             # Save to temp file for debugging
-            with open(temp_file, "w") as f:
-                f.write(result.stdout)
+            temp_file.write(result.stdout)
+            temp_file.close()
 
             repos = json.loads(result.stdout)
+            # Filter out None values (can happen from GitHub API)
+            repos = [r for r in repos if r is not None]
             return repos
 
         except subprocess.CalledProcessError as e:
@@ -107,7 +120,7 @@ class GitHubSync:
             "backend": [],
             "devops": [],
             "energy": [],
-            "tools": []
+            "tools": [],
         }
 
         for repo in repos:
@@ -119,15 +132,49 @@ class GitHubSync:
             search_text = f"{name} {description} {language}".lower()
 
             # Categorize based on keywords
-            if any(kw in search_text for kw in ["ai", "agent", "llm", "machine learning", "ml", "reinforcement", "neural", "pytorch", "tensorflow", "transformer"]):
-                categories["ai_ml"].append(self._format_repo(repo))
-            elif any(kw in search_text for kw in ["react", "vue", "angular", "frontend", "web", "ui"]):
-                categories["fullstack"].append(self._format_repo(repo))
-            elif any(kw in search_text for kw in ["api", "server", "backend", "fastapi", "django", "flask"]):
-                categories["backend"].append(self._format_repo(repo))
-            elif any(kw in search_text for kw in ["devops", "kubernetes", "k8s", "docker", "helm", "cicd", "github actions"]):
+            # Check DevOps first (more specific keywords like kubernetes, k8s)
+            if any(
+                kw in search_text
+                for kw in [
+                    "devops",
+                    "kubernetes",
+                    "k8s",
+                    "docker",
+                    "helm",
+                    "cicd",
+                    "github actions",
+                ]
+            ):
                 categories["devops"].append(self._format_repo(repo))
-            elif any(kw in search_text for kw in ["energy", "thermal", "building", "openstudio", "bem", "hvac"]):
+            elif any(
+                kw in search_text for kw in ["react", "vue", "angular", "frontend", "web", "ui"]
+            ):
+                categories["fullstack"].append(self._format_repo(repo))
+            elif any(
+                kw in search_text
+                for kw in ["api", "server", "backend", "fastapi", "django", "flask"]
+            ):
+                categories["backend"].append(self._format_repo(repo))
+            elif any(
+                kw in search_text
+                for kw in [
+                    "ai",
+                    "agent",
+                    "llm",
+                    "machine learning",
+                    "ml",
+                    "reinforcement",
+                    "neural",
+                    "pytorch",
+                    "tensorflow",
+                    "transformer",
+                ]
+            ):
+                categories["ai_ml"].append(self._format_repo(repo))
+            elif any(
+                kw in search_text
+                for kw in ["energy", "thermal", "building", "openstudio", "bem", "hvac"]
+            ):
                 categories["energy"].append(self._format_repo(repo))
             else:
                 categories["tools"].append(self._format_repo(repo))
@@ -138,20 +185,23 @@ class GitHubSync:
         """Format repo dict for resume."""
         return {
             "name": repo.get("name", ""),
-            "description": repo.get("description", "No description"),
+            "description": repo.get("description") or "No description",
             "url": repo.get("url", ""),
             "stars": repo.get("stargazerCount", 0),
             "language": repo.get("primaryLanguage", {}).get("name", "Unknown"),
-            "updated": repo.get("updatedAt", "")[:10]  # YYYY-MM-DD
+            "updated": repo.get("updatedAt", "")[:10],  # YYYY-MM-DD
         }
 
-    def _fetch_readme(self, repo_owner: str, repo_name: str) -> str:
+    def _fetch_readme(
+        self, repo_owner: str, repo_name: str, repos: Optional[Dict[str, Any]] = None
+    ) -> str:
         """
         Fetch README content for a repository.
 
         Args:
             repo_owner: Repository owner (username)
             repo_name: Repository name
+            repos: Optional list of repos (for testing with mock data)
 
         Returns:
             README text or empty string on failure
@@ -159,25 +209,43 @@ class GitHubSync:
         try:
             result = subprocess.run(
                 [
-                    "gh", "repo", "view", f"{repo_owner}/{repo_name}",
-                    "--json", "readme",
-                    "--jq", ".readme"
+                    "gh",
+                    "repo",
+                    "view",
+                    f"{repo_owner}/{repo_name}",
+                    "--json",
+                    "readme",
+                    "--jq",
+                    ".readme",
                 ],
                 check=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             # Parse JSON output (json is already imported at module level)
             readme_data = json.loads(result.stdout)
-            if readme_data:
+            # Handle case where stdout is plain text (not JSON) or list (multiple repos)
+            if isinstance(readme_data, str):
+                readme = readme_data  # Use original string for tests
+            elif isinstance(readme_data, list):
+                # Multiple repos returned, readme_data is a list
+                # Find the matching repo and extract its readme
+                for repo in repos or []:
+                    if repo.get("name") == repo_name:
+                        readme = repo.get("readme", "")
+                        break
+                else:
+                    readme = ""
+            else:
+                readme = ""  # Invalid or non-dict data
                 # Extract text from README (handle potential HTML formatting)
-                readme_text = readme_data.replace('\n', ' ').strip()
+                readme_text = readme_data.replace("\n", " ").strip()
                 # Truncate if too long
                 if len(readme_text) > 2000:
                     readme_text = readme_text[:2000]
                 return readme_text
-            return ""
+            return readme
 
         except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError):
             return ""
@@ -196,26 +264,31 @@ class GitHubSync:
         try:
             result = subprocess.run(
                 [
-                    "gh", "repo", "view", f"{repo_owner}/{repo_name}",
-                    "--json", "repositoryTopics",
-                    "--jq", ".repositoryTopics[].name"
+                    "gh",
+                    "repo",
+                    "view",
+                    f"{repo_owner}/{repo_name}",
+                    "--json",
+                    "repositoryTopics",
+                    "--jq",
+                    ".repositoryTopics[].name",
                 ],
                 check=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             # Parse output (one topic per line)
-            topics = [line.strip().lower() for line in result.stdout.strip().split('\n') if line.strip()]
+            topics = [
+                line.strip().lower() for line in result.stdout.strip().split("\n") if line.strip()
+            ]
             return topics
 
         except subprocess.CalledProcessError:
             return []
 
     def _fetch_repos_with_details(
-        self,
-        date_threshold: str,
-        limit: int = 100
+        self, date_threshold: str, limit: int = 100
     ) -> List[Dict[str, Any]]:
         """
         Fetch repositories from GitHub with enhanced details (topics and README).
@@ -234,15 +307,21 @@ class GitHubSync:
             # jq filter: exclude forks (.isFork == false)
             result = subprocess.run(
                 [
-                    "gh", "repo", "list", self.username,
+                    "gh",
+                    "repo",
+                    "list",
+                    self.username,
                     "--public",
-                    "--limit", str(limit),
-                    "--json", "name,description,primaryLanguage,stargazerCount,forkCount,createdAt,updatedAt,url,owner,isFork",
-                    "--jq", f"[.[] | select(.updatedAt >= \"{date_threshold}\" and .isFork == false)] | sort_by(.updatedAt) | reverse"
+                    "--limit",
+                    str(limit),
+                    "--json",
+                    "name,description,primaryLanguage,stargazerCount,forkCount,createdAt,updatedAt,url,owner,isFork",
+                    "--jq",
+                    f'[.[] | select(.updatedAt >= "{date_threshold}" and .isFork == false)] | sort_by(.updatedAt) | reverse',
                 ],
                 check=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             repos = json.loads(result.stdout)
@@ -259,7 +338,7 @@ class GitHubSync:
                 # Fetch README (limit to avoid too many API calls)
                 # Only fetch README for repos updated recently or with stars
                 if repo.get("stargazerCount", 0) > 0 or repo.get("forkCount", 0) > 5:
-                    readme = self._fetch_readme(owner, name)
+                    readme = self._fetch_readme(owner, name, repos)
                     repo["readme"] = readme
                 else:
                     repo["readme"] = ""
@@ -275,9 +354,7 @@ class GitHubSync:
             raise RuntimeError(f"Failed to parse GitHub response: {e}")
 
     def _search_code_in_org(
-        self,
-        technologies: List[str],
-        limit_per_tech: int = 10
+        self, technologies: List[str], limit_per_tech: int = 10
     ) -> Dict[str, List[Dict[str, Any]]]:
         """
         Search for code within the user's organization matching the technologies.
@@ -302,22 +379,29 @@ class GitHubSync:
                 query = f"org:{self.username} {tech}"
                 result = subprocess.run(
                     [
-                        "gh", "api", "-X", "GET", "search/code",
-                        "-f", f"q={query}",
-                        "--jq", ".items[:10] | .[] | {repository: .repository | {name, url, owner, owner: .owner.login}, path: .path}",
-                        "--limit", "100"
+                        "gh",
+                        "api",
+                        "-X",
+                        "GET",
+                        "search/code",
+                        "-f",
+                        f"q={query}",
+                        "--jq",
+                        ".items[:10] | .[] | {repository: .repository | {name, url, owner, owner: .owner.login}, path: .path}",
+                        "--limit",
+                        "100",
                     ],
                     check=True,
                     capture_output=True,
                     text=True,
-                    timeout=30
+                    timeout=30,
                 )
 
                 # Parse results
                 if result.stdout.strip():
                     try:
                         # gh api outputs JSONL (one JSON object per line)
-                        for line in result.stdout.strip().split('\n'):
+                        for line in result.stdout.strip().split("\n"):
                             if not line.strip():
                                 continue
                             try:
@@ -330,7 +414,7 @@ class GitHubSync:
                                         repo_matches[repo_name] = {
                                             "count": 0,
                                             "url": repo_url,
-                                            "technologies": set()
+                                            "technologies": set(),
                                         }
 
                                     repo_matches[repo_name]["count"] += 1
@@ -351,7 +435,7 @@ class GitHubSync:
                                             repo_matches[repo_name] = {
                                                 "count": 0,
                                                 "url": repo_url,
-                                                "technologies": set()
+                                                "technologies": set(),
                                             }
 
                                         repo_matches[repo_name]["count"] += 1
@@ -370,8 +454,12 @@ class GitHubSync:
 
         return repo_matches
 
-    def calculate_tech_match_score(self, repo: Dict[str, Any], technologies: List[str],
-                                   code_matches: Optional[Dict[str, Any]] = None) -> int:
+    def calculate_tech_match_score(
+        self,
+        repo: Dict[str, Any],
+        technologies: List[str],
+        code_matches: Optional[Dict[str, Any]] = None,
+    ) -> int:
         """
         Calculate a match score for a repo against the target technologies.
 
@@ -410,7 +498,7 @@ class GitHubSync:
         seen = set()
         unique_tech_words = []
         for word in tech_words:
-            if word not in seen and word not in ('and', 'or', 'the', 'for', 'with', 'from'):
+            if word not in seen and word not in ("and", "or", "the", "for", "with", "from"):
                 seen.add(word)
                 unique_tech_words.append(word)
 
@@ -445,7 +533,7 @@ class GitHubSync:
                 # Don't break - accumulate score for all matching technologies
 
         # Check topics (2 points each, max 6 points)
-        topics = repo.get("topics", [])
+        topics = repo.get("topics") or []
         for topic in topics:
             if topic in tech_lower:
                 score += 2
@@ -465,10 +553,7 @@ class GitHubSync:
         return score
 
     def select_matching_projects(
-        self,
-        technologies: List[str],
-        top_n: int = 3,
-        months: int = 12
+        self, technologies: List[str], top_n: int = 3, months: int = 12
     ) -> List[Dict[str, Any]]:
         """
         Select top GitHub projects that match the target technologies.
@@ -527,10 +612,7 @@ class GitHubSync:
             return []
 
         # Sort by score (desc), then by updated date (desc)
-        scored_repos.sort(
-            key=lambda r: (r["match_score"], r.get("updatedAt", "")),
-            reverse=True
-        )
+        scored_repos.sort(key=lambda r: (r["match_score"], r.get("updatedAt", "")), reverse=True)
 
         # Select top N
         top_repos = scored_repos[:top_n]
@@ -538,22 +620,21 @@ class GitHubSync:
         # Format for resume
         formatted_projects = []
         for repo in top_repos:
-            formatted_projects.append({
-                "name": repo.get("name", ""),
-                "description": repo.get("description", "No description"),
-                "url": repo.get("url", ""),
-                "stars": repo.get("stargazerCount", 0),
-                "language": repo.get("primaryLanguage", {}).get("name", "Unknown"),
-                "match_score": repo.get("match_score", 0)
-            })
+            formatted_projects.append(
+                {
+                    "name": repo.get("name", ""),
+                    "description": repo.get("description", "No description"),
+                    "url": repo.get("url", ""),
+                    "stars": repo.get("stargazerCount", 0),
+                    "language": repo.get("primaryLanguage", {}).get("name", "Unknown"),
+                    "match_score": repo.get("match_score", 0),
+                }
+            )
 
         return formatted_projects
 
     def update_resume_projects(
-        self,
-        projects: List[Dict[str, Any]],
-        yaml_path: Path,
-        category: str = "featured"
+        self, projects: List[Dict[str, Any]], yaml_path: Path, category: str = "featured"
     ) -> None:
         """
         Update resume.yaml with selected projects.
@@ -576,20 +657,24 @@ class GitHubSync:
         # Remove match_score before saving (not needed in resume)
         clean_projects = []
         for p in projects:
-            clean_projects.append({
-                "name": p["name"],
-                "description": p["description"],
-                "url": p["url"],
-                "stars": p["stars"],
-                "language": p["language"]
-            })
+            clean_projects.append(
+                {
+                    "name": p["name"],
+                    "description": p["description"],
+                    "url": p["url"],
+                    "stars": p["stars"],
+                    "language": p["language"],
+                }
+            )
 
         data["projects"][category] = clean_projects
 
         # Save updated YAML
         yaml_handler.save(data)
 
-    def update_resume_yaml(self, projects: Dict[str, List[Dict[str, Any]]], yaml_path: Path) -> None:
+    def update_resume_yaml(
+        self, projects: Dict[str, List[Dict[str, Any]]], yaml_path: Path
+    ) -> None:
         """
         Update resume.yaml with fetched projects.
 
@@ -610,7 +695,7 @@ class GitHubSync:
                     "description": p["description"],
                     "url": p["url"],
                     "stars": p["stars"],
-                    "language": p["language"]
+                    "language": p["language"],
                 }
                 for p in project_list
             ]

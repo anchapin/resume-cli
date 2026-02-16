@@ -1,36 +1,45 @@
 """AI-powered resume generator using Claude or OpenAI."""
 
+# Import hashlib before kubernetes_asyncio can patch it
+# Use sha256 instead of md5 to avoid kubernetes_asyncio patching
+import hashlib
+import json
 import os
 import re
-import json
-from pathlib import Path
-from typing import Optional, Dict, Any, List
+import sys
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from rich.console import Console
+
+_sha256 = hashlib.sha256
 
 # Load environment variables from .env file if present
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass  # python-dotenv is optional but recommended
 
 try:
     import anthropic
+
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
 
 try:
     import openai
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
 
-from .template import TemplateGenerator
 from ..utils.config import Config
 from .ai_judge import create_ai_judge
+from .template import TemplateGenerator
 
 # Initialize console for output
 console = Console()
@@ -39,11 +48,7 @@ console = Console()
 class AIGenerator:
     """Generate resumes using AI for customization."""
 
-    def __init__(
-        self,
-        yaml_path: Optional[Path] = None,
-        config: Optional[Config] = None
-    ):
+    def __init__(self, yaml_path: Optional[Path] = None, config: Optional[Config] = None):
         """
         Initialize AI generator.
 
@@ -61,8 +66,7 @@ class AIGenerator:
         if provider == "anthropic":
             if not ANTHROPIC_AVAILABLE:
                 raise ImportError(
-                    "anthropic package not installed. "
-                    "Install with: pip install 'resume-cli[ai]'"
+                    "anthropic package not installed. " "Install with: pip install 'resume-cli[ai]'"
                 )
             api_key = os.getenv("ANTHROPIC_API_KEY")
             if not api_key:
@@ -81,8 +85,7 @@ class AIGenerator:
         elif provider == "openai":
             if not OPENAI_AVAILABLE:
                 raise ImportError(
-                    "openai package not installed. "
-                    "Install with: pip install 'resume-cli[ai]'"
+                    "openai package not installed. " "Install with: pip install 'resume-cli[ai]'"
                 )
             api_key = os.getenv("OPENAI_API_KEY")
             if not api_key:
@@ -113,10 +116,7 @@ class AIGenerator:
         self._content_cache.clear()
 
     def enhance_project_descriptions(
-        self,
-        projects: List[Dict[str, Any]],
-        job_description: str,
-        technologies: List[str]
+        self, projects: List[Dict[str, Any]], job_description: str, technologies: List[str]
     ) -> List[Dict[str, Any]]:
         """
         Generate job-tailored project descriptions with technology highlights.
@@ -202,6 +202,7 @@ Please generate the enhanced project descriptions:"""
 
             # Parse JSON response
             import json
+
             extracted = self._extract_json(response)
             if not extracted:
                 raise ValueError("No valid JSON found in AI response")
@@ -220,16 +221,22 @@ Please generate the enhanced project descriptions:"""
 
                 if project_name in enhancement_map:
                     enhancement = enhancement_map[project_name]
-                    project_copy.update({
-                        "enhanced_description": enhancement.get("enhanced_description", ""),
-                        "highlighted_technologies": enhancement.get("highlighted_technologies", []),
-                        "achievement_highlights": enhancement.get("achievement_highlights", []),
-                        "relevance_score": enhancement.get("relevance_score", 0.0)
-                    })
+                    project_copy.update(
+                        {
+                            "enhanced_description": enhancement.get("enhanced_description", ""),
+                            "highlighted_technologies": enhancement.get(
+                                "highlighted_technologies", []
+                            ),
+                            "achievement_highlights": enhancement.get("achievement_highlights", []),
+                            "relevance_score": enhancement.get("relevance_score", 0.0),
+                        }
+                    )
 
                 enhanced_projects.append(project_copy)
 
-            console.print(f"[green]✓[/green] Enhanced {len(enhanced_projects)} project descriptions")
+            console.print(
+                f"[green]✓[/green] Enhanced {len(enhanced_projects)} project descriptions"
+            )
             return enhanced_projects
 
         except Exception as e:
@@ -238,10 +245,7 @@ Please generate the enhanced project descriptions:"""
             return projects
 
     def generate_project_summary(
-        self,
-        enhanced_projects: List[Dict[str, Any]],
-        base_summary: str,
-        variant: str
+        self, enhanced_projects: List[Dict[str, Any]], base_summary: str, variant: str
     ) -> str:
         """
         Seamlessly integrate relevant projects into professional summary.
@@ -269,15 +273,15 @@ Please generate the enhanced project descriptions:"""
 
         # Sort by relevance and take top 3
         top_projects = sorted(
-            enhanced_projects,
-            key=lambda p: p.get("relevance_score", 0),
-            reverse=True
+            enhanced_projects, key=lambda p: p.get("relevance_score", 0), reverse=True
         )[:3]
 
-        projects_summary = "\n".join([
-            f"- {p.get('name', 'Project')}: {p.get('enhanced_description', p.get('description', ''))}"
-            for p in top_projects
-        ])
+        projects_summary = "\n".join(
+            [
+                f"- {p.get('name', 'Project')}: {p.get('enhanced_description', p.get('description', ''))}"
+                for p in top_projects
+            ]
+        )
 
         prompt = f"""You are an expert resume writer. I need you to seamlessly integrate relevant project experience into a professional summary.
 
@@ -313,7 +317,9 @@ Please generate the enhanced professional summary:"""
             enhanced_summary = self._extract_from_code_block(response).strip()
 
             if enhanced_summary and len(enhanced_summary) > 50:
-                console.print("[green]✓[/green] Professional summary enhanced with project experience")
+                console.print(
+                    "[green]✓[/green] Professional summary enhanced with project experience"
+                )
                 return enhanced_summary
             else:
                 return base_summary
@@ -326,16 +332,19 @@ Please generate the enhanced professional summary:"""
     def _projects_to_json(self, projects: List[Dict[str, Any]]) -> str:
         """Convert projects list to JSON string for AI prompt."""
         import json
+
         # Extract only relevant fields for the prompt
         simplified = []
         for p in projects:
-            simplified.append({
-                "name": p.get("name", ""),
-                "description": p.get("description", ""),
-                "language": p.get("language", ""),
-                "url": p.get("url", ""),
-                "stars": p.get("stars", 0)
-            })
+            simplified.append(
+                {
+                    "name": p.get("name", ""),
+                    "description": p.get("description", ""),
+                    "language": p.get("language", ""),
+                    "url": p.get("url", ""),
+                    "stars": p.get("stars", 0),
+                }
+            )
         return json.dumps(simplified, indent=2)
 
     def extract_technologies(self, job_description: str) -> List[str]:
@@ -372,9 +381,10 @@ Return ONLY valid JSON, nothing else."""
 
             # Parse JSON from response
             # Try to extract JSON array from response
-            json_match = re.search(r'\[.*\]', response, re.DOTALL)
+            json_match = re.search(r"\[.*\]", response, re.DOTALL)
             if json_match:
                 import json
+
                 technologies = json.loads(json_match.group(0))
                 if isinstance(technologies, list):
                     return [str(tech).lower().strip() for tech in technologies if tech]
@@ -393,7 +403,7 @@ Return ONLY valid JSON, nothing else."""
         output_format: str = "md",
         output_path: Optional[Path] = None,
         fallback: bool = True,
-        enhanced_context: Optional[Dict[str, Any]] = None
+        enhanced_context: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Generate AI-customized resume.
@@ -415,7 +425,7 @@ Return ONLY valid JSON, nothing else."""
                 variant=variant,
                 output_format=output_format,
                 output_path=None,
-                enhanced_context=enhanced_context
+                enhanced_context=enhanced_context,
             )
 
             if job_description:
@@ -424,7 +434,7 @@ Return ONLY valid JSON, nothing else."""
                     base_resume=base_resume,
                     job_description=job_description,
                     variant=variant,
-                    output_format=output_format
+                    output_format=output_format,
                 )
             else:
                 customized_resume = base_resume
@@ -452,17 +462,13 @@ Return ONLY valid JSON, nothing else."""
                     variant=variant,
                     output_format=output_format,
                     output_path=output_path,
-                    enhanced_context=enhanced_context
+                    enhanced_context=enhanced_context,
                 )
             else:
                 raise
 
     def _customize_with_ai(
-        self,
-        base_resume: str,
-        job_description: str,
-        variant: str,
-        output_format: str = "md"
+        self, base_resume: str, job_description: str, variant: str, output_format: str = "md"
     ) -> str:
         """
         Use AI to customize resume for job description with multi-generation and judge.
@@ -480,10 +486,12 @@ Return ONLY valid JSON, nothing else."""
             Customized resume content
         """
         # Create cache key from inputs (include output_format since content differs)
-        import hashlib
-        cache_key = hashlib.md5(
-            f"{job_description[:1000]}{variant}{output_format}".encode()
-        ).hexdigest()
+        cache_key_input = f"{job_description[:1000]}{variant}{output_format}".encode()
+        # usedforsecurity argument only available in Python 3.9+
+        if sys.version_info >= (3, 9):
+            cache_key = _sha256(cache_key_input, usedforsecurity=False).hexdigest()
+        else:
+            cache_key = _sha256(cache_key_input).hexdigest()
 
         # Check cache - return customized content converted to requested format
         if cache_key in self._content_cache:
@@ -541,7 +549,9 @@ Return ONLY valid JSON, nothing else."""
                 self._content_cache[cache_key] = selected
                 return selected
             except Exception as e:
-                console.print(f"[yellow]Warning:[/yellow] Judge evaluation failed: {str(e)}. Using first version.")
+                console.print(
+                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {str(e)}. Using first version."
+                )
                 result = versions[0]
                 self._content_cache[cache_key] = result
                 return result
@@ -558,11 +568,36 @@ Return ONLY valid JSON, nothing else."""
 
         # Common tech keywords
         tech_keywords = [
-            "python", "javascript", "typescript", "react", "vue", "angular",
-            "node.js", "django", "flask", "fastapi", "kubernetes", "docker",
-            "aws", "gcp", "azure", "sql", "mongodb", "postgresql", "redis",
-            "ci/cd", "devops", "machine learning", "ai", "llm", "pytorch",
-            "tensorflow", "react native", "graphql", "rest api", "microservices"
+            "python",
+            "javascript",
+            "typescript",
+            "react",
+            "vue",
+            "angular",
+            "node.js",
+            "django",
+            "flask",
+            "fastapi",
+            "kubernetes",
+            "docker",
+            "aws",
+            "gcp",
+            "azure",
+            "sql",
+            "mongodb",
+            "postgresql",
+            "redis",
+            "ci/cd",
+            "devops",
+            "machine learning",
+            "ai",
+            "llm",
+            "pytorch",
+            "tensorflow",
+            "react native",
+            "graphql",
+            "rest api",
+            "microservices",
         ]
 
         job_lower = job_description.lower()
@@ -572,12 +607,7 @@ Return ONLY valid JSON, nothing else."""
 
         return keywords
 
-    def _build_prompt(
-        self,
-        base_resume: str,
-        job_description: str,
-        keywords: list
-    ) -> str:
+    def _build_prompt(self, base_resume: str, job_description: str, keywords: list) -> str:
         """Build AI prompt for resume customization."""
         prompt = f"""You are an expert resume writer. I need you to tailor my resume for a specific job description.
 
@@ -624,10 +654,10 @@ Please return the customized resume in the same format as the base resume:"""
 
         # Try to extract content from ```latex...``` or ```...``` blocks
         patterns = [
-            r'```latex\s*\n(.*?)\n```',  # ```latex...```
-            r'```\s*\n(.*?)\n```',       # ```...``` (any language)
-            r'```latex\s+(.*?)```',      # ```latex content``` (single line)
-            r'```\s+(.*?)```',           # ```content``` (single line)
+            r"```latex\s*\n(.*?)\n```",  # ```latex...```
+            r"```\s*\n(.*?)\n```",  # ```...``` (any language)
+            r"```latex\s+(.*?)```",  # ```latex content``` (single line)
+            r"```\s+(.*?)```",  # ```content``` (single line)
         ]
 
         for pattern in patterns:
@@ -639,15 +669,15 @@ Please return the customized resume in the same format as the base resume:"""
 
         # If no code blocks found, look for common AI intro patterns and skip them
         intro_patterns = [
-            r'^(Here is[^\n]+\n)*',                    # "Here is the resume..."
-            r'^(Below is[^\n]+\n)*',                   # "Below is the resume..."
-            r'^(The customized resume[^\n]+\n)*',      # "The customized resume..."
-            r'^("|\')[^"\']*\1\s*\n*',                 # Quoted intro text
+            r"^(Here is[^\n]+\n)*",  # "Here is the resume..."
+            r"^(Below is[^\n]+\n)*",  # "Below is the resume..."
+            r"^(The customized resume[^\n]+\n)*",  # "The customized resume..."
+            r'^("|\')[^"\']*\1\s*\n*',  # Quoted intro text
         ]
 
         cleaned = response
         for pattern in intro_patterns:
-            cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
+            cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE)
 
         return cleaned.strip() if cleaned.strip() else response
 
@@ -671,24 +701,24 @@ Please return the customized resume in the same format as the base resume:"""
         if code_block_content and code_block_content != response:
             # If we successfully extracted from code blocks, validate it's JSON-like
             stripped = code_block_content.strip()
-            if stripped.startswith('[') or stripped.startswith('{'):
+            if stripped.startswith("[") or stripped.startswith("{"):
                 return stripped
 
         # If code block extraction didn't work or returned same response,
         # try to find JSON array/object directly
         # Look for content between [ and ] or { and } at the top level
-        json_match = re.search(r'\[\s*\{.*\}\s*\]', response, re.DOTALL)
+        json_match = re.search(r"\[\s*\{.*\}\s*\]", response, re.DOTALL)
         if json_match:
             return json_match.group(0).strip()
 
         # Look for JSON object
-        obj_match = re.search(r'\{[^{}]*\{[^{}]*\}[^{}]*\}', response, re.DOTALL)
+        obj_match = re.search(r"\{[^{}]*\{[^{}]*\}[^{}]*\}", response, re.DOTALL)
         if obj_match:
             return obj_match.group(0).strip()
 
         # Fallback: return the original response stripped
         stripped = response.strip()
-        if stripped.startswith('[') or stripped.startswith('{'):
+        if stripped.startswith("[") or stripped.startswith("{"):
             return stripped
 
         # No valid JSON found
@@ -702,9 +732,7 @@ Please return the customized resume in the same format as the base resume:"""
             model=model,
             max_tokens=self.config.get("ai.max_tokens", 4000),
             temperature=self.config.get("ai.temperature", 0.7),
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            messages=[{"role": "user", "content": prompt}],
         )
 
         return message.content[0].text
@@ -717,18 +745,12 @@ Please return the customized resume in the same format as the base resume:"""
             model=model,
             max_tokens=self.config.get("ai.max_tokens", 4000),
             temperature=self.config.get("ai.temperature", 0.7),
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            messages=[{"role": "user", "content": prompt}],
         )
 
         return response.choices[0].message.content
 
-    def tailor_data(
-        self,
-        resume_data: Dict[str, Any],
-        job_description: str
-    ) -> Dict[str, Any]:
+    def tailor_data(self, resume_data: Dict[str, Any], job_description: str) -> Dict[str, Any]:
         """
         Tailor resume data (dict) to job description.
 
@@ -780,7 +802,7 @@ Return ONLY valid JSON, nothing else."""
 
             # Try to extract JSON from response (in case of markdown or other wrappers)
             # Non-greedy match for simple JSON extraction
-            json_match = re.search(r'(\{.*?\})', response, re.DOTALL)
+            json_match = re.search(r"(\{.*?\})", response, re.DOTALL)
             if json_match:
                 try:
                     return json.loads(json_match.group(1))
@@ -800,7 +822,7 @@ def generate_with_ai(
     job_description: Optional[str] = None,
     yaml_path: Optional[Path] = None,
     config: Optional[Config] = None,
-    **kwargs
+    **kwargs,
 ) -> str:
     """
     Convenience function to generate resume with AI.
@@ -816,8 +838,4 @@ def generate_with_ai(
         Generated resume content
     """
     generator = AIGenerator(yaml_path, config)
-    return generator.generate(
-        variant=variant,
-        job_description=job_description,
-        **kwargs
-    )
+    return generator.generate(variant=variant, job_description=job_description, **kwargs)

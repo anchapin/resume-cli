@@ -4,7 +4,9 @@ from setuptools import setup, find_packages
 from pathlib import Path
 
 this_directory = Path(__file__).parent
-long_description = (this_directory / "README.md").read_text() if (this_directory / "README.md").exists() else ""
+long_description = (
+    (this_directory / "README.md").read_text() if (this_directory / "README.md").exists() else ""
+)
 
 setup(
     name="resume-cli",
@@ -45,6 +47,11 @@ setup(
         "dev": [
             "pytest>=7.0.0",
             "pytest-cov>=4.0.0",
+            "pytest-mock>=3.10.0",
+            "fastapi>=0.100.0",
+            "pydantic>=2.0.0",
+            "uvicorn>=0.23.0",
+            "httpx>=0.24.0",
         ],
     },
     entry_points={

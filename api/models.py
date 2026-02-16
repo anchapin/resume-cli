@@ -1,9 +1,12 @@
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel
+
 
 class ResumeRequest(BaseModel):
     resume_data: Dict[str, Any]
     variant: str = "base"
+
 
 class TailorRequest(BaseModel):
     resume_data: Dict[str, Any]

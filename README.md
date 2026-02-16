@@ -1,5 +1,9 @@
 # Resume CLI System
 
+[![CI](https://github.com/anchapin/job-hunt/actions/workflows/ci.yml/badge.svg)](https://github.com/anchapin/job-hunt/actions/workflows/ci.yml)
+[![Lint](https://github.com/anchapin/job-hunt/actions/workflows/lint.yml/badge.svg)](https://github.com/anchapin/job-hunt/actions/workflows/lint.yml)
+[![Security](https://github.com/anchapin/job-hunt/actions/workflows/security.yml/badge.svg)](https://github.com/anchapin/job-hunt/actions/workflows/security.yml)
+
 A unified command-line interface for generating job-specific resumes from a single YAML source. Supports fast template-based generation and AI-powered customization with full integration into application tracking.
 
 ## Features
@@ -7,10 +11,12 @@ A unified command-line interface for generating job-specific resumes from a sing
 - **Single Source of Truth**: Store all resume data in `resume.yaml`
 - **Fast Generation**: Create any variant in <1 second using Jinja2 templates
 - **AI-Powered**: Optional AI customization using Claude or OpenAI
+- **ATS Compatibility**: Check resume optimization for automated screening systems
 - **Multiple Variants**: 6 pre-configured variants (base, backend, ML/AI, fullstack, DevOps, leadership)
 - **Multiple Formats**: Output to Markdown, LaTeX, or PDF
 - **Application Tracking**: Built-in CSV tracking with analytics
 - **GitHub Integration**: Sync projects automatically
+- **LinkedIn Integration**: Import/export LinkedIn profile data
 - **Schema Validation**: Catch errors before generating
 
 ## Installation
@@ -117,6 +123,58 @@ List all available resume variants.
 
 ```bash
 resume-cli variants
+```
+
+### ats-check
+
+Check ATS (Applicant Tracking System) compatibility score.
+
+Analyzes resume against job description and provides actionable feedback for optimization.
+
+```bash
+resume-cli ats-check [OPTIONS]
+
+Options:
+  --job-desc PATH        Path to job description file (required)
+  -v, --variant TEXT     Resume variant to check (default: v1.0.0-base)
+  --output PATH          Save report as JSON file
+```
+
+**Scoring Categories:**
+
+- **Format Parsing** (20pts): Text extraction and formatting checks
+- **Keywords** (30pts): Job keyword matching (uses AI if available, falls back to regex)
+- **Section Structure** (20pts): Standard ATS sections validation
+- **Contact Info** (15pts): Email, phone, location verification
+- **Readability** (15pts): Action verbs, metrics, bullet points
+
+**Examples:**
+
+```bash
+# Check ATS score for backend variant
+resume-cli ats-check -v v1.1.0-backend --job-desc job-posting.txt
+
+# Save report as JSON
+resume-cli ats-check --job-desc job.txt --output ats-report.json
+```
+
+**Sample Output:**
+
+```
+ATS Score: 81/100 (81%)
+
+Good! Your resume is ATS-friendly with room for improvement.
+
+Category Breakdown:
+✓ Format Parsing: 20/20
+✗ Keywords: 14/30 - Missing: Kubernetes, CI/CD
+✓ Section Structure: 20/20
+✓ Contact Info: 15/15
+✗ Readability: 12/15
+
+Top Recommendations:
+  1. Add these keywords to skills or experience: Kubernetes, CI/CD
+  2. Add quantifiable metrics (e.g., 'increased by 30%')
 ```
 
 ### validate
@@ -233,47 +291,86 @@ Options:
 - GitHub CLI (`gh`) installed and authenticated
 - Run `gh auth login` first if needed
 
-### interview-prep
+### linkedin-import
 
-Generate interview questions based on job description and resume.
+Import LinkedIn profile data into resume.yaml.
 
 ```bash
-resume-cli interview-prep [OPTIONS]
+resume-cli linkedin-import [OPTIONS]
 
 Options:
-  -v, --variant TEXT        Resume variant (default: v1.0.0-base)
-  --job-desc PATH           Path to job description file [required]
-  --num-technical INTEGER   Number of technical questions (default: 10)
-  --num-behavioral INTEGER  Number of behavioral questions (default: 5)
-  --no-system-design        Skip system design questions
-  --flashcard-mode          Generate flashcard format for studying
-  -o, --output PATH         Output file path
+  --data-file PATH     Path to LinkedIn exported JSON data file (required)
+  --output PATH        Output YAML file path (default: resume.yaml)
+  --merge              Merge with existing resume.yaml instead of overwriting
+  --dry-run            Preview changes without writing to file
+```
+
+**Note:** Direct URL import is not supported due to LinkedIn API restrictions. You must export your LinkedIn data first:
+
+1. Go to https://www.linkedin.com/psettings/member-data
+2. Request 'Profile' data export
+3. Use the downloaded JSON file with `--data-file`
+
+**Examples:**
+
+```bash
+# Import from exported JSON (creates new resume.yaml)
+resume-cli linkedin-import --data-file linkedin_data.json
+
+# Merge with existing resume.yaml
+resume-cli linkedin-import --data-file linkedin_data.json --merge
+
+# Preview changes before importing
+resume-cli linkedin-import --data-file linkedin_data.json --dry-run
+
+# Import to custom path
+resume-cli linkedin-import --data-file linkedin_data.json --output my-resume.yaml
+```
+
+**Field Mapping:**
+
+| LinkedIn Field | resume.yaml Field |
+|----------------|------------------|
+| firstName/lastName | contact.name |
+| email | contact.email |
+| phone | contact.phone |
+| location | contact.location |
+| headline/summary | professional_summary.base |
+| skills | skills.* (auto-categorized) |
+| experience | experience |
+| education | education |
+| certifications | certifications |
+
+### linkedin-export
+
+Export resume.yaml data to LinkedIn-friendly format.
+
+```bash
+resume-cli linkedin-export [OPTIONS]
+
+Options:
+  -v, --variant TEXT    Resume variant to export (default: v1.0.0-base)
+  -o, --output PATH    Output file path (default: output/linkedin-update.txt)
+  --format CHOICE      Output format: linkedin, plain (default: linkedin)
 ```
 
 **Examples:**
 
 ```bash
-# Basic interview preparation
-resume-cli interview-prep --job-desc job-posting.txt
+# Export for LinkedIn update
+resume-cli linkedin-export
 
-# Generate more questions
-resume-cli interview-prep --job-desc job.txt --num-technical 15 --num-behavioral 8
+# Export specific variant
+resume-cli linkedin-export -v v1.1.0-backend
 
-# Flashcard mode for studying
-resume-cli interview-prep --job-desc job.txt --flashcard-mode
+# Export to custom file
+resume-cli linkedin-export -o my-linkedin-update.txt
 
-# Specify output file
-resume-cli interview-prep --job-desc job.txt -o interview-prep.md
+# Export plain text format
+resume-cli linkedin-export --format plain
 ```
 
-**Output includes:**
-- Technical questions with domain-specific focus
-- Behavioral questions with STAR framework
-- System design questions (for engineering roles)
-- Job analysis with key technologies and focus areas
-- Answers and tips for each question
-
-See `docs/INTERVIEW_PREP_GUIDE.md` for detailed usage.
+**Note:** LinkedIn has character limits for each field. You may need to trim bullets to fit LinkedIn's format.
 
 ### init
 
@@ -495,6 +592,12 @@ github:
   sync_months: 3
   # Auto-projects feature for generate-package
   max_projects: 3
+
+linkedin:
+  # LinkedIn import/export settings
+  import_merge_mode: merge      # Options: merge, overwrite
+  export_format: linkedin       # Options: linkedin, plain
+  output_directory: output     # Default directory for LinkedIn exports
 ```
 
 ## PDF Generation
@@ -534,7 +637,7 @@ job_hunt/
 │   ├── main.py              # Entry point
 │   ├── commands/            # Command implementations
 │   ├── generators/          # Template + AI engines
-│   ├── integrations/        # Tracking, GitHub, etc.
+│   ├── integrations/        # Tracking, GitHub, LinkedIn, etc.
 │   └── utils/               # YAML parser, schema, config
 ├── templates/               # Jinja2 templates
 │   ├── resume_md.j2
@@ -596,6 +699,128 @@ pytest
 ## License
 
 MIT License - See LICENSE file for details.
+
+## Roadmap
+
+### Current Version: v2.0.0
+
+**Completed Features:**
+- ✅ Core CLI with template-based generation (Jinja2)
+- ✅ Multiple output formats (Markdown, LaTeX, PDF)
+- ✅ AI-powered resume tailoring (Claude/OpenAI)
+- ✅ Cover letter generation (interactive + non-interactive)
+- ✅ Application tracking (CSV-based analytics)
+- ✅ GitHub project sync and AI enhancement
+- ✅ AI Judge for multi-generation quality selection
+- ✅ REST API server for programmatic access
+- ✅ Schema validation and configuration management
+- ✅ 6 pre-configured resume variants
+
+---
+
+### Short-Term (1-3 Months)
+
+**Quality & Testing**
+- [ ] Comprehensive test coverage (pytest for all modules)
+- [ ] Integration tests for CLI commands
+- [ ] Mock testing for AI API calls
+- [ ] Performance benchmarking for large resume.yaml files
+
+**User Experience**
+- [ ] Better error messages and actionable guidance
+- [ ] Progress indicators for long-running operations
+- [ ] Resume diff/comparison between variants
+- [ ] "What changed" log when updating resume.yaml
+
+**Template Enhancements**
+- [ ] Additional resume templates (modern, minimalist, academic)
+- [ ] Cover letter templates with different tones
+- [ ] User-provided custom template support
+- [ ] Template preview mode
+
+**Documentation**
+- [ ] Interactive tutorials for each command
+- [ ] Video walkthrough for quick onboarding
+- [ ] Troubleshooting guide for common issues
+
+---
+
+### Medium-Term (3-6 Months)
+
+**ATS Optimization**
+- [ ] ATS score checker (parse-friendly format validation)
+- [ ] Keyword density analysis
+- [ ] Resume format recommendations for popular ATS systems
+- [ ] Export to ATS-friendly formats (plain text, docx)
+
+**Job Board Integration**
+- [ ] LinkedIn profile import/export
+- [ ] Indeed/LinkedIn job posting parser
+- [ ] Automated application logging (with manual approval)
+- [ ] Job search aggregator integration
+
+**Advanced Analytics**
+- [ ] Visual dashboard for application metrics
+- [ ] Response rate heatmaps by company size/location
+- [ ] Variant performance A/B testing tools
+- [ ] Export analytics to CSV/JSON for external analysis
+
+**Multi-Device Support**
+- [ ] Mobile-responsive web interface
+- [ ] Desktop application (Electron/Tauri)
+- [ ] Cross-platform sync via cloud storage
+- [ ] Offline mode with local AI models
+
+---
+
+### Long-Term (6-12+ Months)
+
+**Interview Preparation**
+- [ ] AI-generated interview questions based on job description
+- [ ] Mock interview mode with AI interviewer
+- [ ] Company research aggregation (news, culture, recent wins)
+- [ ] STAR method response templates
+
+**Networking & Career Growth**
+- [ ] Connection finder (find alumni/connections at target companies)
+- [ ] Salary research and market data integration
+- [ ] Offer comparison tool with negotiation suggestions
+- [ ] Personal branding assistant (LinkedIn, portfolio suggestions)
+
+**Enterprise Features**
+- [ ] Team collaboration mode (shared resume reviews)
+- [ ] Template marketplace for resume designs
+- [ ] Recruiter dashboard for hiring teams
+- [ ] API rate limiting and usage analytics
+
+**Advanced AI Features**
+- [ ] Multi-language resume generation
+- [ ] Video resume generation support
+- [ ] Portfolio project recommendations
+- [ ] Skill gap analysis vs. job requirements
+
+**Platform Expansion**
+- [ ] Browser extension for auto-fill applications
+- [ ] Mobile app for iOS/Android
+- [ ] Plugin ecosystem for third-party integrations
+- [ ] White-label offering for career coaches
+
+---
+
+### Requested Features
+
+Help us prioritize! If you'd like to see a feature, please:
+1. Check existing GitHub issues
+2. Create a new issue with the `enhancement` label
+3. Include use cases and why it matters to you
+
+**Most requested (community-driven):**
+- 📊 ATS optimization tools
+- 🌐 Web UI
+- 📱 Mobile companion app
+- 🤝 Collaboration features
+
+---
 
 ## Contributing
 

@@ -81,3 +81,17 @@ job*.txt
 *.jpeg
 *.gif
 !screenshot*.png  # Allow generic screenshot examples if needed
+
+# Coverage reports
+.coverage
+coverage.xml
+htmlcov/
+coverage.json
+
+# Security reports
+safety-report.json
+bandit-report.json
+
+# Mypy
+.mypy_cache/
+.pytest_cache/

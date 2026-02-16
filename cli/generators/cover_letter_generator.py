@@ -1,16 +1,23 @@
 """AI-powered cover letter generator using Claude or OpenAI."""
 
+# Import hashlib before kubernetes_asyncio can patch it
+# Use sha256 instead of md5 to avoid kubernetes_asyncio patching
+import hashlib
 import os
 import re
-from pathlib import Path
-from typing import Optional, Dict, Any, Tuple, List
+import sys
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 from rich.console import Console
+
+_sha256 = hashlib.sha256
 
 # Load environment variables from .env file if present
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass
@@ -20,32 +27,33 @@ console = Console()
 
 try:
     import anthropic
+
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
 
 try:
     import openai
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from .template import TemplateGenerator
-from ..utils.yaml_parser import ResumeYAML
 from ..utils.config import Config
+from ..utils.template_filters import latex_escape
+from ..utils.yaml_parser import ResumeYAML
 from .ai_judge import create_ai_judge
+from .template import TemplateGenerator
 
 
 class CoverLetterGenerator:
     """Generate personalized cover letters with AI."""
 
-    def __init__(
-        self,
-        yaml_path: Optional[Path] = None,
-        config: Optional[Config] = None
-    ):
+    _ENV_CACHE = {}
+
+    def __init__(self, yaml_path: Optional[Path] = None, config: Optional[Config] = None):
         """
         Initialize cover letter generator.
 
@@ -61,48 +69,26 @@ class CoverLetterGenerator:
         # Set up template directory
         template_dir = Path(__file__).parent.parent.parent / "templates"
 
-        # Set up Jinja2 environment
-        self.env = Environment(
-            loader=FileSystemLoader(template_dir),
-            autoescape=select_autoescape(),
-            trim_blocks=True,
-            lstrip_blocks=True
-        )
+        # Check cache
+        cache_key = str(template_dir.resolve())
+        if cache_key in self._ENV_CACHE:
+            self.env = self._ENV_CACHE[cache_key]
+        else:
+            # Set up Jinja2 environment
+            self.env = Environment(
+                loader=FileSystemLoader(template_dir),
+                autoescape=select_autoescape(),
+                trim_blocks=True,
+                lstrip_blocks=True,
+            )
 
-        # Add now() function for templates
-        self.env.globals['now'] = datetime.now
+            # Add now() function for templates
+            self.env.globals["now"] = datetime.now
 
-        # Add LaTeX escape filter (reuse from template_generator)
-        def latex_escape(text):
-            """Escape special LaTeX characters."""
-            if not text:
-                return text
-            replacements = {
-                '&': r'\&',
-                '%': r'\%',
-                '$': r'\$',
-                '#': r'\#',
-                '_': r'\_',
-                '{': r'\{',
-                '}': r'\}',
-                '~': r'\textasciitilde{}',
-                '^': r'\^{}',
-                '™': r'\textsuperscript{TM}',
-                '®': r'\textsuperscript{R}',
-                '©': r'\textcopyright{}',
-                '°': r'\textsuperscript{\textdegree}{}',
-                '±': r'$\pm$',
-                '≥': r'$\ge$',
-                '≤': r'$\le$',
-                '→': r'$\rightarrow$',
-                '—': r'---',  # em dash
-                '–': r'--',   # en dash
-            }
-            for old, new in replacements.items():
-                text = text.replace(old, new)
-            return text
+            # Add LaTeX escape filter (reuse from template_generator via template_filters)
+            self.env.filters["latex_escape"] = latex_escape
 
-        self.env.filters['latex_escape'] = latex_escape
+            self._ENV_CACHE[cache_key] = self.env
 
         # Initialize AI client (same as AIGenerator)
         provider = self.config.ai_provider
@@ -110,8 +96,7 @@ class CoverLetterGenerator:
         if provider == "anthropic":
             if not ANTHROPIC_AVAILABLE:
                 raise ImportError(
-                    "anthropic package not installed. "
-                    "Install with: pip install 'resume-cli[ai]'"
+                    "anthropic package not installed. " "Install with: pip install 'resume-cli[ai]'"
                 )
             api_key = os.getenv("ANTHROPIC_API_KEY")
             if not api_key:
@@ -119,7 +104,9 @@ class CoverLetterGenerator:
                     "ANTHROPIC_API_KEY environment variable not set. "
                     "Set it with: export ANTHROPIC_API_KEY=your_key"
                 )
-            base_url = os.getenv("ANTHROPIC_BASE_URL") or self.config.get("ai.anthropic_base_url", "")
+            base_url = os.getenv("ANTHROPIC_BASE_URL") or self.config.get(
+                "ai.anthropic_base_url", ""
+            )
             client_kwargs = {"api_key": api_key}
             if base_url:
                 client_kwargs["base_url"] = base_url
@@ -129,8 +116,7 @@ class CoverLetterGenerator:
         elif provider == "openai":
             if not OPENAI_AVAILABLE:
                 raise ImportError(
-                    "openai package not installed. "
-                    "Install with: pip install 'resume-cli[ai]'"
+                    "openai package not installed. " "Install with: pip install 'resume-cli[ai]'"
                 )
             api_key = os.getenv("OPENAI_API_KEY")
             if not api_key:
@@ -273,7 +259,9 @@ class CoverLetterGenerator:
 
         return results, job_details
 
-    def _extract_job_details(self, job_description: str, company_name: Optional[str] = None) -> Dict[str, Any]:
+    def _extract_job_details(
+        self, job_description: str, company_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Extract key details from job description using AI.
 
@@ -311,8 +299,9 @@ Return ONLY valid JSON, nothing else."""
 
             # Parse JSON from response
             import json
+
             # Try to extract JSON from response
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            json_match = re.search(r"\{.*\}", response, re.DOTALL)
             if json_match:
                 details = json.loads(json_match.group(0))
             else:
@@ -375,26 +364,32 @@ Job posting:
         position = job_details.get("position", "this role")
 
         # Always ask about motivation
-        questions.append({
-            "key": "motivation",
-            "question": f"What specifically excites you about the {position} role at {company}?",
-            "required": True
-        })
+        questions.append(
+            {
+                "key": "motivation",
+                "question": f"What specifically excites you about the {position} role at {company}?",
+                "required": True,
+            }
+        )
 
         # Check for company-specific context
         if job_details.get("company_mission"):
-            questions.append({
-                "key": "company_alignment",
-                "question": f"What aspects of {company}'s mission or values resonate with you? (Press Enter to skip)",
-                "required": False
-            })
+            questions.append(
+                {
+                    "key": "company_alignment",
+                    "question": f"What aspects of {company}'s mission or values resonate with you? (Press Enter to skip)",
+                    "required": False,
+                }
+            )
 
         # Ask about connections
-        questions.append({
-            "key": "connection",
-            "question": f"Do you have any connections at {company} or have you spoken with anyone there? (Press Enter to skip)",
-            "required": False
-        })
+        questions.append(
+            {
+                "key": "connection",
+                "question": f"Do you have any connections at {company} or have you spoken with anyone there? (Press Enter to skip)",
+                "required": False,
+            }
+        )
 
         return questions
 
@@ -423,10 +418,7 @@ Job posting:
                 raise
 
     def _generate_smart_guesses(
-        self,
-        job_description: str,
-        job_details: Dict[str, Any],
-        variant: str
+        self, job_description: str, job_details: Dict[str, Any], variant: str
     ) -> Dict[str, str]:
         """
         Generate AI-based smart guesses for cover letter questions.
@@ -481,7 +473,8 @@ Return ONLY valid JSON, nothing else."""
                 response = self._call_openai(prompt)
 
             import json
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+
+            json_match = re.search(r"\{.*\}", response, re.DOTALL)
             if json_match:
                 guesses = json.loads(json_match.group(0))
                 return guesses
@@ -497,10 +490,7 @@ Return ONLY valid JSON, nothing else."""
         }
 
     def _generate_with_ai(
-        self,
-        job_description: str,
-        job_details: Dict[str, Any],
-        variant: str
+        self, job_description: str, job_details: Dict[str, Any], variant: str
     ) -> Dict[str, Any]:
         """
         Generate cover letter sections using AI with multi-generation and judge.
@@ -517,10 +507,13 @@ Return ONLY valid JSON, nothing else."""
             Dict with cover letter sections
         """
         # Create cache key from inputs
-        import hashlib
         qa = job_details.get("question_answers", {})
         cache_key_input = f"{job_description[:500]}{str(qa)}{variant}"
-        cache_key = hashlib.md5(cache_key_input.encode()).hexdigest()
+        # usedforsecurity argument only available in Python 3.9+
+        if sys.version_info >= (3, 9):
+            cache_key = _sha256(cache_key_input.encode(), usedforsecurity=False).hexdigest()
+        else:
+            cache_key = _sha256(cache_key_input.encode()).hexdigest()
 
         # Check cache
         if cache_key in self._content_cache:
@@ -541,16 +534,19 @@ Return ONLY valid JSON, nothing else."""
 **Experience:**
 """
         for job in experience[:3]:
-            bullets_text = "\n".join([f"  - {b.get('text', '') if isinstance(b, dict) else b}" for b in job.get('bullets', [])[:2]])
+            bullets_text = "\n".join(
+                [
+                    f"  - {b.get('text', '') if isinstance(b, dict) else b}"
+                    for b in job.get("bullets", [])[:2]
+                ]
+            )
             resume_context += f"- {job.get('title')} at {job.get('company')}\n{bullets_text}\n"
 
         # Get question answers
         qa = job_details.get("question_answers", {})
 
         # Build prompt (same for all generations)
-        prompt = self._build_cover_letter_prompt(
-            job_description, job_details, resume_context, qa
-        )
+        prompt = self._build_cover_letter_prompt(job_description, job_details, resume_context, qa)
 
         # Generate multiple versions
         versions = []
@@ -588,7 +584,9 @@ Return ONLY valid JSON, nothing else."""
                 self._content_cache[cache_key] = selected
                 return selected
             except Exception as e:
-                console.print(f"[yellow]Warning:[/yellow] Judge evaluation failed: {str(e)}. Using first version.")
+                console.print(
+                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {str(e)}. Using first version."
+                )
                 result = versions[0]
                 self._content_cache[cache_key] = result
                 return result
@@ -603,7 +601,7 @@ Return ONLY valid JSON, nothing else."""
         job_description: str,
         job_details: Dict[str, Any],
         resume_context: str,
-        qa: Dict[str, Any]
+        qa: Dict[str, Any],
     ) -> str:
         """Build the cover letter generation prompt."""
         return f"""You are an expert cover letter writer. Generate a professional cover letter based on the information below.
@@ -653,7 +651,8 @@ Return ONLY valid JSON, nothing else."""
                 response = self._call_openai(prompt)
 
             import json
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+
+            json_match = re.search(r"\{.*\}", response, re.DOTALL)
             if json_match:
                 return json.loads(json_match.group(0))
         except Exception:
@@ -722,10 +721,7 @@ Return ONLY valid JSON, nothing else."""
         return template.render(**context)
 
     def save_outputs(
-        self,
-        outputs: Dict[str, str],
-        company_name: str,
-        output_dir: Optional[Path] = None
+        self, outputs: Dict[str, str], company_name: str, output_dir: Optional[Path] = None
     ) -> Dict[str, Path]:
         """
         Save cover letter outputs to files.
@@ -742,8 +738,8 @@ Return ONLY valid JSON, nothing else."""
             # Create package directory in default output location
             output_base_dir = Path(self.config.output_dir)
             date_str = datetime.now().strftime("%Y-%m-%d")
-            company_slug = re.sub(r'[^\w\s-]', '', company_name).strip().lower()[:30]
-            company_slug = re.sub(r'[-\s]+', '-', company_slug)
+            company_slug = re.sub(r"[^\w\s-]", "", company_name).strip().lower()[:30]
+            company_slug = re.sub(r"[-\s]+", "-", company_slug)
             output_dir = output_base_dir / f"{company_slug}-{date_str}"
 
         output_dir = Path(output_dir)
@@ -765,7 +761,9 @@ Return ONLY valid JSON, nothing else."""
                 saved_paths["pdf"] = pdf_path
             else:
                 # PDF compilation failed, but we have MD
-                console.print("[yellow]Note:[/yellow] PDF compilation failed (pdflatex/pandoc not available). Cover letter saved as Markdown only.")
+                console.print(
+                    "[yellow]Note:[/yellow] PDF compilation failed (pdflatex/pandoc not available). Cover letter saved as Markdown only."
+                )
 
         return saved_paths
 
@@ -785,6 +783,7 @@ Return ONLY valid JSON, nothing else."""
 
         # Try pdflatex first
         import subprocess
+
         pdf_created = False
         try:
             # Use Popen with explicit cleanup to avoid double-free issues
@@ -792,7 +791,7 @@ Return ONLY valid JSON, nothing else."""
                 ["pdflatex", "-interaction=nonstopmode", tex_path.name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                cwd=tex_path.parent
+                cwd=tex_path.parent,
             )
             stdout, stderr = process.communicate()
             if process.returncode == 0 or output_path.exists():
@@ -805,14 +804,9 @@ Return ONLY valid JSON, nothing else."""
                 # Fallback to pandoc
                 try:
                     process = subprocess.Popen(
-                        [
-                            "pandoc",
-                            str(tex_path),
-                            "-o", str(output_path),
-                            "--pdf-engine=xelatex"
-                        ],
+                        ["pandoc", str(tex_path), "-o", str(output_path), "--pdf-engine=xelatex"],
                         stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE
+                        stderr=subprocess.PIPE,
                     )
                     stdout, stderr = process.communicate()
                     if process.returncode == 0 or output_path.exists():
@@ -834,9 +828,7 @@ Return ONLY valid JSON, nothing else."""
             model=model,
             max_tokens=self.config.get("ai.max_tokens", 4000),
             temperature=self.config.get("ai.temperature", 0.7),
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            messages=[{"role": "user", "content": prompt}],
         )
 
         return message.content[0].text
@@ -849,9 +841,7 @@ Return ONLY valid JSON, nothing else."""
             model=model,
             max_tokens=self.config.get("ai.max_tokens", 4000),
             temperature=self.config.get("ai.temperature", 0.7),
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            messages=[{"role": "user", "content": prompt}],
         )
 
         return response.choices[0].message.content
@@ -864,7 +854,7 @@ def generate_cover_letter(
     yaml_path: Optional[Path] = None,
     config: Optional[Config] = None,
     interactive: bool = True,
-    **kwargs
+    **kwargs,
 ) -> Tuple[Dict[str, str], Dict[str, Any]]:
     """
     Convenience function to generate cover letter.
@@ -885,15 +875,9 @@ def generate_cover_letter(
 
     if interactive:
         return generator.generate_interactive(
-            job_description=job_description,
-            company_name=company_name,
-            variant=variant,
-            **kwargs
+            job_description=job_description, company_name=company_name, variant=variant, **kwargs
         )
     else:
         return generator.generate_non_interactive(
-            job_description=job_description,
-            company_name=company_name,
-            variant=variant,
-            **kwargs
+            job_description=job_description, company_name=company_name, variant=variant, **kwargs
         )

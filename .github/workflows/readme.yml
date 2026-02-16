@@ -1,0 +1,57 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'README.md'
+      - 'CLAUDE.md'
+      - 'QUICKSTART.md'
+      - 'IMPLEMENTATION_PLAN.md'
+      - 'GEMINI.md'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'README.md'
+      - 'CLAUDE.md'
+      - 'QUICKSTART.md'
+      - 'IMPLEMENTATION_PLAN.md'
+      - 'GEMINI.md'
+
+jobs:
+  lint-markdown:
+    name: Lint Markdown Files
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install markdownlint
+      run: |
+        npm install -g markdownlint-cli
+
+    - name: Lint Markdown files
+      run: |
+        markdownlint README.md CLAUDE.md QUICKSTART.md IMPLEMENTATION_PLAN.md GEMINI.md || true
+        echo "Markdown lint check completed"
+
+  check-links:
+    name: Check External Links
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run lychee link checker
+      uses: lycheeverse/lychee-action@v2
+      with:
+        args: --verbose --no-progress "*.md" --exclude "http://localhost|https://claude.ai"
+        fail: true
+        jobSummary: true

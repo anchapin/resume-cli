@@ -3,7 +3,7 @@
 import json
 import os
 from types import SimpleNamespace
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -13,20 +13,12 @@ from cli.utils.config import Config
 
 def _make_anthropic_response(text: str):
     """Helper to build a fake Anthropic-style response object."""
-    return SimpleNamespace(
-        content=[SimpleNamespace(text=text)]
-    )
+    return SimpleNamespace(content=[SimpleNamespace(text=text)])
 
 
 def _make_openai_response(text: str):
     """Helper to build a fake OpenAI-style response object."""
-    return SimpleNamespace(
-        choices=[
-            SimpleNamespace(
-                message=SimpleNamespace(content=text)
-            )
-        ]
-    )
+    return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=text))])
 
 
 @pytest.fixture
@@ -41,7 +33,7 @@ def base_resume_data():
                 "company": "Acme",
                 "title": "Engineer",
                 "start_date": "2020-01",
-                "bullets": [{"text": "Did work"}]
+                "bullets": [{"text": "Did work"}],
             }
         ],
     }
@@ -63,7 +55,7 @@ def _build_generator(provider: str, monkeypatch) -> AIGenerator:
         monkeypatch.setenv("OPENAI_API_KEY", "dummy-key")
 
     # Create generator - will initialize real client but we'll replace it
-    with patch.object(Config, 'ai_provider', provider):
+    with patch.object(Config, "ai_provider", provider):
         config = Config()
         config.set("ai.provider", provider)
         generator = AIGenerator(yaml_path=None, config=config)
@@ -71,7 +63,9 @@ def _build_generator(provider: str, monkeypatch) -> AIGenerator:
     return generator
 
 
-def test_tailor_data_anthropic_markdown_json_extraction(base_resume_data, job_description, monkeypatch):
+def test_tailor_data_anthropic_markdown_json_extraction(
+    base_resume_data, job_description, monkeypatch
+):
     """
     Anthropic branch: response is markdown text with JSON inside a fenced code block.
     tailor_data should extract and parse the JSON.
@@ -87,7 +81,7 @@ def test_tailor_data_anthropic_markdown_json_extraction(base_resume_data, job_de
                 "company": "Acme",
                 "title": "Senior Engineer",
                 "start_date": "2020-01",
-                "bullets": [{"text": "Did senior work"}]
+                "bullets": [{"text": "Did senior work"}],
             }
         ],
     }
@@ -143,7 +137,7 @@ def test_tailor_data_anthropic_plain_json(base_resume_data, job_description, mon
                 "company": "Acme",
                 "title": "Staff Engineer",
                 "start_date": "2020-01",
-                "bullets": [{"text": "Did staff work"}]
+                "bullets": [{"text": "Did staff work"}],
             }
         ],
     }
@@ -178,7 +172,7 @@ def test_tailor_data_openai_markdown_json(base_resume_data, job_description, mon
                 "company": "Acme",
                 "title": "Senior Engineer",
                 "start_date": "2020-01",
-                "bullets": [{"text": "Did senior work"}]
+                "bullets": [{"text": "Did senior work"}],
             }
         ],
     }
@@ -230,7 +224,7 @@ def test_tailor_data_openai_plain_json(base_resume_data, job_description, monkey
                 "company": "Acme",
                 "title": "Staff Engineer",
                 "start_date": "2020-01",
-                "bullets": [{"text": "Did staff work"}]
+                "bullets": [{"text": "Did staff work"}],
             }
         ],
     }

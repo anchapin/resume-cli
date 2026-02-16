@@ -140,7 +140,7 @@ class TestTemplateMarketplaceInitialization:
     def test_init_loads_default_registry(self, temp_dir: Path):
         """Test initialization loads default registry."""
         registry_path = temp_dir / "registry.json"
-        marketplace = TemplateMarketplace(registry_path=registry_path)
+        marketplace = TemplateMarketplace(registry_path=registry_path)  # noqa: F841
 
         assert "templates" in marketplace.registry
         assert "categories" in marketplace.registry
@@ -154,7 +154,7 @@ class TestTemplateMarketplaceInitialization:
         with open(registry_path, "w") as f:
             json.dump(registry_data, f)
 
-        marketplace = TemplateMarketplace(registry_path=registry_path)
+        marketplace = TemplateMarketplace(registry_path=registry_path)  # noqa: F841
 
         assert "custom" in marketplace.registry["templates"]
 
@@ -164,7 +164,7 @@ class TestTemplateMarketplaceListTemplates:
 
     def test_list_all_templates(self, temp_dir: Path):
         """Test listing all templates."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         templates = marketplace.list_templates()
 
@@ -174,7 +174,7 @@ class TestTemplateMarketplaceListTemplates:
 
     def test_list_templates_by_category(self, temp_dir: Path):
         """Test filtering templates by category."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         templates = marketplace.list_templates(category="professional")
 
@@ -182,7 +182,7 @@ class TestTemplateMarketplaceListTemplates:
 
     def test_list_templates_by_tag(self, temp_dir: Path):
         """Test filtering templates by tag."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         templates = marketplace.list_templates(tag="markdown")
 
@@ -190,7 +190,7 @@ class TestTemplateMarketplaceListTemplates:
 
     def test_list_templates_sorted_by_rating(self, temp_dir: Path):
         """Test templates are sorted by rating."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         # Add templates with different ratings
         marketplace.registry["templates"]["high_rated"] = TemplateMetadata(
@@ -213,7 +213,7 @@ class TestTemplateMarketplaceCategories:
 
     def test_get_categories(self, temp_dir: Path):
         """Test getting available categories."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         categories = marketplace.get_categories()
 
@@ -228,7 +228,7 @@ class TestTemplateMarketplaceGetTemplate:
 
     def test_get_existing_template(self, temp_dir: Path):
         """Test getting an existing template."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         template = marketplace.get_template("resume_md")
 
@@ -237,7 +237,7 @@ class TestTemplateMarketplaceGetTemplate:
 
     def test_get_nonexistent_template(self, temp_dir: Path):
         """Test getting a non-existent template."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         template = marketplace.get_template("nonexistent")
 
@@ -249,7 +249,7 @@ class TestTemplateMarketplacePreview:
 
     def test_preview_existing_template(self, temp_dir: Path):
         """Test previewing an existing template."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         preview = marketplace.preview_template("resume_md", lines=10)
 
@@ -259,7 +259,7 @@ class TestTemplateMarketplacePreview:
 
     def test_preview_nonexistent_template(self, temp_dir: Path):
         """Test previewing a non-existent template."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         preview = marketplace.preview_template("nonexistent")
 
@@ -280,7 +280,7 @@ class TestTemplateMarketplaceInstall:
         template_file = temp_dir / "test_template.j2"
         template_file.write_text("{# Test Template #}\nTest content")
 
-        installed_path = marketplace.install_template(template_file)
+        installed_path = marketplace.install_template(template_file)  # noqa: F841
 
         assert installed_path.exists()
         assert installed_path.name == "test_template.j2"
@@ -374,14 +374,14 @@ class TestTemplateMarketplaceUninstall:
 
     def test_uninstall_builtin_template_raises(self, temp_dir: Path):
         """Test uninstalling a builtin template raises error."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         with pytest.raises(ValueError, match="builtin"):
             marketplace.uninstall_template("resume_md")
 
     def test_uninstall_nonexistent_template(self, temp_dir: Path):
         """Test uninstalling a non-existent template."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         result = marketplace.uninstall_template("nonexistent")
 
@@ -393,7 +393,7 @@ class TestTemplateMarketplaceRating:
 
     def test_rate_template(self, temp_dir: Path):
         """Test rating a template."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         result = marketplace.rate_template("resume_md", rating=4.0)
 
@@ -404,7 +404,7 @@ class TestTemplateMarketplaceRating:
 
     def test_rate_template_invalid_rating(self, temp_dir: Path):
         """Test rating with invalid value."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         with pytest.raises(ValueError, match="between 1.0 and 5.0"):
             marketplace.rate_template("resume_md", rating=6.0)
@@ -414,7 +414,7 @@ class TestTemplateMarketplaceRating:
 
     def test_rate_template_nonexistent(self, temp_dir: Path):
         """Test rating a non-existent template."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         result = marketplace.rate_template("nonexistent", rating=4.0)
 
@@ -422,7 +422,7 @@ class TestTemplateMarketplaceRating:
 
     def test_rate_template_with_review(self, temp_dir: Path):
         """Test rating with a review."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         marketplace.rate_template("resume_md", rating=5.0, review="Great template!")
 
@@ -433,7 +433,7 @@ class TestTemplateMarketplaceRating:
 
     def test_multiple_ratings_average(self, temp_dir: Path):
         """Test multiple ratings are averaged."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         marketplace.rate_template("resume_md", rating=3.0)
         marketplace.rate_template("resume_md", rating=5.0)
@@ -448,7 +448,7 @@ class TestTemplateMarketplaceReviews:
 
     def test_get_reviews_empty(self, temp_dir: Path):
         """Test getting reviews for template with no reviews."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         reviews = marketplace.get_reviews("resume_md")
 
@@ -456,7 +456,7 @@ class TestTemplateMarketplaceReviews:
 
     def test_get_reviews_nonexistent_template(self, temp_dir: Path):
         """Test getting reviews for non-existent template."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         reviews = marketplace.get_reviews("nonexistent")
 
@@ -468,7 +468,7 @@ class TestTemplateMarketplaceExport:
 
     def test_export_builtin_template(self, temp_dir: Path):
         """Test exporting a builtin template."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         output_path = temp_dir / "exported.j2"
         exported = marketplace.export_template("resume_md", output_path)
@@ -478,7 +478,7 @@ class TestTemplateMarketplaceExport:
 
     def test_export_increments_downloads(self, temp_dir: Path):
         """Test exporting increments download count."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         initial_downloads = marketplace.get_template("resume_md").downloads
 
@@ -489,7 +489,7 @@ class TestTemplateMarketplaceExport:
 
     def test_export_nonexistent_template(self, temp_dir: Path):
         """Test exporting a non-existent template."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         with pytest.raises(ValueError, match="not found"):
             marketplace.export_template("nonexistent", temp_dir / "exported.j2")
@@ -500,7 +500,7 @@ class TestTemplateMarketplaceSearch:
 
     def test_search_by_name(self, temp_dir: Path):
         """Test searching templates by name."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         results = marketplace.search_templates("resume_md")
 
@@ -509,7 +509,7 @@ class TestTemplateMarketplaceSearch:
 
     def test_search_by_description(self, temp_dir: Path):
         """Test searching templates by description."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         results = marketplace.search_templates("Markdown")
 
@@ -517,7 +517,7 @@ class TestTemplateMarketplaceSearch:
 
     def test_search_by_tag(self, temp_dir: Path):
         """Test searching templates by tag."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         results = marketplace.search_templates("modern")
 
@@ -525,7 +525,7 @@ class TestTemplateMarketplaceSearch:
 
     def test_search_no_results(self, temp_dir: Path):
         """Test searching with no results."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         results = marketplace.search_templates("xyznonexistent123")
 
@@ -556,7 +556,7 @@ class TestTemplateMarketplaceRegistryPersistence:
     def test_registry_saved_after_rating(self, temp_dir: Path):
         """Test registry is saved after rating template."""
         registry_path = temp_dir / "registry.json"
-        marketplace = TemplateMarketplace(registry_path=registry_path)
+        marketplace = TemplateMarketplace(registry_path=registry_path)  # noqa: F841
 
         marketplace.rate_template("resume_md", rating=4.0)
 
@@ -572,7 +572,7 @@ class TestTemplateMetadataValidation:
 
     def test_rating_bounds(self, temp_dir: Path):
         """Test rating is within bounds."""
-        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")
+        marketplace = TemplateMarketplace(registry_path=temp_dir / "registry.json")  # noqa: F841
 
         # Test minimum bound
         with pytest.raises(ValueError):

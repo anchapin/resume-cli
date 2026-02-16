@@ -7,6 +7,7 @@ LinkedIn, Indeed, and generic job boards.
 """
 
 import json
+import requests
 import tempfile
 from pathlib import Path
 from unittest.mock import patch

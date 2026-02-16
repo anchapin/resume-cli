@@ -355,11 +355,16 @@ async def generate_cover_letter(request: CoverLetterRequest):
         raise HTTPException(status_code=500, detail="Cover letter generation failed")
 
 
+
+>>>>>>> origin/main
+------- REPLACE
 # =========================================================================
 # Analytics Endpoints for Dashboard
 # =========================================================================
 
+=======
 
+>>>>>>> origin/main
 @app.get(
     "/v1/analytics/overview",
     dependencies=[Security(get_api_key)],

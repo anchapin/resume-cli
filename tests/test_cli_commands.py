@@ -236,8 +236,7 @@ class TestCLIAtsCheck:
         """Test ats-check command with job description."""
         # Create a sample job description
         job_desc = temp_dir / "job.txt"
-        job_desc.write_text(
-            """
+        job_desc.write_text("""
 Senior Backend Engineer
 
 Requirements:
@@ -246,8 +245,7 @@ Requirements:
 - PostgreSQL
 - Kubernetes
 - REST API
-"""
-        )
+""")
 
         result = subprocess.run(
             [
@@ -300,8 +298,7 @@ class TestCLIKeywordAnalysis:
         """Test keyword-analysis command with job description."""
         # Create a sample job description
         job_desc = temp_dir / "job.txt"
-        job_desc.write_text(
-            """
+        job_desc.write_text("""
 Senior Backend Engineer
 
 Requirements:
@@ -311,8 +308,7 @@ Requirements:
 - Kubernetes
 - REST API
 - Docker
-"""
-        )
+""")
 
         result = subprocess.run(
             [

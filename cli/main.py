@@ -1085,9 +1085,9 @@ def salary_research(title: str, location: str, company: str, level: str, output:
     and experience level. Uses market data to generate estimates.
 
     Examples:
-        resume-cli salary-research --title \"Senior Backend Engineer\" --location \"San Francisco\"
-        resume-cli salary-research --title \"Product Manager\" --company \"Google\" --level senior
-        resume-cli salary-research --title \"ML Engineer\" --location \"New York\" --company \"Stripe\" -o salary.json
+        resume-cli salary-research --title "Senior Backend Engineer" --location "San Francisco"
+        resume-cli salary-research --title "Product Manager" --company "Google" --level senior
+        resume-cli salary-research --title "ML Engineer" --location "New York" --company "Stripe" -o salary.json
     """
     from .integrations.salary_research import SalaryResearch
 
@@ -1115,13 +1115,180 @@ def salary_research(title: str, location: str, company: str, level: str, output:
         if output:
             output_path = Path(output)
             research.export_json(salary_data, output_path)
-            console.print(f"\n[green]✓[/green] Report saved to: {output_path}")
+            console.print(f"
+[green]✓[/green] Report saved to: {output_path}")
 
     except Exception as e:
         console.print(f"[bold red]Error researching salary:[/bold red] {e}")
         import traceback
 
         traceback.print_exc()
+        sys.exit(1)
+
+
+# Offer comparison commands
+@cli.group()
+def offer():
+    """Offer comparison commands."""
+    pass
+
+
+@offer.command("add")
+@click.option("--company", required=True, help="Company name")
+@click.option("--role", required=True, help="Job role/title")
+@click.option("--base", "base_salary", type=float, default=0, help="Annual base salary")
+@click.option("--bonus", type=float, default=0, help="Annual bonus")
+@click.option("--equity", type=float, default=0, help="Total equity value")
+@click.option("--equity-years", type=int, default=4, help="Equity vesting years")
+@click.option("--benefits", "benefits_value", type=float, default=0, help="Annual benefits value")
+@click.option("--location", type=str, default="", help="Job location")
+@click.option("--remote", is_flag=True, help="Is remote position")
+@click.option("--notes", type=str, default="", help="Additional notes")
+def offer_add(
+    company: str,
+    role: str,
+    base_salary: float,
+    bonus: float,
+    equity: float,
+    equity_years: int,
+    benefits_value: float,
+    location: str,
+    remote: bool,
+    notes: str,
+):
+    """
+    Add a job offer for comparison.
+
+    Examples:
+        resume-cli offer add --company Stripe --role "Senior Engineer" --base 200000 --bonus 30000 --equity 320000
+        resume-cli offer add --company Google --role "Staff Engineer" --base 220000 --remote
+    """
+    from .integrations.offer_comparison import add_offer as add_offer_func
+
+    try:
+        add_offer_func(
+            company=company,
+            role=role,
+            base_salary=base_salary,
+            bonus=bonus,
+            equity=equity,
+            equity_years=equity_years,
+            benefits_value=benefits_value,
+            location=location,
+            remote=remote,
+            notes=notes,
+        )
+        console.print(f"[green]✓[/green] Added offer from {company}")
+
+    except Exception as e:
+        console.print(f"[bold red]Error adding offer:[/bold red] {e}")
+        sys.exit(1)
+
+
+@offer.command("compare")
+@click.option("-o", "--output", type=click.Path(), help="Save report to file")
+def offer_compare(output: Optional[str]):
+    """
+    Compare all stored offers and show weighted scores.
+
+    Examples:
+        resume-cli offer compare
+        resume-cli offer compare -o comparison.md
+    """
+    from .integrations.offer_comparison import generate_report
+
+    try:
+        report = generate_report()
+
+        if output:
+            output_path = Path(output)
+            output_path.write_text(report)
+            console.print(f"[green]✓[/green] Report saved to: {output_path}")
+        else:
+            console.print(report)
+
+    except Exception as e:
+        console.print(f"[bold red]Error comparing offers:[/bold red] {e}")
+        sys.exit(1)
+
+
+@offer.command("list")
+def offer_list():
+    """List all stored offers."""
+    from .integrations.offer_comparison import OfferComparison
+
+    try:
+        comparison = OfferComparison()
+        offers = comparison.list_offers()
+
+        if not offers:
+            console.print("[yellow]No offers stored.[/yellow]")
+            console.print("  Add offers using: resume-cli offer add")
+            return
+
+        table = Table(title="Stored Offers")
+        table.add_column("Company", style="cyan")
+        table.add_column("Role", style="white")
+        table.add_column("Total Comp", style="green", justify="right")
+        table.add_column("Location", style="yellow")
+
+        for o in offers:
+            table.add_row(
+                o.company,
+                o.role,
+                f"${o.total_compensation:,.0f}",
+                o.location or "N/A"
+            )
+
+        console.print(table)
+
+    except Exception as e:
+        console.print(f"[bold red]Error listing offers:[/bold red] {e}")
+        sys.exit(1)
+
+
+@offer.command("priorities")
+@click.option("--salary", type=int, default=30, help="Salary weight (0-100)")
+@click.option("--growth", type=int, default=25, help="Career growth weight (0-100)")
+@click.option("--wlb", type=int, default=25, help="Work-life balance weight (0-100)")
+@click.option("--benefits", type=int, default=20, help="Benefits weight (0-100)")
+def offer_priorities(salary: int, growth: int, wlb: int, benefits: int):
+    """
+    Set priorities for offer comparison.
+
+    Examples:
+        resume-cli offer priorities --salary 40 --growth 30 --wlb 20 --benefits 10
+    """
+    from .integrations.offer_comparison import set_priorities
+
+    try:
+        set_priorities(salary=salary, growth=growth, wlb=wlb, benefits=benefits)
+        console.print(f"[green]✓[/green] Priorities updated:")
+        console.print(f"  Salary: {salary}%")
+        console.print(f"  Growth: {growth}%")
+        console.print(f"  Work-Life Balance: {wlb}%")
+        console.print(f"  Benefits: {benefits}%")
+
+    except Exception as e:
+        console.print(f"[bold red]Error setting priorities:[/bold red] {e}")
+        sys.exit(1)
+
+
+@offer.command("clear")
+@click.confirmation_option(prompt="Are you sure you want to delete all stored offers?")
+def offer_clear():
+    """Clear all stored offers."""
+    from .integrations.offer_comparison import OfferComparison
+
+    try:
+        comparison = OfferComparison()
+        comparison.clear_offers()
+        console.print("[green]✓[/green] All offers cleared")
+
+    except Exception as e:
+        console.print(f"[bold red]Error clearing offers:[/bold red] {e}")
+        sys.exit(1)
+
         sys.exit(1)
 
 

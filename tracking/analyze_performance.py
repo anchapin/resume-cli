@@ -214,7 +214,8 @@ class ResumeAnalyzer:
                 print(f"      • {ver}: {rate:.1f}% response rate")
         else:
             print(
-                "\n   ✅ All versions are performing adequately (need more data to identify underperformers)"
+                "\n   ✅ All versions are performing adequately"
+                " (need more data to identify underperformers)"
             )
 
         # Find top performer
@@ -234,7 +235,8 @@ class ResumeAnalyzer:
             if best_ver:
                 print(f"\n   🏆 Top performer: {best_ver} ({best_rate:.1f}% response rate)")
                 print(
-                    "      Consider using this version more frequently or using it as template for variants."
+                    "      Consider using this version more frequently"
+                    " or using it as template for variants."
                 )
 
     def generate_report(self, version: Optional[str] = None):

@@ -595,27 +595,107 @@ def apply(
 
 @cli.command()
 @click.option("--months", type=int, default=3, help="Number of months to look back")
+@click.option("--write", is_flag=True, help="Write projects to resume.yaml (not just preview)")
+@click.option("--no-backup", is_flag=True, help="Skip creating backup file (use with --write)")
+@click.option("--dry-run", is_flag=True, help="Preview changes without writing (default behavior)")
 @click.pass_context
-def sync_github(ctx, months: int):
-    """Sync GitHub projects to resume.yaml."""
+def sync_github(ctx, months: int, write: bool, no_backup: bool, dry_run: bool):
+    """Sync GitHub projects to resume.yaml.
+    
+    Examples:
+        resume-cli sync-github --months 3           # Preview projects (default)
+        resume-cli sync-github --months 3 --write   # Auto-update resume.yaml
+        resume-cli sync-github --months 6 --dry-run  # Explicit preview mode
+    """
     from .integrations.github_sync import GitHubSync
 
     config = ctx.obj["config"]
     yaml_handler = ctx.obj["yaml_handler"]
+    yaml_path = ctx.obj["yaml_path"]
 
     console.print(f"[bold blue]Syncing GitHub projects (past {months} months)...[/bold blue]")
+
+    # Validate write mode
+    if write and not yaml_path.exists():
+        console.print(f"[bold red]Error:[/bold red] resume.yaml not found at {yaml_path}")
+        console.print("  Run 'resume-cli init' to create it first.")
+        sys.exit(1)
 
     try:
         sync = GitHubSync(config)
         projects = sync.fetch_projects(months=months)
 
-        console.print(
-            f"[green]✓[/green] Found {len(projects.get('ai_ml', [])) + len(projects.get('fullstack', []))} projects"
-        )
+        total_projects = sum(len(proj_list) for proj_list in projects.values())
+        console.print(f"[green]✓[/green] Found {total_projects} projects")
 
-        # TODO: Update resume.yaml with projects
-        console.print("[yellow]Note:[/yellow] Auto-update of resume.yaml coming soon.")
-        console.print("  Current projects fetched successfully.")
+        # If dry-run (default) or no write flag, just show preview
+        if not write or dry_run:
+            console.print("\n[bold]Fetched projects by category:[/bold]")
+            for category, proj_list in projects.items():
+                if proj_list:
+                    console.print(f"  {category}: {len(proj_list)} projects")
+                    for proj in proj_list[:3]:  # Show first 3
+                        console.print(f"    - {proj['name']} ({proj['language']})")
+                    if len(proj_list) > 3:
+                        console.print(f"    ... and {len(proj_list) - 3} more")
+            
+            if dry_run or not write:
+                console.print("\n[yellow]Note:[/yellow] This is a preview (--dry-run is default).")
+                console.print("  Use --write to update resume.yaml:")
+                console.print("    resume-cli sync-github --months 3 --write")
+            return
+
+        # Write mode: update resume.yaml
+        console.print("\n[bold blue]Updating resume.yaml...[/bold blue]")
+
+        # Create backup if requested
+        backup_path = None
+        if not no_backup:
+            backup_path = yaml_path.with_suffix(".yaml.bak")
+            import shutil
+            shutil.copy2(yaml_path, backup_path)
+            console.print(f"[dim]Created backup: {backup_path}[/dim]")
+
+        # Get existing projects to avoid duplicates
+        existing_projects = yaml_handler.get_projects()
+        
+        # Flatten existing project names for deduplication
+        existing_names = set()
+        for category_projects in existing_projects.values():
+            if isinstance(category_projects, list):
+                for proj in category_projects:
+                    if isinstance(proj, dict) and "name" in proj:
+                        existing_names.add(proj["name"])
+
+        # Filter out duplicates and prepare new projects
+        new_projects_added = 0
+        for category, proj_list in projects.items():
+            filtered_list = []
+            for proj in proj_list:
+                if proj["name"] not in existing_names:
+                    filtered_list.append(proj)
+                    existing_names.add(proj["name"])  # Add to avoid dupes within new projects
+                    new_projects_added += 1
+            
+            # Update category with filtered list (only new projects)
+            if filtered_list:
+                if category not in existing_projects:
+                    existing_projects[category] = []
+                # Extend existing category with new projects
+                if isinstance(existing_projects[category], list):
+                    existing_projects[category].extend(filtered_list)
+
+        # Save updated YAML
+        data = yaml_handler.load()
+        data["projects"] = existing_projects
+        yaml_handler.save(data)
+
+        console.print(f"[green]✓[/green] Updated resume.yaml with {new_projects_added} new projects")
+
+        if backup_path:
+            console.print(f"[dim]Backup saved to: {backup_path}[/dim]")
+        
+        console.print("\n[bold green]Done![/bold green] Run 'resume-cli variants' to see updated projects.")
 
     except Exception as e:
         console.print(f"[bold red]Error syncing GitHub:[/bold red] {e}")

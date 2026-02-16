@@ -194,3 +194,98 @@ class TrackingIntegration:
             self._write_csv(entries)
 
         return updated
+
+    def get_dashboard_data(self) -> Dict[str, Any]:
+        """
+        Get comprehensive dashboard data for analytics.
+
+        Returns:
+            Dictionary with dashboard data including:
+            - overview: total_applications, response_rate, interview_rate, offer_rate
+            - by_status: breakdown by application status
+            - by_variant: breakdown by resume variant
+            - by_source: breakdown by application source
+            - top_companies: most applied companies
+            - timeline: applications over time
+        """
+        entries = self._read_csv()
+
+        total = len(entries)
+        if total == 0:
+            return {
+                "overview": {
+                    "total_applications": 0,
+                    "response_rate": 0.0,
+                    "interview_rate": 0.0,
+                    "offer_rate": 0.0,
+                },
+                "by_status": {},
+                "by_variant": {},
+                "by_source": {},
+                "top_companies": [],
+                "timeline": [],
+            }
+
+        # Count by status
+        status_counts = {}
+        for entry in entries:
+            status = entry.get("status", "unknown")
+            status_counts[status] = status_counts.get(status, 0) + 1
+
+        # Count responses, interviews, offers
+        responses = sum(1 for e in entries if e.get("response") == "1")
+        interviews = status_counts.get("interview", 0)
+        offers = status_counts.get("offer", 0)
+
+        # Calculate rates
+        response_rate = (responses / total * 100) if total > 0 else 0
+        interview_rate = (interviews / total * 100) if total > 0 else 0
+        offer_rate = (offers / total * 100) if total > 0 else 0
+
+        # Count by variant
+        variant_counts = {}
+        for entry in entries:
+            variant = entry.get("resume_version", "unknown")
+            variant_counts[variant] = variant_counts.get(variant, 0) + 1
+
+        # Count by source
+        source_counts = {}
+        for entry in entries:
+            source = entry.get("source", "unknown")
+            source_counts[source] = source_counts.get(source, 0) + 1
+
+        # Count by company
+        company_counts = {}
+        for entry in entries:
+            company = entry.get("company", "unknown")
+            company_counts[company] = company_counts.get(company, 0) + 1
+
+        # Get top companies
+        top_companies = sorted(
+            company_counts.items(), key=lambda x: x[1], reverse=True
+        )[:10]
+
+        # Timeline data (by date)
+        timeline_data = {}
+        for entry in entries:
+            date = entry.get("date", "unknown")
+            timeline_data[date] = timeline_data.get(date, 0) + 1
+
+        timeline = sorted(timeline_data.items())
+
+        return {
+            "overview": {
+                "total_applications": total,
+                "response_rate": response_rate,
+                "interview_rate": interview_rate,
+                "offer_rate": offer_rate,
+                "responses": responses,
+                "interviews": interviews,
+                "offers": offers,
+            },
+            "by_status": status_counts,
+            "by_variant": variant_counts,
+            "by_source": source_counts,
+            "top_companies": top_companies,
+            "timeline": timeline,
+        }

@@ -744,9 +744,22 @@ def sync_github(ctx, months: int, write: bool, no_backup: bool, dry_run: bool):
 
 
 @cli.command()
+@click.option("--days", type=int, default=90, help="Number of days to show in timeline (default: 90)")
+@click.option("--top-companies", type=int, default=5, help="Number of top companies to show (default: 5)")
+@click.option("--simple", is_flag=True, help="Show simple statistics only (no charts)")
 @click.pass_context
-def analyze(ctx):
-    """Show application tracking analytics."""
+def analyze(ctx, days: int, top_companies: int, simple: bool):
+    """
+    Show application tracking analytics dashboard.
+
+    Displays a visual dashboard with charts and metrics for job application tracking.
+
+    Examples:
+        resume-cli analyze
+        resume-cli analyze --days 30
+        resume-cli analyze --top-companies 10
+        resume-cli analyze --simple
+    """
     from .integrations.tracking import TrackingIntegration
 
     config = ctx.obj["config"]
@@ -757,21 +770,34 @@ def analyze(ctx):
 
     try:
         tracker = TrackingIntegration(config)
-        stats = tracker.get_statistics()
+        dashboard_data = tracker.get_dashboard_data()
 
-        console.print("\n[bold blue]Application Statistics[/bold blue]\n")
+        # Check if there's any data
+        overview = dashboard_data.get("overview", {})
+        if overview.get("total_applications", 0) == 0:
+            console.print("\n[yellow]No tracking data found.[/yellow]")
+            console.print("  Start tracking with: [bold]resume-cli apply <company> <status>[/bold]")
+            return
 
-        table = Table()
-        table.add_column("Metric", style="cyan")
-        table.add_column("Value", style="green")
+        console.print("\n" + "=" * 80)
+        console.print("[bold blue]APPLICATION TRACKING DASHBOARD[/bold blue]")
+        console.print("=" * 80)
 
-        table.add_row("Total Applications", str(stats.get("total", 0)))
-        table.add_row("Applied", str(stats.get("applied", 0)))
-        table.add_row("Interviews", str(stats.get("interview", 0)))
-        table.add_row("Offers", str(stats.get("offer", 0)))
-        table.add_row("Response Rate", f"{stats.get('response_rate', 0):.1f}%")
+        if simple:
+            # Simple mode - just basic stats
+            _print_simple_stats(console, dashboard_data)
+        else:
+            # Full dashboard
+            _print_overview_gauges(console, dashboard_data)
+            _print_status_breakdown(console, dashboard_data)
+            _print_variant_performance(console, dashboard_data)
+            _print_source_breakdown(console, dashboard_data)
+            _print_top_companies(console, dashboard_data, limit=top_companies)
+            _print_timeline_summary(console, dashboard_data, days=days)
 
-        console.print(table)
+        console.print("\n" + "=" * 80)
+        console.print("[dim]Tip: Use --simple for basic stats, --days N for timeline range[/dim]")
+        console.print("=" * 80 + "\n")
 
     except FileNotFoundError:
         console.print("[yellow]No tracking data found.[/yellow]")
@@ -779,6 +805,237 @@ def analyze(ctx):
     except Exception as e:
         console.print(f"[bold red]Error analyzing:[/bold red] {e}")
         sys.exit(1)
+
+
+def _print_simple_stats(console, dashboard_data: dict):
+    """Print simple statistics table."""
+    overview = dashboard_data.get("overview", {})
+    by_status = dashboard_data.get("by_status", {})
+
+    console.print("\n[bold blue]Application Statistics[/bold blue]\n")
+
+    table = Table()
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="green")
+
+    table.add_row("Total Applications", str(overview.get("total_applications", 0)))
+    table.add_row("Applied", str(by_status.get("applied", 0)))
+    table.add_row("Interviews", str(by_status.get("interview", 0)))
+    table.add_row("Offers", str(by_status.get("offer", 0)))
+    table.add_row("Response Rate", f"{overview.get('response_rate', 0):.1f}%")
+
+    console.print(table)
+
+
+def _print_overview_gauges(console, dashboard_data: dict):
+    """Print overview metrics as gauge-style display."""
+    overview = dashboard_data.get("overview", {})
+
+    console.print("\n[bold]📊 Overview Metrics[/bold]\n")
+
+    # Create gauge-style display
+    total = overview.get("total_applications", 0)
+
+    # Response Rate Gauge
+    response_rate = overview.get("response_rate", 0)
+    response_bar = _create_progress_bar(response_rate, width=30)
+    console.print(f"  Response Rate:  {response_bar} {response_rate:.1f}%")
+
+    # Interview Rate Gauge
+    interview_rate = overview.get("interview_rate", 0)
+    interview_bar = _create_progress_bar(interview_rate, width=30)
+    console.print(f"  Interview Rate: {interview_bar} {interview_rate:.1f}%")
+
+    # Offer Rate Gauge
+    offer_rate = overview.get("offer_rate", 0)
+    offer_bar = _create_progress_bar(offer_rate, width=30)
+    console.print(f"  Offer Rate:     {offer_bar} {offer_rate:.1f}%")
+
+    console.print(f"\n  [dim]Total Applications: {total} | Interviews: {overview.get('interviews', 0)} | Offers: {overview.get('offers', 0)}[/dim]")
+
+
+def _create_progress_bar(percentage: float, width: int = 30) -> str:
+    """Create a text-based progress bar."""
+    filled = int(width * percentage / 100)
+    empty = width - filled
+
+    # Color based on percentage
+    if percentage >= 50:
+        color = "green"
+    elif percentage >= 25:
+        color = "yellow"
+    else:
+        color = "red"
+
+    bar = f"[{color}]{'█' * filled}[/{'green' if percentage >= 50 else 'yellow' if percentage >= 25 else 'red'}]"
+    bar += f"[dim]{'░' * empty}[/dim]"
+    return bar
+
+
+def _print_status_breakdown(console, dashboard_data: dict):
+    """Print applications by status as a visual breakdown."""
+    by_status = dashboard_data.get("by_status", {})
+
+    if not by_status:
+        return
+
+    console.print("\n[bold]📋 Applications by Status[/bold]\n")
+
+    total = sum(by_status.values())
+    if total == 0:
+        return
+
+    # Status icons and colors
+    status_config = {
+        "applied": ("⏳", "cyan"),
+        "interview": ("📞", "yellow"),
+        "offer": ("🎉", "green"),
+        "rejected": ("❌", "red"),
+        "withdrawn": ("🔙", "dim"),
+    }
+
+    table = Table(show_header=False, box=None)
+    table.add_column("Icon", style="white")
+    table.add_column("Status", style="cyan")
+    table.add_column("Count", style="green", justify="right")
+    table.add_column("Percentage", style="yellow", justify="right")
+
+    for status, count in sorted(by_status.items(), key=lambda x: x[1], reverse=True):
+        percentage = (count / total * 100) if total > 0 else 0
+        icon, color = status_config.get(status, ("❓", "white"))
+        table.add_row(icon, status.capitalize(), str(count), f"{percentage:.1f}%")
+
+    console.print(table)
+
+
+def _print_variant_performance(console, dashboard_data: dict):
+    """Print variant performance comparison."""
+    variants = dashboard_data.get("variant_performance", [])
+
+    if not variants:
+        return
+
+    console.print("\n[bold]🎯 Variant Performance[/bold]\n")
+
+    table = Table(title="Resume Variant Comparison")
+    table.add_column("Variant", style="cyan", no_wrap=True)
+    table.add_column("Applications", style="white", justify="right")
+    table.add_column("Response Rate", style="green", justify="right")
+    table.add_column("Interview Rate", style="yellow", justify="right")
+    table.add_column("Offer Rate", style="blue", justify="right")
+
+    for variant in variants:
+        table.add_row(
+            variant.get("variant", "unknown"),
+            str(variant.get("total_applications", 0)),
+            f"{variant.get('response_rate', 0):.1f}%",
+            f"{variant.get('interview_rate', 0):.1f}%",
+            f"{variant.get('offer_rate', 0):.1f}%",
+        )
+
+    console.print(table)
+
+
+def _print_source_breakdown(console, dashboard_data: dict):
+    """Print application sources breakdown."""
+    sources = dashboard_data.get("source_breakdown", [])
+
+    if not sources:
+        return
+
+    console.print("\n[bold]📮 Application Sources[/bold]\n")
+
+    total = sum(s.get("count", 0) for s in sources)
+    if total == 0:
+        return
+
+    table = Table(show_header=False, box=None)
+    table.add_column("Source", style="cyan")
+    table.add_column("Count", style="green", justify="right")
+    table.add_column("Percentage", style="yellow", justify="right")
+
+    for source in sources[:5]:  # Top 5 sources
+        count = source.get("count", 0)
+        percentage = (count / total * 100) if total > 0 else 0
+        table.add_row(source.get("source", "unknown"), str(count), f"{percentage:.1f}%")
+
+    console.print(table)
+
+
+def _print_top_companies(console, dashboard_data: dict, limit: int = 5):
+    """Print top companies by applications."""
+    companies = dashboard_data.get("company_analytics", [])
+
+    if not companies:
+        return
+
+    console.print(f"\n[bold]🏢 Top {limit} Companies[/bold]\n")
+
+    table = Table(title=f"Top {limit} Companies by Applications")
+    table.add_column("Company", style="cyan")
+    table.add_column("Applications", style="green", justify="right")
+    table.add_column("Latest Role", style="white")
+    table.add_column("Status", style="yellow")
+
+    for company in companies[:limit]:
+        # Get most common status
+        statuses = company.get("statuses", {})
+        top_status = max(statuses.items(), key=lambda x: x[1])[0] if statuses else "unknown"
+
+        # Get latest role
+        roles = company.get("roles", [])
+        latest_role = roles[0] if roles else "Unknown"
+
+        table.add_row(
+            company.get("company", "Unknown"),
+            str(company.get("total_applications", 0)),
+            latest_role[:25],
+            top_status.capitalize(),
+        )
+
+    console.print(table)
+
+
+def _print_timeline_summary(console, dashboard_data: dict, days: int = 90):
+    """Print timeline summary with weekly aggregates."""
+    timeline = dashboard_data.get("timeline", [])
+
+    if not timeline:
+        return
+
+    console.print(f"\n[bold]📈 Application Timeline (Last {days} Days)[/bold]\n")
+
+    # Aggregate by week
+    from datetime import datetime
+
+    weekly_counts = {}
+    for entry in timeline:
+        try:
+            date = datetime.strptime(entry.get("date", ""), "%Y-%m-%d")
+            # Get ISO week
+            year, week, _ = date.isocalendar()
+            week_key = f"{year}-W{week:02d}"
+            weekly_counts[week_key] = weekly_counts.get(week_key, 0) + entry.get("count", 0)
+        except (ValueError, TypeError):
+            continue
+
+    if not weekly_counts:
+        return
+
+    # Show last 8 weeks
+    weeks = list(weekly_counts.items())[-8:]
+
+    # Find max for scaling
+    max_count = max(count for _, count in weeks) if weeks else 1
+
+    for week, count in weeks:
+        bar_length = int((count / max_count) * 40) if max_count > 0 else 0
+        bar = "█" * bar_length
+        console.print(f"  {week}: [green]{bar}[/green] [dim]({count})[/dim]")
+
+    # Total for period
+    total_in_period = sum(count for _, count in weeks)
+    console.print(f"\n  [dim]Total applications in period: {total_in_period}[/dim]")
 
 
 # Add LinkedIn commands
@@ -791,6 +1048,11 @@ cli.add_command(linkedin_export)
 from .commands.tutorials import tutorial as tutorial_group
 
 cli.add_command(tutorial_group, name="tutorial")
+
+# Add template marketplace commands
+from .commands.templates import templates as templates_group
+
+cli.add_command(templates_group, name="templates")
 
 
 @cli.command("ats-check")

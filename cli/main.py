@@ -704,6 +704,113 @@ def ats_check(ctx, variant: str, job_desc: str, output: Optional[str]):
         sys.exit(1)
 
 
+@cli.command("diff")
+@click.argument("variant1", required=False, default="v1.0.0-base")
+@click.argument("variant2", required=False, default=None)
+@click.option("--all", "show_all", is_flag=True, help="Compare all variants")
+@click.option("-o", "--output", type=click.Path(), help="Save diff report to file")
+@click.pass_context
+def diff(ctx, variant1: str, variant2: Optional[str], show_all: bool, output: Optional[str]):
+    """
+    Compare resume variants and show differences.
+
+    Examples:
+        resume-cli diff v1.0.0-base v1.1.0-backend
+        resume-cli diff v1.0.0-base v1.2.0-ml_ai -o diff-report.md
+        resume-cli diff --all
+    """
+    from .generators.template import TemplateGenerator
+    from difflib import unified_diff
+    import io
+
+    yaml_path = ctx.obj["yaml_path"]
+    config = ctx.obj["config"]
+    yaml_handler = ctx.obj["yaml_handler"]
+
+    # Check if yaml exists
+    if not yaml_path.exists():
+        console.print(f"[bold red]Error:[/bold red] resume.yaml not found at {yaml_path}")
+        console.print("  Run 'resume-cli init' to create it first.")
+        sys.exit(1)
+
+    # Get available variants
+    available_variants = yaml_handler.list_variants()
+
+    if show_all:
+        # Compare all variants with base
+        variants_to_compare = [v for v in available_variants if v != "v1.0.0-base"]
+        base_variant = "v1.0.0-base"
+    elif variant2 is None:
+        # If only one variant provided, compare with base
+        variants_to_compare = [variant1]
+        base_variant = "v1.0.0-base"
+    else:
+        # Compare two specific variants
+        variants_to_compare = [variant2]
+        base_variant = variant1
+
+    # Validate variants exist
+    all_variants_to_check = list(set([base_variant] + variants_to_compare))
+    for v in all_variants_to_check:
+        if v not in available_variants:
+            console.print(f"[bold red]Error:[/bold red] Variant '{v}' not found.")
+            console.print(f"  Available variants: {', '.join(available_variants)}")
+            sys.exit(1)
+
+    console.print(f"[bold blue]Comparing Resume Variants[/bold blue]\n")
+
+    try:
+        generator = TemplateGenerator(yaml_path, config=config)
+        diff_output = []
+
+        for compare_variant in variants_to_compare:
+            console.print(f"[cyan]Comparing:[/cyan] {base_variant} → {compare_variant}")
+
+            # Generate content for both variants
+            content1 = generator.generate(variant=base_variant, output_format="md", output_path=None)
+            content2 = generator.generate(variant=compare_variant, output_format="md", output_path=None)
+
+            # Generate unified diff
+            lines1 = content1.splitlines(keepends=True)
+            lines2 = content2.splitlines(keepends=True)
+
+            diff = unified_diff(
+                lines1,
+                lines2,
+                fromfile=f"{base_variant}",
+                tofile=f"{compare_variant}",
+                lineterm=""
+            )
+
+            diff_text = "".join(diff)
+
+            if diff_text:
+                diff_output.append(f"\n## Diff: {base_variant} → {compare_variant}\n")
+                diff_output.append(diff_text)
+
+                console.print(f"[green]✓[/green] Found differences")
+            else:
+                diff_output.append(f"\n## Diff: {base_variant} → {compare_variant}\n")
+                diff_output.append("No differences found.\n")
+                console.print(f"[yellow]No differences found[/yellow]")
+
+        # Output results
+        final_output = "".join(diff_output)
+
+        if output:
+            output_path = Path(output)
+            output_path.write_text(final_output)
+            console.print(f"\n[green]✓[/green] Diff saved to: {output_path}")
+        else:
+            console.print("\n" + final_output)
+
+    except Exception as e:
+        console.print(f"[bold red]Error generating diff:[/bold red] {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
 @cli.command("keyword-analysis")
 @click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to analyze")
 @click.option(

@@ -66,6 +66,7 @@ class TemplateGenerator:
         output_path: Optional[Path] = None,
         enhanced_context: Optional[Dict[str, Any]] = None,
         template: str = "base",
+        custom_template_path: Optional[Path] = None,
         **kwargs,
     ) -> str:
         """
@@ -78,6 +79,8 @@ class TemplateGenerator:
             enhanced_context: Optional dict with AI-enhanced data to merge into context
                             (e.g., {"projects": {...}, "summary": "...", "skills": {...}})
             template: Template style (base, modern, minimalist, academic, tech)
+            custom_template_path: Optional path to custom Jinja2 template file
+                            (overrides template parameter)
             **kwargs: Additional template variables
 
         Returns:
@@ -152,16 +155,36 @@ class TemplateGenerator:
         # Select template (PDF uses TEX template, other formats use the selected style)
         template_format = "tex" if output_format == "pdf" else output_format
         
-        # For MD format, use template-specific template; otherwise use base
-        if output_format == "md" and template != "base":
-            template_name = f"resume_{template}_{template_format}.j2"
+        # Handle custom template path
+        if custom_template_path:
+            try:
+                # Load custom template from file path
+                custom_template = Path(custom_template_path)
+                if not custom_template.exists():
+                    raise ValueError(f"Custom template not found: {custom_template_path}")
+                
+                # Read custom template content
+                template_content = custom_template.read_text(encoding="utf-8")
+                
+                # Create a temporary template from string
+                from jinja2 import Template
+                template = Template(template_content)
+            except Exception as e:
+                if "Custom template not found" in str(e):
+                    raise
+                raise ValueError(f"Failed to load custom template: {e}")
         else:
-            template_name = f"resume_{template_format}.j2"
-        
-        try:
-            template = self.env.get_template(template_name)
-        except Exception:
-            raise ValueError(f"Template not found: {template_name}")
+            # Use built-in templates
+            # For MD format, use template-specific template; otherwise use base
+            if output_format == "md" and template != "base":
+                template_name = f"resume_{template}_{template_format}.j2"
+            else:
+                template_name = f"resume_{template_format}.j2"
+            
+            try:
+                template = self.env.get_template(template_name)
+            except Exception:
+                raise ValueError(f"Template not found: {template_name}")
 
         # Render
         content = template.render(**context)

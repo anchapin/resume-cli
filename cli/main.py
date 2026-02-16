@@ -127,6 +127,11 @@ def validate(ctx):
     help="Resume template style"
 )
 @click.option(
+    "--template-path",
+    type=click.Path(exists=True),
+    help="Path to custom Jinja2 template file (overrides --template)",
+)
+@click.option(
     "-o", "--output", type=click.Path(), help="Output file path (default: auto-generated)"
 )
 @click.option("--no-save", is_flag=True, help="Print to stdout without saving")
@@ -142,6 +147,7 @@ def generate(
     variant: str,
     format: str,
     template: str,
+    template_path: Optional[str],
     output: Optional[str],
     no_save: bool,
     ai: bool,
@@ -162,9 +168,11 @@ def generate(
     yaml_path = ctx.obj["yaml_path"]
     config = ctx.obj["config"]
 
+    # Determine template display name
+    template_display = template_path if template_path else template
     console.print(f"[bold blue]Generating resume: {variant}[/bold blue]")
     console.print(f"  Format: {format.upper()}")
-    console.print(f"  Template: {template}")
+    console.print(f"  Template: {template_display}")
 
     # Check if yaml exists
     if not yaml_path.exists():
@@ -183,6 +191,12 @@ def generate(
             output_path = Path(output)
         else:
             output_path = None
+
+        # Handle custom template path
+        custom_template_path = None
+        if template_path:
+            custom_template_path = Path(template_path)
+            console.print(f"  Using custom template: {custom_template_path}")
 
         # Generate
         if ai or job_description:
@@ -204,6 +218,7 @@ def generate(
                 job_description=job_description,
                 output_format=format,
                 output_path=output_path,
+                custom_template_path=custom_template_path,
             )
         else:
             generator = TemplateGenerator(yaml_path, config=config)
@@ -211,8 +226,15 @@ def generate(
             if output_path is None and not no_save:
                 output_path = generator.get_output_path(variant, format)
 
-            # Handle template selection (for non-AI generation)
-            if template != "base":
+            # Handle custom template or built-in template selection
+            if custom_template_path:
+                content = generator.generate(
+                    variant=variant,
+                    output_format=format,
+                    output_path=output_path,
+                    custom_template_path=custom_template_path,
+                )
+            elif template != "base":
                 content = generator.generate(
                     variant=variant, 
                     output_format=format, 

@@ -404,6 +404,7 @@ Return ONLY valid JSON, nothing else."""
         output_path: Optional[Path] = None,
         fallback: bool = True,
         enhanced_context: Optional[Dict[str, Any]] = None,
+        custom_template_path: Optional[Path] = None,
     ) -> str:
         """
         Generate AI-customized resume.
@@ -415,6 +416,7 @@ Return ONLY valid JSON, nothing else."""
             output_path: Optional output file path
             fallback: Whether to fallback to template on AI failure
             enhanced_context: Optional dict with AI-enhanced data (e.g., from GitHub projects)
+            custom_template_path: Optional path to custom Jinja2 template file
 
         Returns:
             Generated resume content
@@ -426,6 +428,7 @@ Return ONLY valid JSON, nothing else."""
                 output_format=output_format,
                 output_path=None,
                 enhanced_context=enhanced_context,
+                custom_template_path=custom_template_path,
             )
 
             if job_description:

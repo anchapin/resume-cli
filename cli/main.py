@@ -121,6 +121,12 @@ def validate(ctx):
     "-f", "--format", type=click.Choice(["md", "tex", "pdf", "txt", "docx"]), default="md", help="Output format"
 )
 @click.option(
+    "-t", "--template",
+    type=click.Choice(["base", "modern", "minimalist", "academic", "tech"]),
+    default="base",
+    help="Resume template style"
+)
+@click.option(
     "-o", "--output", type=click.Path(), help="Output file path (default: auto-generated)"
 )
 @click.option("--no-save", is_flag=True, help="Print to stdout without saving")
@@ -135,6 +141,7 @@ def generate(
     ctx,
     variant: str,
     format: str,
+    template: str,
     output: Optional[str],
     no_save: bool,
     ai: bool,
@@ -146,6 +153,7 @@ def generate(
     Examples:
         resume-cli generate -v v1.0.0-base -f md
         resume-cli generate -v v1.1.0-backend -f pdf -o my-resume.pdf
+        resume-cli generate -t modern -f md
         resume-cli generate --ai --job-desc job-posting.txt
     """
     # Lazy import for performance
@@ -156,6 +164,7 @@ def generate(
 
     console.print(f"[bold blue]Generating resume: {variant}[/bold blue]")
     console.print(f"  Format: {format.upper()}")
+    console.print(f"  Template: {template}")
 
     # Check if yaml exists
     if not yaml_path.exists():
@@ -175,39 +184,8 @@ def generate(
         else:
             output_path = None
 
-        # Handle new ATS formats (txt, docx)
-        if format in ("txt", "docx"):
-            # Use template generator for txt, docx generator for docx
-            if format == "txt":
-                generator = TemplateGenerator(yaml_path, config=config)
-                
-                if output_path is None and not no_save:
-                    output_path = generator.get_output_path(variant, format)
-                
-                content = generator.generate(
-                    variant=variant, output_format=format, output_path=output_path
-                )
-            else:  # docx
-                from .generators.docx_generator import DocxGenerator
-                
-                generator = DocxGenerator(yaml_path, config=config)
-                
-                if output_path is None and not no_save:
-                    # Use template generator to get the right path structure
-                    base_path = TemplateGenerator(yaml_path, config=config).get_output_path(
-                        variant, "md"
-                    )
-                    output_path = base_path.parent / f"{base_path.stem}.docx"
-                
-                generator.generate(
-                    variant=variant, 
-                    output_path=output_path,
-                    enhanced_context=None
-                )
-                content = None  # DOCX is saved directly
-
-        # Standard generation (md, tex, pdf) with optional AI enhancement
-        elif ai or job_description:
+        # Generate
+        if ai or job_description:
             from .generators.ai_generator import AIGenerator
 
             console.print("[cyan]Using AI-powered generation...[/cyan]")
@@ -233,11 +211,20 @@ def generate(
             if output_path is None and not no_save:
                 output_path = generator.get_output_path(variant, format)
 
-            content = generator.generate(
-                variant=variant, output_format=format, output_path=output_path
-            )
+            # Handle template selection (for non-AI generation)
+            if template != "base":
+                content = generator.generate(
+                    variant=variant, 
+                    output_format=format, 
+                    output_path=output_path,
+                    template=template
+                )
+            else:
+                content = generator.generate(
+                    variant=variant, output_format=format, output_path=output_path
+                )
 
-        if no_save and content:
+        if no_save:
             console.print("\n" + "-" * 80)
             console.print(content)
             console.print("-" * 80)

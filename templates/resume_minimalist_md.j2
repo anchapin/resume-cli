@@ -1,0 +1,40 @@
+{# Minimalist Resume Template #}
+{# Ultra-simple design, no borders/boxes, maximum whitespace #}
+
+{{ contact.name }}{% if contact.credentials %}, {% for cred in contact.credentials %}{{ cred }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+
+{{ contact.location.city }}, {{ contact.location.state }} · {{ contact.email }} · {{ contact.phone }}
+{% if contact.urls.github %}github.com/{{ contact.urls.github|replace('https://github.com/', '') }}{% endif %}{% if contact.urls.linkedin %} · linkedin.com/in/{{ contact.urls.linkedin|replace('https://linkedin.com/in/', '') }}{% endif %}
+
+
+{{ summary }}
+
+
+SKILLS
+
+{% for section_name, skills in skills.items() %}{{ section_name|replace('_',' ')|title }}: {% for skill in skills %}{% if skill.name %}{{ skill.name }}{% else %}{{ skill }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+
+{% endfor %}
+
+
+EXPERIENCE
+
+{% for job in experience %}{{ job.title }} · {{ job.company }}
+{{ job.start_date }}{% if job.end_date %} – {{ job.end_date }}{% else %} – Present{% endif %}{% if job.location %} · {{ job.location }}{% endif %}
+
+{% for bullet in job.bullets %}  {{ bullet.text }}
+{% endfor %}
+{% endfor %}
+
+
+PROJECTS
+
+{% if projects %}{% for category, project_list in projects.items() %}{% for project in project_list %}{{ project.name }}{% if project.enhanced_description %}: {{ project.enhanced_description }}{% elif project.description %}: {{ project.description }}{% endif %}
+{% if project.highlighted_technologies %}[{{ project.highlighted_technologies|join(', ') }}]{% endif %}
+{% endfor %}{% endfor %}{% endif %}
+
+
+EDUCATION
+
+{% for edu in education %}{{ edu.degree }}{% if edu.field %}, {{ edu.field }}{% endif %} · {{ edu.institution }} · {{ edu.graduation_date }}
+{% endfor %}

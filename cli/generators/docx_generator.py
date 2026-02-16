@@ -1,12 +1,10 @@
 """DOCX resume generator using python-docx."""
 
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 from docx import Document
-from docx.shared import Inches, Pt, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Inches, Pt
 
 from ..utils.config import Config
 from ..utils.yaml_parser import ResumeYAML
@@ -90,7 +88,9 @@ class DocxGenerator:
         # Get resume data
         contact = self.yaml_handler.get_contact()
         summary = self.yaml_handler.get_summary(summary_key)
-        skills = self.yaml_handler.get_skills(variant, prioritize_technologies=prioritize_technologies)
+        skills = self.yaml_handler.get_skills(
+            variant, prioritize_technologies=prioritize_technologies
+        )
         experience = self.yaml_handler.get_experience(variant)
         education = self.yaml_handler.get_education(variant)
         publications = self.yaml_handler.data.get("publications", [])
@@ -386,7 +386,7 @@ class DocxGenerator:
         self._add_section_heading(doc, "PUBLICATIONS")
 
         for pub in publications:
-            pub_type = pub.get("type", "")
+            pub.get("type", "")
             title = pub.get("title", "")
             authors = pub.get("authors", "")
             year = pub.get("year", "")
@@ -408,7 +408,7 @@ class DocxGenerator:
                 parts.append(f"In {conference}")
 
             if parts:
-                para = doc.add_paragraph("- " + " ".join(parts))
+                doc.add_paragraph("- " + " ".join(parts))
 
         doc.add_paragraph()
 
@@ -431,6 +431,6 @@ class DocxGenerator:
                 text += f" (License: {license_num})"
 
             if text:
-                para = doc.add_paragraph(f"- {text}")
+                doc.add_paragraph(f"- {text}")
 
         doc.add_paragraph()

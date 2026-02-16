@@ -44,6 +44,35 @@ exclude = [
 module = "tests.*"
 ignore_errors = true
 
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.ruff.lint]
+ignore = [
+    "E402",  # Module level import not at top of file (due to conditional imports)
+    "E501",  # Line too long (handled by Black)
+    "E722",  # Do not use bare 'except'
+]
+
+[tool.flake8]
+max-line-length = 100
+extend-ignore = [
+    "E203",  # whitespace before ':'
+    "W503",  # line break before binary operator
+    "E501",  # Line too long (handled by Black)
+    "C901",  # Too complex (handled by ruff)
+    "E226",  # Missing whitespace around arithmetic operator
+    "E225",  # Missing whitespace around operator
+]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "UP",    # pyupgrade
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

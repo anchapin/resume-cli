@@ -3,7 +3,7 @@
 import json
 import re
 from pathlib import Path
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Any, Dict, List, Optional
 
 from rich.console import Console
 
@@ -32,10 +32,10 @@ try:
 except ImportError:
     OPENAI_AVAILABLE = False
 
-from .template import TemplateGenerator
-from ..utils.yaml_parser import ResumeYAML
 from ..utils.config import Config
+from ..utils.yaml_parser import ResumeYAML
 from .ai_judge import create_ai_judge
+from .template import TemplateGenerator
 
 
 class InterviewQuestionsGenerator:
@@ -244,7 +244,7 @@ class InterviewQuestionsGenerator:
                 selected = self.judge.judge_interview_questions(
                     versions, job_description, resume_content
                 )
-                console.print(f"[dim]AI Judge (Interview Questions): Selected best version[/dim]")
+                console.print("[dim]AI Judge (Interview Questions): Selected best version[/dim]")
                 return selected
             except Exception as e:
                 console.print(
@@ -297,9 +297,9 @@ class InterviewQuestionsGenerator:
         )
 
         system_design_section = (
-            """
+            f"""
 **System Design Questions:**
-Generate {num_system} system design questions relevant to the role and technologies.
+Generate {3 if include_system_design else 0} system design questions relevant to the role and technologies.
 
 For each system design question:
 - question: The design question
@@ -308,9 +308,7 @@ For each system design question:
 - reference: Specific resume experience relevant to this design challenge
 - talking_points: 4-6 key points to cover in the answer
 - complexity: Difficulty level (easy, medium, hard)
-""".format(
-                num_system=3 if include_system_design else 0
-            )
+"""
             if include_system_design
             else ""
         )

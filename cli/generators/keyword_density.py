@@ -2,7 +2,7 @@
 
 import json
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -190,9 +190,7 @@ class KeywordDensityGenerator:
             density_score = 0
 
         # Generate suggestions for missing keywords
-        suggestions = self._generate_suggestions(
-            [kw for kw in top_keywords if not kw.is_present]
-        )
+        suggestions = self._generate_suggestions([kw for kw in top_keywords if not kw.is_present])
 
         return KeywordDensityReport(
             job_title=job_title or "Unknown Position",
@@ -236,9 +234,7 @@ class KeywordDensityGenerator:
 
         return job_title, company
 
-    def _extract_job_keywords(
-        self, job_description: str
-    ) -> List[Tuple[str, str]]:
+    def _extract_job_keywords(self, job_description: str) -> List[Tuple[str, str]]:
         """
         Extract keywords from job description with importance levels.
 
@@ -277,7 +273,10 @@ Please extract the keywords:"""
                     keywords_data = json.loads(json_match.group(0))
                     if isinstance(keywords_data, list):
                         return [
-                            (str(kw.get("keyword", "")).lower().strip(), kw.get("importance", "medium"))
+                            (
+                                str(kw.get("keyword", "")).lower().strip(),
+                                kw.get("importance", "medium"),
+                            )
                             for kw in keywords_data
                             if kw.get("keyword")
                         ][:20]
@@ -400,11 +399,42 @@ Please extract the keywords:"""
 
         # Check if keyword is tech-related
         tech_keywords = [
-            "python", "javascript", "typescript", "react", "vue", "angular", "node.js",
-            "django", "flask", "fastapi", "kubernetes", "docker", "aws", "gcp", "azure",
-            "sql", "mongodb", "postgresql", "redis", "ci/cd", "devops", "machine learning",
-            "ai", "llm", "pytorch", "tensorflow", "graphql", "rest api", "microservices",
-            "java", "go", "rust", "c++", "c#", ".net", "spring",
+            "python",
+            "javascript",
+            "typescript",
+            "react",
+            "vue",
+            "angular",
+            "node.js",
+            "django",
+            "flask",
+            "fastapi",
+            "kubernetes",
+            "docker",
+            "aws",
+            "gcp",
+            "azure",
+            "sql",
+            "mongodb",
+            "postgresql",
+            "redis",
+            "ci/cd",
+            "devops",
+            "machine learning",
+            "ai",
+            "llm",
+            "pytorch",
+            "tensorflow",
+            "graphql",
+            "rest api",
+            "microservices",
+            "java",
+            "go",
+            "rust",
+            "c++",
+            "c#",
+            ".net",
+            "spring",
         ]
 
         if keyword.lower() in tech_keywords:
@@ -438,9 +468,7 @@ Please extract the keywords:"""
 
         if medium_importance:
             medium_names = ", ".join(kw.keyword for kw in medium_importance[:3])
-            suggestions.append(
-                f"Consider adding these keywords: {medium_names}"
-            )
+            suggestions.append(f"Consider adding these keywords: {medium_names}")
 
         return suggestions
 
@@ -479,7 +507,6 @@ Please extract the keywords:"""
     def print_report(self, report: KeywordDensityReport) -> None:
         """Print formatted keyword density report to console."""
         # Header
-        title = f"Keyword Analysis for: {report.job_title} at {report.company}"
         score_color = (
             "green"
             if report.density_score >= 70
@@ -510,7 +537,11 @@ Please extract the keywords:"""
         table.add_column("Status", style="white")
 
         for i, kw in enumerate(report.top_keywords, 1):
-            status = f"[green]✓ Present ({kw.count}x)[/green]" if kw.is_present else "[red]✗ Missing[/red]"
+            status = (
+                f"[green]✓ Present ({kw.count}x)[/green]"
+                if kw.is_present
+                else "[red]✗ Missing[/red]"
+            )
             table.add_row(
                 str(i),
                 kw.keyword,

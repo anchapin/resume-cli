@@ -1,11 +1,7 @@
 """Unit tests for TrackingIntegration class."""
 
 import csv
-import os
-from datetime import datetime
 from pathlib import Path
-
-import pytest
 
 from cli.integrations.tracking import TrackingIntegration
 from cli.utils.config import Config
@@ -37,7 +33,7 @@ class TestEnsureCSVExists:
         assert csv_path.exists()
 
         # Check headers
-        with open(csv_path, "r", newline="") as f:
+        with open(csv_path, newline="") as f:
             reader = csv.DictReader(f)
             headers = reader.fieldnames
 
@@ -96,7 +92,7 @@ class TestLogApplication:
         )
 
         # Read CSV
-        with open(csv_path, "r", newline="") as f:
+        with open(csv_path, newline="") as f:
             reader = csv.DictReader(f)
             entries = list(reader)
 
@@ -126,7 +122,7 @@ class TestLogApplication:
         )
 
         # Read CSV
-        with open(csv_path, "r", newline="") as f:
+        with open(csv_path, newline="") as f:
             reader = csv.DictReader(f)
             entry = list(reader)[0]
 
@@ -151,7 +147,7 @@ class TestLogApplication:
         tracking.log_application(company="Company B", role="Role B", status="applied")
 
         # Read CSV
-        with open(csv_path, "r", newline="") as f:
+        with open(csv_path, newline="") as f:
             reader = csv.DictReader(f)
             entries = list(reader)
 
@@ -390,7 +386,7 @@ class TestReadWriteCSV:
         tracking = TrackingIntegration(config)
         tracking._write_csv([{"company": "Test"}])
 
-        with open(csv_path, "r", newline="") as f:
+        with open(csv_path, newline="") as f:
             reader = csv.DictReader(f)
             headers = reader.fieldnames
 
@@ -411,7 +407,7 @@ class TestReadWriteCSV:
         # Write second version (overwrites)
         tracking._write_csv([{"company": "B", "role": "R2"}])
 
-        with open(csv_path, "r", newline="") as f:
+        with open(csv_path, newline="") as f:
             reader = csv.DictReader(f)
             entries = list(reader)
 

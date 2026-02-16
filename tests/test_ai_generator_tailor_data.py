@@ -1,7 +1,6 @@
 """Unit tests for AIGenerator.tailor_data method."""
 
 import json
-import os
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 

@@ -1,8 +1,5 @@
 """Shared fixtures and test configuration for pytest."""
 
-import os
-import shutil
-import tempfile
 from pathlib import Path
 from typing import Any, Dict
 

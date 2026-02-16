@@ -65,7 +65,7 @@ class GitHubSync:
         """Fetch repositories from GitHub using gh CLI."""
         # Use secure temp file instead of hardcoded /tmp path
         temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
-        temp_path = Path(temp_file.name)
+        Path(temp_file.name)
 
         try:
             # Run gh repo list

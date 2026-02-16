@@ -1,16 +1,12 @@
 """Unit tests for TemplateGenerator class."""
 
-import os
-import tempfile
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from cli.generators.template import TemplateGenerator
 from cli.utils.config import Config
-from cli.utils.yaml_parser import ResumeYAML
 
 
 class TestTemplateGeneratorInitialization:
@@ -206,8 +202,6 @@ class TestGenerateMethod:
 
         # Suppress the RuntimeError that would normally be raised
         import cli.generators.template as template_module
-
-        original_compile_pdf = template_module.TemplateGenerator._compile_pdf
 
         def mock_compile_pdf(self, output_path, tex_content):
             # Create the .tex file

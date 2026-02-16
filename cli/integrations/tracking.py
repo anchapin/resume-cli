@@ -2,7 +2,6 @@
 
 import csv
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 
@@ -103,7 +102,7 @@ class TrackingIntegration:
         if not self.csv_path.exists():
             return entries
 
-        with open(self.csv_path, "r", newline="") as f:
+        with open(self.csv_path, newline="") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 entries.append(row)

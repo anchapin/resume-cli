@@ -4,8 +4,7 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-import yaml
+from typing import Any, Dict, List, Optional
 
 
 class LinkedInSync:
@@ -58,7 +57,7 @@ class LinkedInSync:
         if not json_path.exists():
             raise FileNotFoundError(f"LinkedIn data file not found: {json_path}")
 
-        with open(json_path, "r", encoding="utf-8") as f:
+        with open(json_path, encoding="utf-8") as f:
             linkedin_data = json.load(f)
 
         # Map LinkedIn data to resume.yaml structure

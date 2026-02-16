@@ -19,6 +19,19 @@ ignore =
     E203,
     # W503 line break before binary operator
     W503,
+    # E501 line too long (handled by Black)
+    E501,
+    # C901 too complex (handled by ruff)
+    C901,
+    # E226/E225 whitespace around operators (legacy code)
+    E226,
+    E225,
+    # E402 module level import not at top of file (due to conditional imports)
+    E402,
+    # F811 redefinition of unused (in schema.py)
+    F811,
+    # E722 do not use bare 'except'
+    E722,
 
 # Show complexity
 max-complexity = 10

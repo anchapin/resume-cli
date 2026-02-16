@@ -199,7 +199,7 @@ class ResumeValidator:
             if spec.get("required", False) and key not in data:
                 guidance = self._get_guidance(key, "missing")
                 self.errors.append(
-                    ValidationError(key, f"Missing required section", "error", guidance)
+                    ValidationError(key, "Missing required section", "error", guidance)
                 )
 
             # Check type

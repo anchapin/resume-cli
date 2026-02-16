@@ -1,7 +1,6 @@
 """Template-based resume generator."""
 
 import subprocess
-import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -154,7 +153,7 @@ class TemplateGenerator:
 
         # Select template (PDF uses TEX template, other formats use the selected style)
         template_format = "tex" if output_format == "pdf" else output_format
-        
+
         # Handle custom template path
         if custom_template_path:
             try:
@@ -162,12 +161,13 @@ class TemplateGenerator:
                 custom_template = Path(custom_template_path)
                 if not custom_template.exists():
                     raise ValueError(f"Custom template not found: {custom_template_path}")
-                
+
                 # Read custom template content
                 template_content = custom_template.read_text(encoding="utf-8")
-                
+
                 # Create a temporary template from string
                 from jinja2 import Template
+
                 template = Template(template_content)
             except Exception as e:
                 if "Custom template not found" in str(e):
@@ -180,7 +180,7 @@ class TemplateGenerator:
                 template_name = f"resume_{template}_{template_format}.j2"
             else:
                 template_name = f"resume_{template_format}.j2"
-            
+
             try:
                 template = self.env.get_template(template_name)
             except Exception:

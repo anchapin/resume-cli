@@ -50,9 +50,10 @@ def linkedin_import(
         # Import to custom path
         resume-cli linkedin-import --data-file linkedin_data.json --output my-resume.yaml
     """
+    import yaml
+
     from ..integrations.linkedin_sync import LinkedInSync
     from ..utils.yaml_parser import ResumeYAML
-    import yaml
 
     config = ctx.obj["config"]
     yaml_path = ctx.obj["yaml_path"]
@@ -79,7 +80,7 @@ def linkedin_import(
     else:
         output_path = yaml_path
 
-    console.print(f"[bold blue]Importing LinkedIn profile data...[/bold blue]")
+    console.print("[bold blue]Importing LinkedIn profile data...[/bold blue]")
     console.print(f"  Source: {data_file_path}")
     console.print(f"  Target: {output_path}")
     console.print(f"  Mode: {'Merge' if merge else 'Overwrite'}")
@@ -195,7 +196,7 @@ def linkedin_export(ctx, variant: str, output: Optional[str], format: str):
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / "linkedin-update.txt"
 
-    console.print(f"[bold blue]Exporting resume for LinkedIn...[/bold blue]")
+    console.print("[bold blue]Exporting resume for LinkedIn...[/bold blue]")
     console.print(f"  Variant: {variant}")
     console.print(f"  Output: {output_path}")
 
@@ -205,9 +206,11 @@ def linkedin_export(ctx, variant: str, output: Optional[str], format: str):
         sync = LinkedInSync(config)
 
         if format == "linkedin":
-            content = sync.export_to_linkedin_format(yaml_path, output_path)
+            sync.export_to_linkedin_format(yaml_path, output_path)
         else:
             # Plain text export - just dump YAML
+            import yaml
+
             from ..utils.yaml_parser import ResumeYAML
 
             yaml_handler = ResumeYAML(yaml_path)
@@ -216,9 +219,7 @@ def linkedin_export(ctx, variant: str, output: Optional[str], format: str):
             with open(output_path, "w", encoding="utf-8") as f:
                 yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
 
-            content = f"Plain YAML export saved to {output_path}"
-
-        console.print(f"\n[green]✓[/green] Export complete!")
+        console.print("\n[green]✓[/green] Export complete!")
         console.print(f"  File: {output_path}")
 
         # Show file size

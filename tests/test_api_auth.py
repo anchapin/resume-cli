@@ -1,7 +1,7 @@
 """Unit tests for API authentication."""
 
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from fastapi import HTTPException

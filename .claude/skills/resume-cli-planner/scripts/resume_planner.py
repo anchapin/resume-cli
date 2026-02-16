@@ -5,15 +5,15 @@ import json
 import re
 import subprocess
 import sys
-from pathlib import Path
 from collections import defaultdict
-from dataclasses import dataclass, field
-from typing import List, Dict, Set, Optional
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 
 @dataclass
 class Issue:
     """Represents a GitHub issue."""
+
     number: int
     title: str
     body: str
@@ -48,16 +48,74 @@ class Issue:
 
         # Area keywords mapping to Resume CLI codebase
         area_keywords = {
-            "ai": ["ai", "interview", "claude", "openai", "gpt", "gemini", "multi-language", "video resume"],
-            "ats": ["ats", "applicant tracking", "keyword", "density", "score", "parse", "docx", "plain text"],
-            "integration": ["integration", "linkedin", "import", "export", "sync", "parser", "job posting", "salary"],
-            "testing": ["test", "pytest", "coverage", "unit", "integration", "e2e", "ci/cd", "github actions"],
-            "ux": ["ux", "user experience", "error message", "progress", "diff", "comparison", "actionable guidance"],
+            "ai": [
+                "ai",
+                "interview",
+                "claude",
+                "openai",
+                "gpt",
+                "gemini",
+                "multi-language",
+                "video resume",
+            ],
+            "ats": [
+                "ats",
+                "applicant tracking",
+                "keyword",
+                "density",
+                "score",
+                "parse",
+                "docx",
+                "plain text",
+            ],
+            "integration": [
+                "integration",
+                "linkedin",
+                "import",
+                "export",
+                "sync",
+                "parser",
+                "job posting",
+                "salary",
+            ],
+            "testing": [
+                "test",
+                "pytest",
+                "coverage",
+                "unit",
+                "integration",
+                "e2e",
+                "ci/cd",
+                "github actions",
+            ],
+            "ux": [
+                "ux",
+                "user experience",
+                "error message",
+                "progress",
+                "diff",
+                "comparison",
+                "actionable guidance",
+            ],
             "ui": ["ui", "web", "dashboard", "interface", "visual", "desktop", "electron", "tauri"],
-            "enterprise": ["enterprise", "white-label", "recruiter", "team", "collaboration", "career coach"],
+            "enterprise": [
+                "enterprise",
+                "white-label",
+                "recruiter",
+                "team",
+                "collaboration",
+                "career coach",
+            ],
             "mobile": ["mobile", "ios", "android", "responsive", "touch", "app"],
             "templates": ["template", "custom", "marketplace", "design"],
-            "analytics": ["analytics", "metrics", "dashboard", "tracking", "offer comparison", "statistics"],
+            "analytics": [
+                "analytics",
+                "metrics",
+                "dashboard",
+                "tracking",
+                "offer comparison",
+                "statistics",
+            ],
             "api": ["api", "fastapi", "rest", "swagger", "openapi", "endpoint"],
         }
 
@@ -97,11 +155,20 @@ def fetch_issues(limit: int = 100) -> List[Issue]:
     """Fetch open issues from GitHub."""
     print("Fetching open issues from GitHub...")
     result = subprocess.run(
-        ["gh", "issue", "list", "--limit", str(limit), "--state", "open",
-         "--json", "number,title,body,labels"],
+        [
+            "gh",
+            "issue",
+            "list",
+            "--limit",
+            str(limit),
+            "--state",
+            "open",
+            "--json",
+            "number,title,body,labels",
+        ],
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
 
     issues = []
@@ -109,22 +176,26 @@ def fetch_issues(limit: int = 100) -> List[Issue]:
         labels = [label["name"] for label in item.get("labels", [])]
         priority, category, size, issue_type = parse_issue_labels(labels)
 
-        issues.append(Issue(
-            number=item["number"],
-            title=item["title"],
-            body=item.get("body", ""),
-            labels=labels,
-            priority=priority,
-            category=category,
-            size=size,
-            issue_type=issue_type
-        ))
+        issues.append(
+            Issue(
+                number=item["number"],
+                title=item["title"],
+                body=item.get("body", ""),
+                labels=labels,
+                priority=priority,
+                category=category,
+                size=size,
+                issue_type=issue_type,
+            )
+        )
 
     print(f"Fetched {len(issues)} issues")
     return issues
 
 
-def group_by_parallel_workability(issues: List[Issue], max_tracks: int = 4) -> Dict[str, List[Issue]]:
+def group_by_parallel_workability(
+    issues: List[Issue], max_tracks: int = 4
+) -> Dict[str, List[Issue]]:
     """Group issues that can be worked on in parallel."""
 
     # Group by key area
@@ -139,9 +210,7 @@ def group_by_parallel_workability(issues: List[Issue], max_tracks: int = 4) -> D
 
     # Select top tracks based on total priority score
     sorted_areas = sorted(
-        area_groups.items(),
-        key=lambda x: sum(i.priority_score for i in x[1]),
-        reverse=True
+        area_groups.items(), key=lambda x: sum(i.priority_score for i in x[1]), reverse=True
     )
 
     tracks = {}
@@ -154,9 +223,9 @@ def group_by_parallel_workability(issues: List[Issue], max_tracks: int = 4) -> D
 def generate_worktree_name(issue: Issue) -> str:
     """Generate a worktree directory name for an issue."""
     # Clean the title for use as directory name
-    clean_title = re.sub(r'[^\w\s-]', '', issue.title)
-    clean_title = re.sub(r'[-\s]+', '-', clean_title)
-    clean_title = clean_title.strip('-').lower()[:50]
+    clean_title = re.sub(r"[^\w\s-]", "", issue.title)
+    clean_title = re.sub(r"[-\s]+", "-", clean_title)
+    clean_title = clean_title.strip("-").lower()[:50]
     return f"../feature-issue-{issue.number}-{clean_title}"
 
 
@@ -188,7 +257,9 @@ def print_plan(tracks: Dict[str, List[Issue]], max_issues_per_track: int = 3):
             branch = generate_branch_name(issue)
 
             print(f"\n  Issue #{issue.number}: {issue.title}")
-            print(f"  └─ Priority: {prio_str} | Category: {issue.category or area}{size_str} | Score: {issue.priority_score}")
+            print(
+                f"  └─ Priority: {prio_str} | Category: {issue.category or area}{size_str} | Score: {issue.priority_score}"
+            )
             print(f"  └─ Worktree: {worktree}")
             print(f"  └─ Branch: {branch}")
 
@@ -229,11 +300,11 @@ def print_agent_commands(tracks: Dict[str, List[Issue]], max_issues_per_track: i
     for area, issues in tracks.items():
         for issue in issues[:max_issues_per_track]:
             worktree = generate_worktree_name(issue)
-            branch = generate_branch_name(issue)
+            generate_branch_name(issue)
 
             print(f"# Track: {area} | Issue #{issue.number}: {issue.title[:50]}")
             print(f"# cd {worktree} && # Work in this directory")
-            print(f"# Read the issue and implement the feature")
+            print("# Read the issue and implement the feature")
 
 
 def print_summary(tracks: Dict[str, List[Issue]], issues: List[Issue]):
@@ -249,7 +320,7 @@ def print_summary(tracks: Dict[str, List[Issue]], issues: List[Issue]):
         if issue.priority:
             priority_counts[issue.priority] += 1
 
-    print(f"\nAll open issues by priority:")
+    print("\nAll open issues by priority:")
     for priority in sorted(priority_counts.keys()):
         print(f"  {priority.upper()}: {priority_counts[priority]} issues")
 
@@ -259,7 +330,7 @@ def print_summary(tracks: Dict[str, List[Issue]], issues: List[Issue]):
         if issue.category:
             category_counts[issue.category] += 1
 
-    print(f"\nAll open issues by category:")
+    print("\nAll open issues by category:")
     for category in sorted(category_counts.keys()):
         print(f"  {category}: {category_counts[category]} issues")
 

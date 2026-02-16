@@ -5,12 +5,11 @@ from typing import Optional
 from rich.console import Console
 from rich.progress import (
     BarColumn,
-    DownloadColumn,
     Progress,
     SpinnerColumn,
     TextColumn,
-    TimeRemainingColumn,
     TimeElapsedColumn,
+    TimeRemainingColumn,
 )
 
 # Initialize console for output

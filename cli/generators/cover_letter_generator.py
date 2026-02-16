@@ -318,7 +318,7 @@ Return ONLY valid JSON, nothing else."""
                 "company_mission": details.get("company_mission"),
             }
 
-        except Exception as e:
+        except Exception:
             # Fallback to basic extraction
             return {
                 "company": company or "the company",
@@ -479,7 +479,7 @@ Return ONLY valid JSON, nothing else."""
                 guesses = json.loads(json_match.group(0))
                 return guesses
 
-        except Exception as e:
+        except Exception:
             pass
 
         # Fallback to generic responses
@@ -520,7 +520,7 @@ Return ONLY valid JSON, nothing else."""
             return self._content_cache[cache_key]
 
         # Get resume context
-        contact = self.yaml_handler.get_contact()
+        self.yaml_handler.get_contact()
         summary = self.yaml_handler.get_summary(variant)
         skills = self.yaml_handler.get_skills(variant)
         experience = self.yaml_handler.get_experience(variant)

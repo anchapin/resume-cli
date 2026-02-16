@@ -118,13 +118,18 @@ def validate(ctx):
 @cli.command()
 @click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to generate")
 @click.option(
-    "-f", "--format", type=click.Choice(["md", "tex", "pdf", "txt", "docx"]), default="md", help="Output format"
+    "-f",
+    "--format",
+    type=click.Choice(["md", "tex", "pdf", "txt", "docx"]),
+    default="md",
+    help="Output format",
 )
 @click.option(
-    "-t", "--template",
+    "-t",
+    "--template",
     type=click.Choice(["base", "modern", "minimalist", "academic", "tech"]),
     default="base",
-    help="Resume template style"
+    help="Resume template style",
 )
 @click.option(
     "--template-path",
@@ -236,10 +241,10 @@ def generate(
                 )
             elif template != "base":
                 content = generator.generate(
-                    variant=variant, 
-                    output_format=format, 
+                    variant=variant,
+                    output_format=format,
                     output_path=output_path,
-                    template=template
+                    template=template,
                 )
             else:
                 content = generator.generate(
@@ -321,7 +326,7 @@ def generate_package(
     yaml_path = ctx.obj["yaml_path"]
     config = ctx.obj["config"]
 
-    console.print(f"[bold blue]Generating Application Package[/bold blue]")
+    console.print("[bold blue]Generating Application Package[/bold blue]")
 
     # Check if yaml exists
     if not yaml_path.exists():
@@ -492,7 +497,7 @@ def generate_package(
                 console.print(f"[green]✓[/green] Cover letter ({fmt.upper()}): {path}")
 
         # Summary
-        console.print(f"\n[bold green]Application package complete![/bold green]")
+        console.print("\n[bold green]Application package complete![/bold green]")
         console.print(f"[cyan]Package directory:[/cyan] {package_dir}")
         console.print("\n[cyan]Generated files:[/cyan]")
         for name, path in all_saved_paths.items():
@@ -601,7 +606,7 @@ def apply(
 @click.pass_context
 def sync_github(ctx, months: int, write: bool, no_backup: bool, dry_run: bool):
     """Sync GitHub projects to resume.yaml.
-    
+
     Examples:
         resume-cli sync-github --months 3           # Preview projects (default)
         resume-cli sync-github --months 3 --write   # Auto-update resume.yaml
@@ -638,7 +643,7 @@ def sync_github(ctx, months: int, write: bool, no_backup: bool, dry_run: bool):
                         console.print(f"    - {proj['name']} ({proj['language']})")
                     if len(proj_list) > 3:
                         console.print(f"    ... and {len(proj_list) - 3} more")
-            
+
             if dry_run or not write:
                 console.print("\n[yellow]Note:[/yellow] This is a preview (--dry-run is default).")
                 console.print("  Use --write to update resume.yaml:")
@@ -653,12 +658,13 @@ def sync_github(ctx, months: int, write: bool, no_backup: bool, dry_run: bool):
         if not no_backup:
             backup_path = yaml_path.with_suffix(".yaml.bak")
             import shutil
+
             shutil.copy2(yaml_path, backup_path)
             console.print(f"[dim]Created backup: {backup_path}[/dim]")
 
         # Get existing projects to avoid duplicates
         existing_projects = yaml_handler.get_projects()
-        
+
         # Flatten existing project names for deduplication
         existing_names = set()
         for category_projects in existing_projects.values():
@@ -676,7 +682,7 @@ def sync_github(ctx, months: int, write: bool, no_backup: bool, dry_run: bool):
                     filtered_list.append(proj)
                     existing_names.add(proj["name"])  # Add to avoid dupes within new projects
                     new_projects_added += 1
-            
+
             # Update category with filtered list (only new projects)
             if filtered_list:
                 if category not in existing_projects:
@@ -690,12 +696,16 @@ def sync_github(ctx, months: int, write: bool, no_backup: bool, dry_run: bool):
         data["projects"] = existing_projects
         yaml_handler.save(data)
 
-        console.print(f"[green]✓[/green] Updated resume.yaml with {new_projects_added} new projects")
+        console.print(
+            f"[green]✓[/green] Updated resume.yaml with {new_projects_added} new projects"
+        )
 
         if backup_path:
             console.print(f"[dim]Backup saved to: {backup_path}[/dim]")
-        
-        console.print("\n[bold green]Done![/bold green] Run 'resume-cli variants' to see updated projects.")
+
+        console.print(
+            "\n[bold green]Done![/bold green] Run 'resume-cli variants' to see updated projects."
+        )
 
     except Exception as e:
         console.print(f"[bold red]Error syncing GitHub:[/bold red] {e}")
@@ -742,7 +752,7 @@ def analyze(ctx):
 
 
 # Add LinkedIn commands
-from .commands.linkedin import linkedin_import, linkedin_export
+from .commands.linkedin import linkedin_export, linkedin_import
 
 cli.add_command(linkedin_import)
 cli.add_command(linkedin_export)
@@ -774,7 +784,7 @@ def ats_check(ctx, variant: str, job_desc: str, output: Optional[str]):
     yaml_path = ctx.obj["yaml_path"]
     config = ctx.obj["config"]
 
-    console.print(f"[bold blue]Checking ATS Compatibility[/bold blue]")
+    console.print("[bold blue]Checking ATS Compatibility[/bold blue]")
     console.print(f"  Variant: {variant}")
 
     # Check if yaml exists
@@ -826,9 +836,9 @@ def diff(ctx, variant1: str, variant2: Optional[str], show_all: bool, output: Op
         resume-cli diff v1.0.0-base v1.2.0-ml_ai -o diff-report.md
         resume-cli diff --all
     """
-    from .generators.template import TemplateGenerator
     from difflib import unified_diff
-    import io
+
+    from .generators.template import TemplateGenerator
 
     yaml_path = ctx.obj["yaml_path"]
     config = ctx.obj["config"]
@@ -864,7 +874,7 @@ def diff(ctx, variant1: str, variant2: Optional[str], show_all: bool, output: Op
             console.print(f"  Available variants: {', '.join(available_variants)}")
             sys.exit(1)
 
-    console.print(f"[bold blue]Comparing Resume Variants[/bold blue]\n")
+    console.print("[bold blue]Comparing Resume Variants[/bold blue]\n")
 
     try:
         generator = TemplateGenerator(yaml_path, config=config)
@@ -874,19 +884,19 @@ def diff(ctx, variant1: str, variant2: Optional[str], show_all: bool, output: Op
             console.print(f"[cyan]Comparing:[/cyan] {base_variant} → {compare_variant}")
 
             # Generate content for both variants
-            content1 = generator.generate(variant=base_variant, output_format="md", output_path=None)
-            content2 = generator.generate(variant=compare_variant, output_format="md", output_path=None)
+            content1 = generator.generate(
+                variant=base_variant, output_format="md", output_path=None
+            )
+            content2 = generator.generate(
+                variant=compare_variant, output_format="md", output_path=None
+            )
 
             # Generate unified diff
             lines1 = content1.splitlines(keepends=True)
             lines2 = content2.splitlines(keepends=True)
 
             diff = unified_diff(
-                lines1,
-                lines2,
-                fromfile=f"{base_variant}",
-                tofile=f"{compare_variant}",
-                lineterm=""
+                lines1, lines2, fromfile=f"{base_variant}", tofile=f"{compare_variant}", lineterm=""
             )
 
             diff_text = "".join(diff)
@@ -895,11 +905,11 @@ def diff(ctx, variant1: str, variant2: Optional[str], show_all: bool, output: Op
                 diff_output.append(f"\n## Diff: {base_variant} → {compare_variant}\n")
                 diff_output.append(diff_text)
 
-                console.print(f"[green]✓[/green] Found differences")
+                console.print("[green]✓[/green] Found differences")
             else:
                 diff_output.append(f"\n## Diff: {base_variant} → {compare_variant}\n")
                 diff_output.append("No differences found.\n")
-                console.print(f"[yellow]No differences found[/yellow]")
+                console.print("[yellow]No differences found[/yellow]")
 
         # Output results
         final_output = "".join(diff_output)
@@ -914,6 +924,7 @@ def diff(ctx, variant1: str, variant2: Optional[str], show_all: bool, output: Op
     except Exception as e:
         console.print(f"[bold red]Error generating diff:[/bold red] {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -939,7 +950,7 @@ def keyword_analysis(ctx, variant: str, job_desc: str, output: Optional[str]):
     yaml_path = ctx.obj["yaml_path"]
     config = ctx.obj["config"]
 
-    console.print(f"[bold blue]Keyword Density Analysis[/bold blue]")
+    console.print("[bold blue]Keyword Density Analysis[/bold blue]")
     console.print(f"  Variant: {variant}")
 
     # Check if yaml exists
@@ -977,7 +988,9 @@ def keyword_analysis(ctx, variant: str, job_desc: str, output: Optional[str]):
 
 
 @cli.command("job-parse")
-@click.option("--file", "file_input", type=click.Path(exists=True), help="Path to job posting HTML file")
+@click.option(
+    "--file", "file_input", type=click.Path(exists=True), help="Path to job posting HTML file"
+)
 @click.option("--url", type=str, help="URL to job posting (requires HTTP client)")
 @click.option("-o", "--output", type=click.Path(), help="Save parsed data as JSON")
 @click.option("--no-cache", is_flag=True, help="Disable caching of parsed job postings")
@@ -1004,7 +1017,7 @@ def job_parse(file_input: Optional[str], url: Optional[str], output: Optional[st
         from .generators.job_parser import JobParser
 
         parser = JobParser()
-        
+
         if file_input:
             console.print(f"  File: {file_input}")
             job_details = parser.parse_from_file(Path(file_input))
@@ -1016,24 +1029,24 @@ def job_parse(file_input: Optional[str], url: Optional[str], output: Optional[st
         console.print("\n[bold green]Parsed Job Details:[/bold green]\n")
         console.print(f"  [cyan]Company:[/cyan] {job_details.company}")
         console.print(f"  [cyan]Position:[/cyan] {job_details.position}")
-        
+
         if job_details.location:
             console.print(f"  [cyan]Location:[/cyan] {job_details.location}")
-        
+
         if job_details.remote is not None:
             remote_text = "Yes" if job_details.remote else "No"
             console.print(f"  [cyan]Remote:[/cyan] {remote_text}")
-        
+
         if job_details.salary:
             console.print(f"  [cyan]Salary:[/cyan] {job_details.salary}")
 
         if job_details.requirements:
-            console.print(f"\n  [cyan]Requirements:[/cyan]")
+            console.print("\n  [cyan]Requirements:[/cyan]")
             for req in job_details.requirements[:5]:
                 console.print(f"    - {req}")
 
         if job_details.responsibilities:
-            console.print(f"\n  [cyan]Responsibilities:[/cyan]")
+            console.print("\n  [cyan]Responsibilities:[/cyan]")
             for resp in job_details.responsibilities[:5]:
                 console.print(f"    - {resp}")
 
@@ -1048,6 +1061,7 @@ def job_parse(file_input: Optional[str], url: Optional[str], output: Optional[st
     except Exception as e:
         console.print(f"[bold red]Error parsing job posting:[/bold red] {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

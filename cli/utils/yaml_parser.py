@@ -40,7 +40,7 @@ class ResumeYAML:
                 f"Resume file not found: {self.yaml_path}\n" f"Run 'resume-cli init' to create it."
             )
 
-        with open(self.yaml_path, "r", encoding="utf-8") as f:
+        with open(self.yaml_path, encoding="utf-8") as f:
             self._data = yaml.safe_load(f)
 
         return self._data
@@ -241,7 +241,7 @@ class ResumeYAML:
             return education
 
         # Future: could filter/reorder education by variant
-        variant_config = self.data.get("variants", {}).get(variant, {})
+        self.data.get("variants", {}).get(variant, {})
         return education
 
     def get_projects(self, variant: Optional[str] = None) -> Dict[str, list]:

@@ -1281,6 +1281,96 @@ def job_parse(file_input: Optional[str], url: Optional[str], output: Optional[st
         sys.exit(1)
 
 
+@cli.command("find-connections")
+@click.option("--company", required=True, help="Target company name")
+@click.option("--role", default="", help="Role/department to filter by")
+@click.option("--no-linkedin", is_flag=True, help="Disable LinkedIn search")
+@click.option("--no-github", is_flag=True, help="Disable GitHub search")
+@click.option("--include-alumni", is_flag=True, help="Include alumni search")
+@click.option("--include-previous", is_flag=True, help="Include previous company connections")
+@click.option("--draft-message", is_flag=True, help="Generate outreach message suggestions")
+@click.option("-o", "--output", type=click.Path(), help="Export connections to CSV file")
+def find_connections(
+    company: str,
+    role: str,
+    no_linkedin: bool,
+    no_github: bool,
+    include_alumni: bool,
+    include_previous: bool,
+    draft_message: bool,
+    output: Optional[str],
+):
+    """
+    Find professional connections at target companies.
+
+    Helps users find alumni, former colleagues, and other connections
+    at companies they're interested in for networking.
+
+    Examples:
+        resume-cli find-connections --company "Stripe"
+        resume-cli find-connections --company "Google" --role "Engineering"
+        resume-cli find-connections --company "Meta" --include-alumni --draft-message
+    """
+    from .integrations.connection_finder import ConnectionFinder
+
+    console.print("[bold blue]Connection Finder[/bold blue]")
+    console.print(f"  Company: {company}")
+    if role:
+        console.print(f"  Role: {role}")
+
+    try:
+        finder = ConnectionFinder()
+        
+        # Find connections
+        connections = finder.find_connections(
+            company=company,
+            role=role,
+            use_linkedin=not no_linkedin,
+            use_github=not no_github,
+        )
+        
+        # Find alumni if requested
+        if include_alumni:
+            alumni = finder.find_alumni(company)
+            connections.extend(alumni)
+        
+        # Find previous company connections if requested
+        if include_previous:
+            prev_connections = finder.find_previous_company_connections(company)
+            connections.extend(prev_connections)
+        
+        # Print connections table
+        finder.print_connections_table(connections)
+        
+        # Generate outreach suggestions if requested
+        if draft_message and connections:
+            console.print("\n[bold]Outreach Message Suggestions[/bold]\n")
+            suggestions = finder.generate_outreach_suggestions(connections)
+            
+            for i, suggestion in enumerate(suggestions[:3], 1):
+                console.print(f"### {i}. {suggestion.connection.name}")
+                console.print(f"   **Common Ground:** {suggestion.common_ground}")
+                console.print("")
+                console.print(suggestion.message_template)
+                console.print("")
+                console.print("**Talking Points:**")
+                for point in suggestion.talking_points[:3]:
+                    console.print(f"  - {point}")
+                console.print("")
+        
+        # Export to CSV if requested
+        if output and connections:
+            output_path = Path(output)
+            finder.export_to_csv(connections, output_path)
+
+    except Exception as e:
+        console.print(f"[bold red]Error finding connections:[/bold red] {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)
+
+
 @cli.command("salary-research")
 @click.option("--title", required=True, help="Job title")
 @click.option("--location", default="", help="Job location")

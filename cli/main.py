@@ -1089,6 +1089,119 @@ def video_script(
         sys.exit(1)
 
 
+@cli.command("mock-interview")
+@click.option(
+    "--job-desc", type=click.Path(exists=True), required=True, help="Path to job description file"
+)
+@click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to use")
+@click.option(
+    "--category",
+    type=click.Choice(["technical", "behavioral", "mixed"]),
+    default="mixed",
+    help="Interview question category",
+)
+@click.option("--num-technical", type=int, default=5, help="Number of technical questions")
+@click.option("--num-behavioral", type=int, default=3, help="Number of behavioral questions")
+@click.option("--no-system-design", is_flag=True, help="Exclude system design questions")
+@click.option("-o", "--output", type=click.Path(), help="Save session report to file")
+@click.pass_context
+def mock_interview(
+    ctx,
+    job_desc: str,
+    variant: str,
+    category: str,
+    num_technical: int,
+    num_behavioral: int,
+    no_system_design: bool,
+    output: Optional[str],
+):
+    """
+    Start an interactive mock interview session with AI evaluation.
+
+    The session generates interview questions based on the job description and your resume.
+    You answer questions and receive AI-powered feedback and evaluation.
+
+    Examples:
+        resume-cli mock-interview --job-desc job-posting.txt
+        resume-cli mock-interview --job-desc job.txt --category technical --num-technical 8
+        resume-cli mock-interview --job-desc job.txt --no-system-design -o report.md
+    """
+    yaml_path = ctx.obj["yaml_path"]
+    config = ctx.obj["config"]
+
+    console.print("[bold blue]Mock Interview Mode[/bold blue]")
+    console.print(f"  Variant: {variant}")
+    console.print(f"  Category: {category}")
+
+    # Check if yaml exists
+    if not yaml_path.exists():
+        console.print(f"[bold red]Error:[/bold red] resume.yaml not found at {yaml_path}")
+        console.print("  Run 'resume-cli init' to create it first.")
+        sys.exit(1)
+
+    # Read job description
+    job_description = Path(job_desc).read_text()
+    console.print(f"  Job description: {job_desc}")
+
+    try:
+        from .generators.mock_interview_generator import MockInterviewGenerator
+
+        # Start interview session
+        generator = MockInterviewGenerator(yaml_path, config=config)
+        session = generator.start_session(
+            job_description=job_description,
+            variant=variant,
+            category=category,
+            num_technical=num_technical,
+            num_behavioral=num_behavioral,
+            include_system_design=not no_system_design,
+        )
+
+        console.print(f"\n[green]✓[/green] Session ID: {session.session_id}")
+        console.print(f"  Total questions: {len(session.questions)}")
+        console.print("\n[bold]Instructions:[/bold]")
+        console.print("  This is a non-interactive preview mode.")
+        console.print("  To use the full interactive mode, run with a terminal that supports input.")
+        console.print("  For now, we'll show the questions and generate a report.\n")
+
+        # Display questions
+        for i, q in enumerate(session.questions[:5], 1):  # Show first 5
+            console.print(f"[cyan]Q{i}:[/cyan] {q.get('question', '')}")
+            console.print(f"  [dim]Type: {q.get('type', 'N/A')} | Priority: {q.get('priority', 'medium')}[/dim]")
+            console.print("")
+
+        if len(session.questions) > 5:
+            console.print(f"[dim]... and {len(session.questions) - 5} more questions[/dim]")
+
+        # Complete session (for demo purposes, simulate completing with questions displayed)
+        summary = generator.complete_session(session)
+
+        console.print("\n[bold green]Session Complete![/bold green]")
+        console.print(f"  Questions: {summary['answered']} / {summary['total_questions']}")
+        console.print(f"  Overall Score: {summary['overall_score']:.1f}/5")
+
+        # Generate and save report
+        report = generator.render_session_report(session)
+
+        if output:
+            output_path = Path(output)
+            output_path.write_text(report)
+            console.print(f"\n[green]✓[/green] Report saved to: {output_path}")
+        else:
+            console.print("\n" + report)
+
+    except ImportError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}")
+        console.print("  Install AI dependencies: pip install 'resume-cli[ai]'")
+        sys.exit(1)
+    except Exception as e:
+        console.print(f"[bold red]Error in mock interview:[/bold red] {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)
+
+
 @cli.command("job-parse")
 @click.option(
     "--file", "file_input", type=click.Path(exists=True), help="Path to job posting HTML file"

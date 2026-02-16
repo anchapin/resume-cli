@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ResumeAI Desktop - Professional resume management and job application tracking">
+    <meta name="theme-color" content="#2563eb">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <!-- Title -->
+    <title>ResumeAI Desktop</title>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="src/css/styles.css">
+    <link rel="stylesheet" href="src/css/components.css">
+</head>
+<body>
+    <!-- App Container -->
+    <div id="app">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="app-title">
+                    <span class="logo">📄</span>
+                    ResumeAI
+                </h1>
+                <span class="version-badge">Desktop</span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-view="resume">
+                    <span class="nav-icon">📝</span>
+                    <span class="nav-label">Resume</span>
+                </a>
+                <a href="#" class="nav-item" data-view="generate">
+                    <span class="nav-icon">✨</span>
+                    <span class="nav-label">Generate</span>
+                </a>
+                <a href="#" class="nav-item" data-view="tracking">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-label">Tracking</span>
+                </a>
+                <a href="#" class="nav-item" data-view="analytics">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-label">Analytics</span>
+                </a>
+                <a href="#" class="nav-item" data-view="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-label">Settings</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot offline"></span>
+                    <span class="status-text">Offline Mode</span>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <section id="view-dashboard" class="view active">
+                <header class="view-header">
+                    <h2>Dashboard</h2>
+                    <p class="view-subtitle">Overview of your job application progress</p>
+                </header>
+                
+                <div class="dashboard-grid">
+                    <!-- Overview Cards -->
+                    <div class="stat-card">
+                        <div class="stat-icon">📤</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="stat-total">0</span>
+                            <span class="stat-label">Total Applications</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">💬</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="stat-interviews">0</span>
+                            <span class="stat-label">Interviews</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="stat-offers">0</span>
+                            <span class="stat-label">Offers</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="stat-response-rate">0%</span>
+                            <span class="stat-label">Response Rate</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h3>Recent Activity</h3>
+                        <button class="btn btn-sm" id="refreshDashboard">Refresh</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="recentActivity" class="activity-list">
+                            <p class="text-muted">No recent activity. Start by adding applications!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h3>Quick Actions</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="quick-actions">
+                            <button class="action-btn" data-action="new-application">
+                                <span class="action-icon">➕</span>
+                                <span>New Application</span>
+                            </button>
+                            <button class="action-btn" data-action="generate-resume">
+                                <span class="action-icon">✨</span>
+                                <span>Generate Resume</span>
+                            </button>
+                            <button class="action-btn" data-action="upload-job-desc">
+                                <span class="action-icon">📄</span>
+                                <span>Upload Job Description</span>
+                            </button>
+                            <button class="action-btn" data-action="view-analytics">
+                                <span class="action-icon">📈</span>
+                                <span>View Analytics</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Resume View -->
+            <section id="view-resume" class="view">
+                <header class="view-header">
+                    <h2>Resume Management</h2>
+                    <p class="view-subtitle">Edit and preview your resume data</p>
+                </header>
+                
+                <div class="resume-container">
+                    <!-- File Browser -->
+                    <div class="file-browser card">
+                        <div class="card-header">
+                            <h3>Files</h3>
+                            <div class="file-actions">
+                                <button class="btn btn-sm" id="openResumeFile">
+                                    <span>📂</span> Open
+                                </button>
+                                <button class="btn btn-sm" id="saveResumeFile">
+                                    <span>💾</span> Save
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="file-list" id="fileList">
+                                <div class="file-item active">
+                                    <span class="file-icon">📄</span>
+                                    <span class="file-name">resume.yaml</span>
+                                    <span class="file-path" id="currentFilePath">Not loaded</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- YAML Editor -->
+                    <div class="yaml-editor card">
+                        <div class="card-header">
+                            <h3>YAML Editor</h3>
+                            <div class="editor-actions">
+                                <button class="btn btn-sm" id="validateYaml">
+                                    <span>✓</span> Validate
+                                </button>
+                                <button class="btn btn-sm" id="formatYaml">
+                                    <span>⚡</span> Format
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <textarea id="yamlEditor" class="yaml-editor-area" spellcheck="false" placeholder="Load or paste your resume.yaml content here..."></textarea>
+                            <div id="yamlValidation" class="validation-status hidden"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview Panel -->
+                    <div class="preview-panel card">
+                        <div class="card-header">
+                            <h3>Preview</h3>
+                            <div class="preview-actions">
+                                <select id="previewVariant" class="select">
+                                    <option value="v1.0.0-base">Base</option>
+                                    <option value="v1.1.0-backend">Backend</option>
+                                    <option value="v1.2.0-ml_ai">ML/AI</option>
+                                    <option value="v1.3.0-fullstack">Fullstack</option>
+                                    <option value="v1.4.0-devops">DevOps</option>
+                                    <option value="v1.5.0-leadership">Leadership</option>
+                                </select>
+                                <button class="btn btn-sm" id="refreshPreview">
+                                    <span>🔄</span> Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="previewContent" class="preview-content">
+                                <p class="text-muted">Load resume.yaml and select a variant to preview</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Generate View -->
+            <section id="view-generate" class="view">
+                <header class="view-header">
+                    <h2>Generate Resume</h2>
+                    <p class="view-subtitle">Create tailored resumes for job applications</p>
+                </header>
+                
+                <div class="generate-container">
+                    <!-- Job Description Upload -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Job Description</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="upload-area" id="jobDescUpload">
+                                <input type="file" id="jobDescFile" accept=".txt,.html,.pdf" hidden>
+                                <div class="upload-placeholder">
+                                    <span class="upload-icon">📄</span>
+                                    <p>Drag and drop job description here</p>
+                                    <p class="text-muted">or click to browse (TXT, HTML, PDF)</p>
+                                </div>
+                                <div class="upload-content hidden" id="jobDescContent">
+                                    <span class="file-name" id="jobDescFileName"></span>
+                                    <button class="btn btn-sm btn-danger" id="removeJobDesc">Remove</button>
+                                </div>
+                            </div>
+                            <textarea id="jobDescText" class="job-desc-text mt-3" placeholder="Or paste job description text here..." rows="6"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Generation Options -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3>Generation Options</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="generateVariant">Resume Variant</label>
+                                    <select id="generateVariant" class="select">
+                                        <option value="v1.0.0-base">Base - General software engineering</option>
+                                        <option value="v1.1.0-backend">Backend & DevOps</option>
+                                        <option value="v1.2.0-ml_ai">ML/AI Specialization</option>
+                                        <option value="v1.3.0-fullstack">Full-stack</option>
+                                        <option value="v1.4.0-devops">DevOps & Infrastructure</option>
+                                        <option value="v1.5.0-leadership">Leadership & Technical Staff</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="generateFormat">Output Format</label>
+                                    <select id="generateFormat" class="select">
+                                        <option value="md">Markdown</option>
+                                        <option value="pdf">PDF</option>
+                                        <option value="tex">LaTeX</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="generateTemplate">Template Style</label>
+                                    <select id="generateTemplate" class="select">
+                                        <option value="base">Base</option>
+                                        <option value="modern">Modern</option>
+                                        <option value="minimalist">Minimalist</option>
+                                        <option value="academic">Academic</option>
+                                        <option value="tech">Tech</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="useAI" checked>
+                                        <span>Use AI customization</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="includeCoverLetter" checked>
+                                        <span>Include cover letter</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="includeGithubProjects">
+                                        <span>Include GitHub projects</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Generate Button -->
+                    <div class="card mt-4">
+                        <div class="card-body">
+                            <button class="btn btn-primary btn-lg" id="generateResume">
+                                <span>✨</span> Generate Application Package
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Panel -->
+                    <div class="card mt-4 hidden" id="progressPanel">
+                        <div class="card-header">
+                            <h3>Generation Progress</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="progress-steps">
+                                <div class="progress-step" id="step-extract">
+                                    <span class="step-indicator">⏳</span>
+                                    <span class="step-label">Extracting job requirements...</span>
+                                </div>
+                                <div class="progress-step" id="step-resume">
+                                    <span class="step-indicator">⏳</span>
+                                    <span class="step-label">Generating resume...</span>
+                                </div>
+                                <div class="progress-step" id="step-cover">
+                                    <span class="step-indicator">⏳</span>
+                                    <span class="step-label">Creating cover letter...</span>
+                                </div>
+                                <div class="progress-step" id="step-pdf">
+                                    <span class="step-indicator">⏳</span>
+                                    <span class="step-label">Compiling PDF...</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Panel -->
+                    <div class="card mt-4 hidden" id="resultsPanel">
+                        <div class="card-header">
+                            <h3>Generation Complete!</h3>
+                            <button class="btn btn-sm" id="openOutputFolder">
+                                <span>📂</span> Open Folder
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="generatedFiles" class="generated-files-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tracking View -->
+            <section id="view-tracking" class="view">
+                <header class="view-header">
+                    <h2>Application Tracking</h2>
+                    <p class="view-subtitle">Manage and track your job applications</p>
+                </header>
+                
+                <div class="tracking-container">
+                    <!-- Add Application Form -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Add Application</h3>
+                            <button class="btn btn-sm btn-primary" id="toggleAddForm">
+                                <span>➕</span> New
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <form id="addApplicationForm" class="application-form hidden">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="appCompany">Company *</label>
+                                        <input type="text" id="appCompany" class="input" required placeholder="e.g., Google">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="appRole">Role</label>
+                                        <input type="text" id="appRole" class="input" placeholder="e.g., Senior Engineer">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="appStatus">Status *</label>
+                                        <select id="appStatus" class="select" required>
+                                            <option value="applied">Applied</option>
+                                            <option value="screening">Screening</option>
+                                            <option value="interview">Interview</option>
+                                            <option value="offer">Offer</option>
+                                            <option value="rejected">Rejected</option>
+                                            <option value="withdrawn">Withdrawn</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="appVariant">Resume Variant</label>
+                                        <select id="appVariant" class="select">
+                                            <option value="v1.0.0-base">Base</option>
+                                            <option value="v1.1.0-backend">Backend</option>
+                                            <option value="v1.2.0-ml_ai">ML/AI</option>
+                                            <option value="v1.3.0-fullstack">Fullstack</option>
+                                            <option value="v1.4.0-devops">DevOps</option>
+                                            <option value="v1.5.0-leadership">Leadership</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="appSource">Source</label>
+                                        <select id="appSource" class="select">
+                                            <option value="manual">Manual</option>
+                                            <option value="linkedin">LinkedIn</option>
+                                            <option value="indeed">Indeed</option>
+                                            <option value="company">Company Website</option>
+                                            <option value="referral">Referral</option>
+                                            <option value="recruiter">Recruiter</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="appUrl">Job URL</label>
+                                        <input type="url" id="appUrl" class="input" placeholder="https://...">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="appNotes">Notes</label>
+                                    <textarea id="appNotes" class="input" rows="3" placeholder="Additional notes..."></textarea>
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Add Application</button>
+                                    <button type="button" class="btn" id="cancelAddForm">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Applications Table -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3>Applications</h3>
+                            <div class="table-actions">
+                                <input type="text" id="searchApplications" class="input input-sm" placeholder="Search...">
+                                <select id="filterStatus" class="select select-sm">
+                                    <option value="">All Statuses</option>
+                                    <option value="applied">Applied</option>
+                                    <option value="screening">Screening</option>
+                                    <option value="interview">Interview</option>
+                                    <option value="offer">Offer</option>
+                                    <option value="rejected">Rejected</option>
+                                    <option value="withdrawn">Withdrawn</option>
+                                </select>
+                                <button class="btn btn-sm" id="exportTracking">
+                                    <span>📥</span> Export CSV
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="data-table" id="applicationsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Company</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                            <th>Variant</th>
+                                            <th>Source</th>
+                                            <th>Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="applicationsBody">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted">No applications yet. Add your first application!</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Analytics View -->
+            <section id="view-analytics" class="view">
+                <header class="view-header">
+                    <h2>Analytics</h2>
+                    <p class="view-subtitle">Insights into your job application performance</p>
+                </header>
+                
+                <div class="analytics-container">
+                    <!-- Charts Row -->
+                    <div class="charts-grid">
+                        <!-- Status Distribution -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Application Status</h3>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="statusChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Timeline -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Application Timeline</h3>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="timelineChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Variant Performance -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3>Variant Performance</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="variantChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Source Breakdown -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3>Application Sources</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="sourceChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Company Analytics -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3>Company Analytics</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="companyAnalytics" class="company-list">
+                                <p class="text-muted">Add applications to see company analytics</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Settings View -->
+            <section id="view-settings" class="view">
+                <header class="view-header">
+                    <h2>Settings</h2>
+                    <p class="view-subtitle">Configure your ResumeAI Desktop experience</p>
+                </header>
+                
+                <div class="settings-container">
+                    <!-- API Configuration -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>AI API Configuration</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="apiSettingsForm">
+                                <div class="form-group">
+                                    <label for="aiProvider">AI Provider</label>
+                                    <select id="aiProvider" class="select">
+                                        <option value="anthropic">Anthropic (Claude)</option>
+                                        <option value="openai">OpenAI (GPT)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="anthropicKey">Anthropic API Key</label>
+                                    <div class="input-group">
+                                        <input type="password" id="anthropicKey" class="input" placeholder="sk-ant-...">
+                                        <button type="button" class="btn btn-sm" id="toggleAnthropicKey">
+                                            <span>👁️</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="openaiKey">OpenAI API Key</label>
+                                    <div class="input-group">
+                                        <input type="password" id="openaiKey" class="input" placeholder="sk-...">
+                                        <button type="button" class="btn btn-sm" id="toggleOpenaiKey">
+                                            <span>👁️</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="apiBaseUrl">Custom API Base URL (optional)</label>
+                                    <input type="url" id="apiBaseUrl" class="input" placeholder="https://api.example.com">
+                                    <small class="form-hint">Leave empty to use default API endpoints</small>
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Save API Settings</button>
+                                    <button type="button" class="btn" id="testApiConnection">Test Connection</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- GitHub Integration -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3>GitHub Integration</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="githubSettingsForm">
+                                <div class="form-group">
+                                    <label for="githubUsername">GitHub Username</label>
+                                    <input type="text" id="githubUsername" class="input" placeholder="your-username">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="githubToken">GitHub Token (optional)</label>
+                                    <div class="input-group">
+                                        <input type="password" id="githubToken" class="input" placeholder="ghp_...">
+                                        <button type="button" class="btn btn-sm" id="toggleGithubToken">
+                                            <span>👁️</span>
+                                        </button>
+                                    </div>
+                                    <small class="form-hint">Required for private repositories</small>
+                                </div>
+                                
+                                <div class="form-group checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="autoGithubProjects">
+                                        <span>Auto-include GitHub projects in resumes</span>
+                                    </label>
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Save GitHub Settings</button>
+                                    <button type="button" class="btn" id="syncGithub">Sync Projects Now</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Application Settings -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3>Application Settings</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="appSettingsForm">
+                                <div class="form-group">
+                                    <label for="outputDirectory">Output Directory</label>
+                                    <div class="input-group">
+                                        <input type="text" id="outputDirectory" class="input" placeholder="/path/to/output">
+                                        <button type="button" class="btn btn-sm" id="browseOutputDir">
+                                            <span>📂</span> Browse
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="defaultVariant">Default Resume Variant</label>
+                                    <select id="defaultVariant" class="select">
+                                        <option value="v1.0.0-base">Base</option>
+                                        <option value="v1.1.0-backend">Backend</option>
+                                        <option value="v1.2.0-ml_ai">ML/AI</option>
+                                        <option value="v1.3.0-fullstack">Fullstack</option>
+                                        <option value="v1.4.0-devops">DevOps</option>
+                                        <option value="v1.5.0-leadership">Leadership</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="enableTracking" checked>
+                                        <span>Enable application tracking</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="enableNotifications" checked>
+                                        <span>Enable desktop notifications</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="autoSave">
+                                        <span>Auto-save resume changes</span>
+                                    </label>
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Save Application Settings</button>
+                                    <button type="button" class="btn btn-danger" id="clearData">Clear All Data</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- About -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3>About</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="about-content">
+                                <h4>ResumeAI Desktop</h4>
+                                <p class="version">Version 1.0.0</p>
+                                <p>A desktop application for managing resumes and tracking job applications.</p>
+                                <div class="about-links">
+                                    <a href="https://github.com/anchapin/ResumeAI" target="_blank">GitHub Repository</a>
+                                    <a href="https://github.com/anchapin/ResumeAI/issues" target="_blank">Report Issue</a>
+                                    <a href="https://github.com/anchapin/ResumeAI/blob/main/README.md" target="_blank">Documentation</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+    
+    <!-- Modal Dialog -->
+    <div id="modalOverlay" class="modal-overlay hidden">
+        <div class="modal" id="modalContent">
+            <div class="modal-header">
+                <h3 id="modalTitle">Modal Title</h3>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Modal content goes here -->
+            </div>
+            <div class="modal-footer" id="modalFooter">
+                <!-- Modal actions go here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="src/js/api.js"></script>
+    <script src="src/js/storage.js"></script>
+    <script src="src/js/utils.js"></script>
+    <script src="src/js/components/toast.js"></script>
+    <script src="src/js/components/modal.js"></script>
+    <script src="src/js/components/charts.js"></script>
+    <script src="src/js/views/dashboard.js"></script>
+    <script src="src/js/views/resume.js"></script>
+    <script src="src/js/views/generate.js"></script>
+    <script src="src/js/views/tracking.js"></script>
+    <script src="src/js/views/analytics.js"></script>
+    <script src="src/js/views/settings.js"></script>
+    <script src="src/js/app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('SW registered:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('SW registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

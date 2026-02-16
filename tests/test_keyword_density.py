@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from cli.generators.keyword_density import (
+from cli.utils.keyword_density import (
     KeywordDensityGenerator,
     KeywordDensityReport,
     KeywordInfo,

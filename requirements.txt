@@ -25,6 +25,10 @@ python-dateutil>=2.8.0
 # HTTP Requests
 requests>=2.31.0
 
+# HTML Parsing
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
 # Document Generation
 python-docx>=1.1.0
 

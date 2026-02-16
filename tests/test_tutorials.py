@@ -1,7 +1,8 @@
 """Tests for tutorial commands."""
 
+from unittest.mock import MagicMock, patch
+
 from click.testing import CliRunner
-from unittest.mock import patch, MagicMock
 
 
 class TestTutorialsModule:

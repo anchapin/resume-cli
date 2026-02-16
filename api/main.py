@@ -549,4 +549,5 @@ async def get_dashboard_data():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # nosec: B104 - Binding to all interfaces is required for Docker container access
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # nosec: B104

@@ -146,6 +146,12 @@ def validate(ctx):
     type=click.Path(exists=True),
     help="Path to job description file for AI customization",
 )
+@click.option(
+    "--language",
+    type=click.Choice(["en", "es", "fr", "de", "pt", "zh", "ja", "ko"]),
+    default="en",
+    help="Target language for resume generation (requires AI)",
+)
 @click.pass_context
 def generate(
     ctx,
@@ -157,6 +163,7 @@ def generate(
     no_save: bool,
     ai: bool,
     job_desc: Optional[str],
+    language: str,
 ):
     """
     Generate resume from template or AI.
@@ -204,7 +211,30 @@ def generate(
             console.print(f"  Using custom template: {custom_template_path}")
 
         # Generate
-        if ai or job_description:
+        if language and language != "en":
+            # Multi-language generation
+            from .generators.multi_language_generator import MultiLanguageResumeGenerator
+
+            console.print(f"[cyan]Translating resume to {language}...[/cyan]")
+            generator = MultiLanguageResumeGenerator(yaml_path, config=config)
+            content = generator.generate(
+                target_language=language,
+                variant=variant,
+                output_format=format,
+            )
+            
+            # Determine output path
+            if output_path is None and not no_save:
+                base_path = TemplateGenerator(yaml_path, config=config).get_output_path(
+                    variant, format
+                )
+                stem = base_path.stem
+                output_path = base_path.parent / f"{stem}-{language}{base_path.suffix}"
+            
+            # Save content
+            if output_path:
+                output_path.write_text(content)
+        elif ai or job_description:
             from .generators.ai_generator import AIGenerator
 
             console.print("[cyan]Using AI-powered generation...[/cyan]")

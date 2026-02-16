@@ -23,6 +23,12 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from bs4 import BeautifulSoup, Tag
 
+# Optional import for URL fetching
+try:
+    import requests
+except ImportError:
+    requests = None
+
 
 @dataclass
 class JobDetails:
@@ -215,7 +221,6 @@ class JobParser:
 
         # Fetch and parse
         try:
-            import requests
 
             headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
             response = requests.get(url, headers=headers, timeout=30)

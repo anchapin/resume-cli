@@ -1,7 +1,7 @@
 """Offer comparison and decision tool for job offers."""
 
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 

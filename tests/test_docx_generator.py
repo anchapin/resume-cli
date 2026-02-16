@@ -1,8 +1,6 @@
 """Tests for DOCX resume generator."""
 
-import pytest
-from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 
 class TestDocxGeneratorInitialization:

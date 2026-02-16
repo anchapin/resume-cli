@@ -603,7 +603,7 @@ Return ONLY the JSON:"""
         """Render session results as Markdown report."""
         lines = []
 
-        lines.append(f"# Mock Interview Session Report")
+        lines.append("# Mock Interview Session Report")
         lines.append(f"**Session ID:** {session.session_id}")
         lines.append(f"**Date:** {session.started_at[:10]}")
         lines.append(f"**Category:** {session.category.title()}")

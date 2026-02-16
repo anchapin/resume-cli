@@ -1,6 +1,5 @@
 """Tests for tutorial commands."""
 
-import pytest
 from click.testing import CliRunner
 from unittest.mock import patch, MagicMock
 
@@ -114,7 +113,7 @@ class TestTutorialCLI:
         from cli.commands.tutorials import tutorial_run
 
         # Mock the run_tutorial function
-        with patch("cli.commands.tutorials.run_tutorial") as mock_run:
+        with patch("cli.commands.tutorials.run_tutorial") as _:
             runner = CliRunner()
             result = runner.invoke(tutorial_run, ["init"])
             # Command should execute without crash

@@ -1594,7 +1594,7 @@ def offer_priorities(salary: int, growth: int, wlb: int, benefits: int):
 
     try:
         set_priorities(salary=salary, growth=growth, wlb=wlb, benefits=benefits)
-        console.print(f"[green]✓[/green] Priorities updated:")
+        console.print("[green]✓[/green] Priorities updated:")
         console.print(f"  Salary: {salary}%")
         console.print(f"  Growth: {growth}%")
         console.print(f"  Work-Life Balance: {wlb}%")

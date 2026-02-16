@@ -1,10 +1,9 @@
 """Connection finder for finding alumni/connections at target companies."""
 
-import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List
 
 from rich.console import Console
 from rich.table import Table

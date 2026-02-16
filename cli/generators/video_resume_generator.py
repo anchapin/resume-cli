@@ -281,7 +281,7 @@ class VideoResumeGenerator:
                 all_skills.extend(skill_names)
                 skills_text += f"\n{category}: {', '.join(str(s) for s in skill_names[:5])}"
 
-        top_skills = all_skills[:5] if all_skills else []
+        # top_skills removed - was unused
 
         # Timing breakdown
         if duration <= 60:
@@ -563,7 +563,7 @@ Please generate the video resume script JSON:"""
 
         # Header
         duration_display = f"{script.duration_seconds // 60}:{script.duration_seconds % 60:02d}"
-        lines.append(f"# Video Resume Script")
+        lines.append("# Video Resume Script")
         lines.append(f"\n**Duration:** {duration_display} ({script.duration_seconds} seconds)")
         lines.append("")
 

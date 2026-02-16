@@ -1,8 +1,7 @@
 """Unit tests for JobParser class."""
 
 import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -98,7 +97,8 @@ class TestJobParserInitialization:
     def test_cache_dir_created(self, tmp_path):
         """Test that cache directory is created."""
         cache_dir = tmp_path / "cache"
-        parser = JobParser(cache_dir=cache_dir)
+        # parser removed - was unused
+        _ = JobParser(cache_dir=cache_dir)
         assert cache_dir.exists()
 
 

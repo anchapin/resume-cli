@@ -1,6 +1,5 @@
 """Multi-language resume generation using AI translation."""
 
-import json
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional

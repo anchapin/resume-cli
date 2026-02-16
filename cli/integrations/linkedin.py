@@ -1,5 +1,6 @@
 """LinkedIn integration for importing/exporting profile data."""
 
+import csv
 import json
 import re
 from datetime import datetime
@@ -19,6 +20,23 @@ class LinkedInSync:
         """
         self.config = config
         self.linkedin_config = config.get("linkedin", {})
+
+        # CSV field mapping from LinkedIn CSV export column names to internal keys
+        self._csv_field_mapping = {
+            "First Name": "firstName",
+            "Last Name": "lastName",
+            "Maiden Name": "maidenName",
+            "Address": "address",
+            "Birth Date": "birthDate",
+            "Headline": "headline",
+            "Summary": "summary",
+            "Industry": "industry",
+            "Zip Code": "zipCode",
+            "Geo Location": "geoLocation",
+            "Twitter Handles": "twitterHandles",
+            "Websites": "websites",
+            "Instant Messengers": "instantMessengers",
+        }
 
     def import_from_url(self, url: str) -> Dict[str, Any]:
         """
@@ -46,6 +64,32 @@ class LinkedInSync:
 
     def import_from_json(self, json_path: Path) -> Dict[str, Any]:
         """
+        Import LinkedIn profile data from JSON or CSV file.
+
+        Automatically detects file format based on extension and content.
+
+        Args:
+            json_path: Path to LinkedIn export file (JSON or CSV)
+
+        Returns:
+            Dictionary of profile data
+        """
+        if not json_path.exists():
+            raise FileNotFoundError(f"LinkedIn data file not found: {json_path}")
+
+        # Check file extension to determine format
+        suffix = json_path.suffix.lower()
+
+        if suffix == ".csv":
+            return self._import_from_csv(json_path)
+        elif suffix == ".json":
+            return self._import_from_json_file(json_path)
+        else:
+            # Try to detect format by reading first character
+            return self._import_from_json_file(json_path)
+
+    def _import_from_json_file(self, json_path: Path) -> Dict[str, Any]:
+        """
         Import LinkedIn profile data from JSON file.
 
         Args:
@@ -54,11 +98,69 @@ class LinkedInSync:
         Returns:
             Dictionary of profile data
         """
-        if not json_path.exists():
-            raise FileNotFoundError(f"LinkedIn data file not found: {json_path}")
+        try:
+            with open(json_path, encoding="utf-8") as f:
+                linkedin_data = json.load(f)
+        except json.JSONDecodeError as e:
+            raise ValueError(
+                f"Invalid JSON file: {json_path}. "
+                f"The file appears to be in CSV format. "
+                f"Please use a LinkedIn JSON export or convert your CSV to JSON.\n"
+                f"JSON error: {e}"
+            ) from e
 
-        with open(json_path, encoding="utf-8") as f:
-            linkedin_data = json.load(f)
+        # Map LinkedIn data to resume.yaml structure
+        resume_data = self._map_linkedin_to_resume(linkedin_data)
+
+        return resume_data
+
+    def _import_from_csv(self, csv_path: Path) -> Dict[str, Any]:
+        """
+        Import LinkedIn profile data from CSV file.
+
+        Handles LinkedIn's basic CSV profile export format.
+
+        Args:
+            csv_path: Path to LinkedIn CSV export file
+
+        Returns:
+            Dictionary of profile data
+        """
+        linkedin_data = {}
+
+        with open(csv_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+
+            if not rows:
+                raise ValueError(f"CSV file is empty: {csv_path}")
+
+            # Get the first (and usually only) row for profile data
+            row = rows[0]
+
+            # Map CSV columns to internal format using the field mapping
+            for csv_field, internal_key in self._csv_field_mapping.items():
+                if csv_field in row and row[csv_field]:
+                    linkedin_data[internal_key] = row[csv_field]
+
+            # Handle positions/experience if present in CSV
+            # (Basic CSV export may not have this, but check for additional rows)
+            if len(rows) > 1:
+                positions = []
+                for row in rows[1:]:
+                    # Check if this row has position data
+                    if row.get("Company") or row.get("Title"):
+                        position = {
+                            "company": row.get("Company", ""),
+                            "title": row.get("Title", ""),
+                            "location": row.get("Location", ""),
+                            "startDate": row.get("Start Date", ""),
+                            "endDate": row.get("End Date", ""),
+                            "description": row.get("Description", ""),
+                        }
+                        positions.append(position)
+                if positions:
+                    linkedin_data["positions"] = positions
 
         # Map LinkedIn data to resume.yaml structure
         resume_data = self._map_linkedin_to_resume(linkedin_data)

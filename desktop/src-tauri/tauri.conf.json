@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "identifier": "com.resumeai.desktop",
     "build": {
-        "frontendDist": "../desktop",
+        "frontendDist": "../dist",
         "devUrl": "http://localhost:1420",
         "beforeDevCommand": "",
         "beforeBuildCommand": ""
@@ -32,21 +32,14 @@
     "bundle": {
         "active": true,
         "targets": "all",
-        "icon": [
-            "icons/icon-32.png",
-            "icons/icon-128.png",
-            "icons/icon-128@2x.png",
-            "icons/icon-square-32.png",
-            "icons/icon-square-128.png",
-            "icons/icon-square-128@2x.png"
-        ],
+        "icon": [],
         "category": "Productivity",
         "shortDescription": "Professional resume management and job application tracking",
         "longDescription": "ResumeAI Desktop is a comprehensive desktop application for managing resumes, generating tailored applications, and tracking job applications. Features include AI-powered resume customization, cover letter generation, application tracking with analytics, and GitHub integration.",
         "copyright": "MIT License",
         "resources": [],
         "externalBin": [],
-        "createUpdaterArtifacts": true
+        "createUpdaterArtifacts": false
     },
     "plugins": {
         "fs": {

@@ -11,34 +11,24 @@ console = Console()
 
 
 @click.command()
+@click.option("--url", type=str, help="LinkedIn profile URL (not supported - requires data file)")
 @click.option(
-    "--url",
-    type=str,
-    help="LinkedIn profile URL (not supported - requires data file)"
+    "--data-file", type=click.Path(exists=True), help="Path to LinkedIn exported JSON data file"
 )
+@click.option("--output", type=click.Path(), help="Output YAML file path (default: resume.yaml)")
 @click.option(
-    "--data-file",
-    type=click.Path(exists=True),
-    help="Path to LinkedIn exported JSON data file"
+    "--merge", is_flag=True, help="Merge with existing resume.yaml instead of overwriting"
 )
-@click.option(
-    "--output",
-    type=click.Path(),
-    help="Output YAML file path (default: resume.yaml)"
-)
-@click.option(
-    "--merge",
-    is_flag=True,
-    help="Merge with existing resume.yaml instead of overwriting"
-)
-@click.option(
-    "--dry-run",
-    is_flag=True,
-    help="Preview changes without writing to file"
-)
+@click.option("--dry-run", is_flag=True, help="Preview changes without writing to file")
 @click.pass_context
-def linkedin_import(ctx, url: Optional[str], data_file: Optional[str],
-                    output: Optional[str], merge: bool, dry_run: bool):
+def linkedin_import(
+    ctx,
+    url: Optional[str],
+    data_file: Optional[str],
+    output: Optional[str],
+    merge: bool,
+    dry_run: bool,
+):
     """
     Import LinkedIn profile data into resume.yaml.
 
@@ -117,8 +107,13 @@ def linkedin_import(ctx, url: Optional[str], data_file: Optional[str],
             else:
                 # Save merged data
                 with open(output_path, "w", encoding="utf-8") as f:
-                    yaml.dump(merged_data, f, default_flow_style=False,
-                             sort_keys=False, allow_unicode=True)
+                    yaml.dump(
+                        merged_data,
+                        f,
+                        default_flow_style=False,
+                        sort_keys=False,
+                        allow_unicode=True,
+                    )
                 console.print(f"[green]✓[/green] Merged data saved to {output_path}")
         else:
             if dry_run:
@@ -127,8 +122,13 @@ def linkedin_import(ctx, url: Optional[str], data_file: Optional[str],
             else:
                 # Save imported data (overwrite or new file)
                 with open(output_path, "w", encoding="utf-8") as f:
-                    yaml.dump(imported_data, f, default_flow_style=False,
-                             sort_keys=False, allow_unicode=True)
+                    yaml.dump(
+                        imported_data,
+                        f,
+                        default_flow_style=False,
+                        sort_keys=False,
+                        allow_unicode=True,
+                    )
                 console.print(f"[green]✓[/green] Imported data saved to {output_path}")
 
         console.print("\n[cyan]Next steps:[/cyan]")
@@ -142,26 +142,21 @@ def linkedin_import(ctx, url: Optional[str], data_file: Optional[str],
     except Exception as e:
         console.print(f"[bold red]Error importing data:[/bold red] {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
 
 @click.command()
+@click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to export")
 @click.option(
-    "-v", "--variant",
-    default="v1.0.0-base",
-    help="Resume variant to export"
-)
-@click.option(
-    "-o", "--output",
+    "-o",
+    "--output",
     type=click.Path(),
-    help="Output file path (default: output/linkedin-update.txt)"
+    help="Output file path (default: output/linkedin-update.txt)",
 )
 @click.option(
-    "--format",
-    type=click.Choice(["linkedin", "plain"]),
-    default="linkedin",
-    help="Output format"
+    "--format", type=click.Choice(["linkedin", "plain"]), default="linkedin", help="Output format"
 )
 @click.pass_context
 def linkedin_export(ctx, variant: str, output: Optional[str], format: str):
@@ -214,6 +209,7 @@ def linkedin_export(ctx, variant: str, output: Optional[str], format: str):
         else:
             # Plain text export - just dump YAML
             from ..utils.yaml_parser import ResumeYAML
+
             yaml_handler = ResumeYAML(yaml_path)
             data = yaml_handler.load()
 
@@ -240,6 +236,7 @@ def linkedin_export(ctx, variant: str, output: Optional[str], format: str):
     except Exception as e:
         console.print(f"[bold red]Error exporting data:[/bold red] {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -358,9 +355,8 @@ def _merge_resume_data(existing: dict, imported: dict) -> dict:
 
     # Sort by start date
     existing_exp.sort(
-        key=lambda x: (x.get("start_date", "") or "1900-01",
-                       x.get("end_date", "") or "9999-12"),
-        reverse=True
+        key=lambda x: (x.get("start_date", "") or "1900-01", x.get("end_date", "") or "9999-12"),
+        reverse=True,
     )
 
     merged["experience"] = existing_exp
@@ -399,8 +395,9 @@ def _merge_resume_data(existing: dict, imported: dict) -> dict:
 
     # Update meta
     if "meta" in merged:
-        merged["meta"]["last_updated"] = imported.get("meta", {}).get("last_updated",
-                                                                       merged["meta"].get("last_updated"))
+        merged["meta"]["last_updated"] = imported.get("meta", {}).get(
+            "last_updated", merged["meta"].get("last_updated")
+        )
         merged["meta"]["source"] = "linkedin_import"
 
     return merged
@@ -415,10 +412,20 @@ def _print_merge_summary(existing: dict, merged: dict) -> None:
     merged_skills = merged.get("skills", {})
 
     for category in set(list(existing_skills.keys()) + list(merged_skills.keys())):
-        old_count = len(existing_skills.get(category, [])) if isinstance(existing_skills.get(category), list) else 0
-        new_count = len(merged_skills.get(category, [])) if isinstance(merged_skills.get(category), list) else 0
+        old_count = (
+            len(existing_skills.get(category, []))
+            if isinstance(existing_skills.get(category), list)
+            else 0
+        )
+        new_count = (
+            len(merged_skills.get(category, []))
+            if isinstance(merged_skills.get(category), list)
+            else 0
+        )
         if new_count > old_count:
-            console.print(f"  Skills.{category}: {old_count} → {new_count} (+{new_count - old_count})")
+            console.print(
+                f"  Skills.{category}: {old_count} → {new_count} (+{new_count - old_count})"
+            )
 
     # Experience
     old_exp = len(existing.get("experience", []))

@@ -28,7 +28,14 @@ class TestCLIValidate:
     def test_validate_missing_file(self, temp_dir: Path):
         """Test validate command with missing file."""
         result = subprocess.run(
-            [sys.executable, "-m", "cli.main", "validate", "--yaml-path", str(temp_dir / "nonexistent.yaml")],
+            [
+                sys.executable,
+                "-m",
+                "cli.main",
+                "validate",
+                "--yaml-path",
+                str(temp_dir / "nonexistent.yaml"),
+            ],
             capture_output=True,
             text=True,
             cwd=Path(__file__).parent.parent,
@@ -65,11 +72,18 @@ class TestCLIGenerate:
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "cli.main", "generate",
-                "--yaml-path", str(sample_yaml_file),
-                "-v", "v1.0.0-base",
-                "-f", "md",
-                "-o", str(output_file),
+                sys.executable,
+                "-m",
+                "cli.main",
+                "generate",
+                "--yaml-path",
+                str(sample_yaml_file),
+                "-v",
+                "v1.0.0-base",
+                "-f",
+                "md",
+                "-o",
+                str(output_file),
             ],
             capture_output=True,
             text=True,
@@ -88,11 +102,18 @@ class TestCLIGenerate:
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "cli.main", "generate",
-                "--yaml-path", str(sample_yaml_file),
-                "-v", "v1.0.0-base",
-                "-f", "tex",
-                "-o", str(output_file),
+                sys.executable,
+                "-m",
+                "cli.main",
+                "generate",
+                "--yaml-path",
+                str(sample_yaml_file),
+                "-v",
+                "v1.0.0-base",
+                "-f",
+                "tex",
+                "-o",
+                str(output_file),
             ],
             capture_output=True,
             text=True,
@@ -108,10 +129,16 @@ class TestCLIGenerate:
         """Test generate command with --no-save prints to stdout."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "cli.main", "generate",
-                "--yaml-path", str(sample_yaml_file),
-                "-v", "v1.0.0-base",
-                "-f", "md",
+                sys.executable,
+                "-m",
+                "cli.main",
+                "generate",
+                "--yaml-path",
+                str(sample_yaml_file),
+                "-v",
+                "v1.0.0-base",
+                "-f",
+                "md",
                 "--no-save",
             ],
             capture_output=True,
@@ -142,11 +169,18 @@ class TestCLIApply:
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "cli.main", "apply",
-                "--yaml-path", str(sample_yaml_file),
-                "--config-path", str(config_path),
-                "TestCompany", "applied",
-                "-r", "Software Engineer",
+                sys.executable,
+                "-m",
+                "cli.main",
+                "apply",
+                "--yaml-path",
+                str(sample_yaml_file),
+                "--config-path",
+                str(config_path),
+                "TestCompany",
+                "applied",
+                "-r",
+                "Software Engineer",
             ],
             capture_output=True,
             text=True,
@@ -177,9 +211,14 @@ class TestCLIAnalyze:
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "cli.main", "analyze",
-                "--yaml-path", str(sample_yaml_file),
-                "--config-path", str(config_path),
+                sys.executable,
+                "-m",
+                "cli.main",
+                "analyze",
+                "--yaml-path",
+                str(sample_yaml_file),
+                "--config-path",
+                str(config_path),
             ],
             capture_output=True,
             text=True,
@@ -197,7 +236,8 @@ class TestCLIAtsCheck:
         """Test ats-check command with job description."""
         # Create a sample job description
         job_desc = temp_dir / "job.txt"
-        job_desc.write_text("""
+        job_desc.write_text(
+            """
 Senior Backend Engineer
 
 Requirements:
@@ -206,14 +246,21 @@ Requirements:
 - PostgreSQL
 - Kubernetes
 - REST API
-""")
+"""
+        )
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "cli.main", "ats-check",
-                "--yaml-path", str(sample_yaml_file),
-                "-v", "v1.0.0-base",
-                "--job-desc", str(job_desc),
+                sys.executable,
+                "-m",
+                "cli.main",
+                "ats-check",
+                "--yaml-path",
+                str(sample_yaml_file),
+                "-v",
+                "v1.0.0-base",
+                "--job-desc",
+                str(job_desc),
             ],
             capture_output=True,
             text=True,
@@ -227,9 +274,14 @@ Requirements:
         """Test ats-check command without job description fails."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "cli.main", "ats-check",
-                "--yaml-path", str(sample_yaml_file),
-                "-v", "v1.0.0-base",
+                sys.executable,
+                "-m",
+                "cli.main",
+                "ats-check",
+                "--yaml-path",
+                str(sample_yaml_file),
+                "-v",
+                "v1.0.0-base",
             ],
             capture_output=True,
             text=True,
@@ -246,7 +298,8 @@ class TestCLIKeywordAnalysis:
         """Test keyword-analysis command with job description."""
         # Create a sample job description
         job_desc = temp_dir / "job.txt"
-        job_desc.write_text("""
+        job_desc.write_text(
+            """
 Senior Backend Engineer
 
 Requirements:
@@ -256,14 +309,21 @@ Requirements:
 - Kubernetes
 - REST API
 - Docker
-""")
+"""
+        )
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "cli.main", "keyword-analysis",
-                "--yaml-path", str(sample_yaml_file),
-                "-v", "v1.0.0-base",
-                "--job-desc", str(job_desc),
+                sys.executable,
+                "-m",
+                "cli.main",
+                "keyword-analysis",
+                "--yaml-path",
+                str(sample_yaml_file),
+                "-v",
+                "v1.0.0-base",
+                "--job-desc",
+                str(job_desc),
             ],
             capture_output=True,
             text=True,
@@ -277,9 +337,14 @@ Requirements:
         """Test keyword-analysis command without job description fails."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "cli.main", "keyword-analysis",
-                "--yaml-path", str(sample_yaml_file),
-                "-v", "v1.0.0-base",
+                sys.executable,
+                "-m",
+                "cli.main",
+                "keyword-analysis",
+                "--yaml-path",
+                str(sample_yaml_file),
+                "-v",
+                "v1.0.0-base",
             ],
             capture_output=True,
             text=True,
@@ -339,10 +404,16 @@ class TestCLIErrorHandling:
         """Test CLI handles invalid variant gracefully."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "cli.main", "generate",
-                "--yaml-path", str(sample_yaml_file),
-                "-v", "nonexistent-variant",
-                "-f", "md",
+                sys.executable,
+                "-m",
+                "cli.main",
+                "generate",
+                "--yaml-path",
+                str(sample_yaml_file),
+                "-v",
+                "nonexistent-variant",
+                "-f",
+                "md",
             ],
             capture_output=True,
             text=True,

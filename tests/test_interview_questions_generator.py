@@ -56,13 +56,14 @@ experience:
 def mock_config():
     """Create a mock config object."""
     from cli.utils.config import Config
+
     config = Config()
     return config
 
 
 def test_generator_initialization(mock_yaml_path, mock_config):
     """Test that generator initializes correctly."""
-    with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test-key'}):
+    with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):
         # This would normally fail if anthropic package is not installed
         # For testing, we just check the structure
         pass
@@ -80,7 +81,7 @@ def test_render_to_markdown_structure(mock_yaml_path, mock_config):
                 "context": "Testing Python knowledge",
                 "reference": "Built Python applications",
                 "answer": "Python is a programming language.",
-                "tips": ["Tip 1", "Tip 2"]
+                "tips": ["Tip 1", "Tip 2"],
             }
         ],
         "behavioral_questions": [
@@ -91,25 +92,30 @@ def test_render_to_markdown_structure(mock_yaml_path, mock_config):
                 "context": "Testing problem-solving",
                 "reference": "Solved complex problems",
                 "answer": "Use STAR framework",
-                "tips": ["Be specific"]
+                "tips": ["Be specific"],
             }
         ],
         "job_analysis": {
             "key_technologies": ["Python", "JavaScript"],
             "role_type": "Software Engineer",
             "focus_areas": ["Web Development"],
-            "difficulty_estimate": "mid"
-        }
+            "difficulty_estimate": "mid",
+        },
     }
 
     # Mock the generator to avoid AI API calls
-    with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test-key'}):
+    with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):
         try:
             from unittest.mock import MagicMock
-            with patch('cli.generators.interview_questions_generator.anthropic') as mock_anthropic:
+
+            with patch("cli.generators.interview_questions_generator.anthropic") as mock_anthropic:
                 mock_client = MagicMock()
                 mock_client.messages.create.return_value = MagicMock(
-                    content=[MagicMock(text='{"technical_questions": [], "behavioral_questions": [], "job_analysis": {}}')]
+                    content=[
+                        MagicMock(
+                            text='{"technical_questions": [], "behavioral_questions": [], "job_analysis": {}}'
+                        )
+                    ]
                 )
                 mock_anthropic.Anthropic.return_value = mock_client
 
@@ -138,7 +144,7 @@ def test_render_to_flashcards_structure(mock_yaml_path, mock_config):
                 "context": "Testing Python knowledge",
                 "reference": "Built Python applications",
                 "answer": "Python is a programming language.",
-                "tips": ["Tip 1", "Tip 2"]
+                "tips": ["Tip 1", "Tip 2"],
             }
         ],
         "behavioral_questions": [],
@@ -146,18 +152,23 @@ def test_render_to_flashcards_structure(mock_yaml_path, mock_config):
             "key_technologies": ["Python"],
             "role_type": "Software Engineer",
             "focus_areas": ["Web Development"],
-            "difficulty_estimate": "mid"
-        }
+            "difficulty_estimate": "mid",
+        },
     }
 
     # Mock the generator to avoid AI API calls
-    with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test-key'}):
+    with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):
         try:
             from unittest.mock import MagicMock
-            with patch('cli.generators.interview_questions_generator.anthropic') as mock_anthropic:
+
+            with patch("cli.generators.interview_questions_generator.anthropic") as mock_anthropic:
                 mock_client = MagicMock()
                 mock_client.messages.create.return_value = MagicMock(
-                    content=[MagicMock(text='{"technical_questions": [], "behavioral_questions": [], "job_analysis": {}}')]
+                    content=[
+                        MagicMock(
+                            text='{"technical_questions": [], "behavioral_questions": [], "job_analysis": {}}'
+                        )
+                    ]
                 )
                 mock_anthropic.Anthropic.return_value = mock_client
 
@@ -175,18 +186,24 @@ def test_render_to_flashcards_structure(mock_yaml_path, mock_config):
 
 def test_extract_json():
     """Test JSON extraction from AI response."""
-    with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test-key'}):
+    with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):
         try:
             from unittest.mock import MagicMock
-            with patch('cli.generators.interview_questions_generator.anthropic') as mock_anthropic:
+
+            with patch("cli.generators.interview_questions_generator.anthropic") as mock_anthropic:
                 mock_client = MagicMock()
                 mock_client.messages.create.return_value = MagicMock(
-                    content=[MagicMock(text='{"technical_questions": [], "behavioral_questions": [], "job_analysis": {}}')]
+                    content=[
+                        MagicMock(
+                            text='{"technical_questions": [], "behavioral_questions": [], "job_analysis": {}}'
+                        )
+                    ]
                 )
                 mock_anthropic.Anthropic.return_value = mock_client
 
                 # Create minimal valid config for testing
                 from cli.utils.config import Config
+
                 config = Config()
 
                 generator = InterviewQuestionsGenerator.__new__(InterviewQuestionsGenerator)
@@ -194,9 +211,9 @@ def test_extract_json():
                 generator.client = MagicMock()
 
                 # Test code block extraction
-                response_with_code_block = '''```json
+                response_with_code_block = """```json
                 {"test": "value"}
-                ```'''
+                ```"""
                 result = generator._extract_json(response_with_code_block)
                 assert '{"test": "value"}' in result
 
@@ -206,7 +223,7 @@ def test_extract_json():
                 assert '{"test": "value"}' == result
 
                 # Test no JSON case
-                response_no_json = 'This is just text'
+                response_no_json = "This is just text"
                 result = generator._extract_json(response_no_json)
                 assert result == ""
         except ImportError:

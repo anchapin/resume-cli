@@ -623,6 +623,7 @@ def analyze(ctx):
 
 # Add LinkedIn commands
 from .commands.linkedin import linkedin_import, linkedin_export
+
 cli.add_command(linkedin_import)
 cli.add_command(linkedin_export)
 
@@ -683,7 +684,6 @@ def ats_check(ctx, variant: str, job_desc: str, output: Optional[str]):
 
         traceback.print_exc()
         sys.exit(1)
-
 
 
 def main():

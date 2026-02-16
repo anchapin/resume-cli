@@ -80,7 +80,7 @@ class LinkedInSync:
             "meta": {
                 "version": "2.0.0",
                 "last_updated": datetime.now().strftime("%Y-%m-%d"),
-                "source": "linkedin_import"
+                "source": "linkedin_import",
             },
             "contact": self._extract_contact(linkedin_data),
             "professional_summary": self._extract_summary(linkedin_data),
@@ -89,7 +89,7 @@ class LinkedInSync:
             "education": self._extract_education(linkedin_data),
             "certifications": self._extract_certifications(linkedin_data),
             "projects": {},
-            "variants": {}
+            "variants": {},
         }
 
         return resume_data
@@ -101,21 +101,19 @@ class LinkedInSync:
         # LinkedIn export data structure varies by export format
         # Try multiple common paths
         profile_data = (
-            linkedin_data.get("profile", {}) or
-            linkedin_data.get("Profile", {}) or
-            linkedin_data
+            linkedin_data.get("profile", {}) or linkedin_data.get("Profile", {}) or linkedin_data
         )
 
         # Extract name
         first_name = (
-            profile_data.get("firstName") or
-            profile_data.get("first_name") or
-            profile_data.get("FirstName")
+            profile_data.get("firstName")
+            or profile_data.get("first_name")
+            or profile_data.get("FirstName")
         )
         last_name = (
-            profile_data.get("lastName") or
-            profile_data.get("last_name") or
-            profile_data.get("LastName")
+            profile_data.get("lastName")
+            or profile_data.get("last_name")
+            or profile_data.get("LastName")
         )
 
         if first_name and last_name:
@@ -125,18 +123,18 @@ class LinkedInSync:
 
         # Extract email
         email = (
-            profile_data.get("email") or
-            profile_data.get("emailAddress") or
-            profile_data.get("email_address")
+            profile_data.get("email")
+            or profile_data.get("emailAddress")
+            or profile_data.get("email_address")
         )
         if email:
             contact["email"] = email
 
         # Extract phone
         phone = (
-            profile_data.get("phone") or
-            profile_data.get("phoneNumber") or
-            profile_data.get("phone_number")
+            profile_data.get("phone")
+            or profile_data.get("phoneNumber")
+            or profile_data.get("phone_number")
         )
         if phone:
             contact["phone"] = phone
@@ -167,23 +165,18 @@ class LinkedInSync:
     def _extract_summary(self, linkedin_data: Dict[str, Any]) -> Dict[str, Any]:
         """Extract professional summary from LinkedIn data."""
         profile_data = (
-            linkedin_data.get("profile", {}) or
-            linkedin_data.get("Profile", {}) or
-            linkedin_data
+            linkedin_data.get("profile", {}) or linkedin_data.get("Profile", {}) or linkedin_data
         )
 
         summary = (
-            profile_data.get("summary") or
-            profile_data.get("Summary") or
-            profile_data.get("headline") or
-            profile_data.get("Headline") or
-            ""
+            profile_data.get("summary")
+            or profile_data.get("Summary")
+            or profile_data.get("headline")
+            or profile_data.get("Headline")
+            or ""
         )
 
-        return {
-            "base": summary,
-            "variants": {}
-        }
+        return {"base": summary, "variants": {}}
 
     def _extract_skills(self, linkedin_data: Dict[str, Any]) -> Dict[str, List[str]]:
         """Extract skills from LinkedIn data."""
@@ -198,10 +191,10 @@ class LinkedInSync:
         for skill in skills_data:
             if isinstance(skill, dict):
                 name = (
-                    skill.get("name") or
-                    skill.get("Name") or
-                    skill.get("skillName") or
-                    skill.get("skillName")
+                    skill.get("name")
+                    or skill.get("Name")
+                    or skill.get("skillName")
+                    or skill.get("skillName")
                 )
             elif isinstance(skill, str):
                 name = skill
@@ -232,33 +225,89 @@ class LinkedInSync:
             "tools": [],
             "cloud_platforms": [],
             "databases": [],
-            "other": []
+            "other": [],
         }
 
         language_keywords = [
-            "python", "javascript", "java", "go", "rust", "c\\+\\+", "c#", "ruby",
-            "php", "swift", "kotlin", "scala", "haskell", "typescript", "sql"
+            "python",
+            "javascript",
+            "java",
+            "go",
+            "rust",
+            "c\\+\\+",
+            "c#",
+            "ruby",
+            "php",
+            "swift",
+            "kotlin",
+            "scala",
+            "haskell",
+            "typescript",
+            "sql",
         ]
 
         framework_keywords = [
-            "django", "flask", "fastapi", "spring", "react", "angular", "vue",
-            "express", "rails", "laravel", "next\\.js", "nuxt", "tensorflow",
-            "pytorch", "keras", "pandas", "numpy", "scikit", "langchain"
+            "django",
+            "flask",
+            "fastapi",
+            "spring",
+            "react",
+            "angular",
+            "vue",
+            "express",
+            "rails",
+            "laravel",
+            "next\\.js",
+            "nuxt",
+            "tensorflow",
+            "pytorch",
+            "keras",
+            "pandas",
+            "numpy",
+            "scikit",
+            "langchain",
         ]
 
         cloud_keywords = [
-            "aws", "azure", "gcp", "google cloud", "amazon web services",
-            "heroku", "vercel", "netlify", "digitalocean", "linode"
+            "aws",
+            "azure",
+            "gcp",
+            "google cloud",
+            "amazon web services",
+            "heroku",
+            "vercel",
+            "netlify",
+            "digitalocean",
+            "linode",
         ]
 
         database_keywords = [
-            "postgres", "postgresql", "mysql", "mongodb", "redis", "sqlite",
-            "oracle", "sql server", "cassandra", "elasticsearch", "dynamodb"
+            "postgres",
+            "postgresql",
+            "mysql",
+            "mongodb",
+            "redis",
+            "sqlite",
+            "oracle",
+            "sql server",
+            "cassandra",
+            "elasticsearch",
+            "dynamodb",
         ]
 
         tool_keywords = [
-            "docker", "kubernetes", "git", "github", "gitlab", "jenkins",
-            "circleci", "terraform", "ansible", "nagios", "grafana", "prometheus"
+            "docker",
+            "kubernetes",
+            "git",
+            "github",
+            "gitlab",
+            "jenkins",
+            "circleci",
+            "terraform",
+            "ansible",
+            "nagios",
+            "grafana",
+            "prometheus",
         ]
 
         for skill in skills:
@@ -271,7 +320,7 @@ class LinkedInSync:
                 (framework_keywords, "frameworks"),
                 (cloud_keywords, "cloud_platforms"),
                 (database_keywords, "databases"),
-                (tool_keywords, "tools")
+                (tool_keywords, "tools"),
             ]
 
             for keywords, category in patterns:
@@ -289,11 +338,11 @@ class LinkedInSync:
     def _extract_experience(self, linkedin_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract work experience from LinkedIn data."""
         experience_data = (
-            linkedin_data.get("experience") or
-            linkedin_data.get("Experience") or
-            linkedin_data.get("positions") or
-            linkedin_data.get("Positions") or
-            []
+            linkedin_data.get("experience")
+            or linkedin_data.get("Experience")
+            or linkedin_data.get("positions")
+            or linkedin_data.get("Positions")
+            or []
         )
 
         if not isinstance(experience_data, list):
@@ -304,19 +353,9 @@ class LinkedInSync:
             if not isinstance(exp, dict):
                 continue
 
-            company = (
-                exp.get("company") or
-                exp.get("CompanyName") or
-                exp.get("companyName") or
-                ""
-            )
+            company = exp.get("company") or exp.get("CompanyName") or exp.get("companyName") or ""
 
-            title = (
-                exp.get("title") or
-                exp.get("Title") or
-                exp.get("jobTitle") or
-                ""
-            )
+            title = exp.get("title") or exp.get("Title") or exp.get("jobTitle") or ""
 
             if not company or not title:
                 continue
@@ -327,18 +366,11 @@ class LinkedInSync:
 
             # Location
             location = (
-                exp.get("location") or
-                exp.get("Location") or
-                exp.get("companyLocation") or
-                ""
+                exp.get("location") or exp.get("Location") or exp.get("companyLocation") or ""
             )
 
             # Description/bullets
-            description = (
-                exp.get("description") or
-                exp.get("Description") or
-                ""
-            )
+            description = exp.get("description") or exp.get("Description") or ""
 
             bullets = self._parse_description_to_bullets(description)
 
@@ -348,15 +380,14 @@ class LinkedInSync:
                 "start_date": start_date,
                 "end_date": end_date,
                 "location": location,
-                "bullets": bullets
+                "bullets": bullets,
             }
 
             experience.append(experience_entry)
 
         # Sort by start date (most recent first)
         experience.sort(
-            key=lambda x: (x["start_date"] or "1900-01", x["end_date"] or "9999-12"),
-            reverse=True
+            key=lambda x: (x["start_date"] or "1900-01", x["end_date"] or "9999-12"), reverse=True
         )
 
         return experience
@@ -375,15 +406,7 @@ class LinkedInSync:
             return None
 
         # Common LinkedIn date formats
-        formats = [
-            "%Y-%m-%d",
-            "%Y-%m",
-            "%B %Y",
-            "%b %Y",
-            "%Y",
-            "%m/%Y",
-            "%m/%d/%Y"
-        ]
+        formats = ["%Y-%m-%d", "%Y-%m", "%B %Y", "%b %Y", "%Y", "%m/%Y", "%m/%d/%Y"]
 
         for fmt in formats:
             try:
@@ -420,29 +443,17 @@ class LinkedInSync:
         for text in raw_bullets:
             text = text.strip()
             if len(text) > 10:  # Ignore very short bullets
-                bullets.append({
-                    "text": text,
-                    "skills": [],
-                    "emphasize_for": []
-                })
+                bullets.append({"text": text, "skills": [], "emphasize_for": []})
 
         # If no bullets found, treat whole description as one bullet
         if not bullets and len(description) > 20:
-            bullets.append({
-                "text": description,
-                "skills": [],
-                "emphasize_for": []
-            })
+            bullets.append({"text": description, "skills": [], "emphasize_for": []})
 
         return bullets
 
     def _extract_education(self, linkedin_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract education from LinkedIn data."""
-        education_data = (
-            linkedin_data.get("education") or
-            linkedin_data.get("Education") or
-            []
-        )
+        education_data = linkedin_data.get("education") or linkedin_data.get("Education") or []
 
         if not isinstance(education_data, list):
             return []
@@ -453,19 +464,14 @@ class LinkedInSync:
                 continue
 
             institution = (
-                edu.get("school") or
-                edu.get("School") or
-                edu.get("schoolName") or
-                edu.get("institution") or
-                ""
+                edu.get("school")
+                or edu.get("School")
+                or edu.get("schoolName")
+                or edu.get("institution")
+                or ""
             )
 
-            degree = (
-                edu.get("degree") or
-                edu.get("Degree") or
-                edu.get("degreeName") or
-                ""
-            )
+            degree = edu.get("degree") or edu.get("Degree") or edu.get("degreeName") or ""
 
             if not institution:
                 continue
@@ -476,45 +482,33 @@ class LinkedInSync:
             )
 
             # Location
-            location = (
-                edu.get("schoolLocation") or
-                edu.get("location") or
-                ""
-            )
+            location = edu.get("schoolLocation") or edu.get("location") or ""
 
             # Field of study
-            field = (
-                edu.get("fieldOfStudy") or
-                edu.get("field_of_study") or
-                edu.get("field") or
-                ""
-            )
+            field = edu.get("fieldOfStudy") or edu.get("field_of_study") or edu.get("field") or ""
 
             education_entry = {
                 "institution": institution,
                 "degree": degree,
                 "graduation_date": grad_date or "",
                 "location": location,
-                "field": field
+                "field": field,
             }
 
             education.append(education_entry)
 
         # Sort by graduation date (most recent first)
-        education.sort(
-            key=lambda x: (x["graduation_date"] or "1900-01"),
-            reverse=True
-        )
+        education.sort(key=lambda x: (x["graduation_date"] or "1900-01"), reverse=True)
 
         return education
 
     def _extract_certifications(self, linkedin_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract certifications from LinkedIn data."""
         cert_data = (
-            linkedin_data.get("certifications") or
-            linkedin_data.get("Certifications") or
-            linkedin_data.get("certifications") or
-            []
+            linkedin_data.get("certifications")
+            or linkedin_data.get("Certifications")
+            or linkedin_data.get("certifications")
+            or []
         )
 
         if not isinstance(cert_data, list):
@@ -525,22 +519,17 @@ class LinkedInSync:
             if not isinstance(cert, dict):
                 continue
 
-            name = (
-                cert.get("name") or
-                cert.get("Name") or
-                cert.get("certificationName") or
-                ""
-            )
+            name = cert.get("name") or cert.get("Name") or cert.get("certificationName") or ""
 
             if not name:
                 continue
 
             # Issuing organization
             authority = (
-                cert.get("authority") or
-                cert.get("Authority") or
-                cert.get("issuingOrganization") or
-                ""
+                cert.get("authority")
+                or cert.get("Authority")
+                or cert.get("issuingOrganization")
+                or ""
             )
 
             # Date
@@ -551,20 +540,13 @@ class LinkedInSync:
             # URL
             url = cert.get("url") or cert.get("Url") or ""
 
-            certifications.append({
-                "name": name,
-                "issuer": authority,
-                "date": date or "",
-                "url": url
-            })
+            certifications.append(
+                {"name": name, "issuer": authority, "date": date or "", "url": url}
+            )
 
         return certifications
 
-    def export_to_linkedin_format(
-        self,
-        yaml_path: Path,
-        output_path: Optional[Path] = None
-    ) -> str:
+    def export_to_linkedin_format(self, yaml_path: Path, output_path: Optional[Path] = None) -> str:
         """
         Export resume.yaml data to LinkedIn-friendly format.
 
@@ -594,20 +576,20 @@ class LinkedInSync:
             sections.append("\nExperience:")
             for exp in experience:
                 sections.append(f"\n{exp.get('title', '')} | {exp.get('company', '')}")
-                if exp.get('location'):
+                if exp.get("location"):
                     sections.append(f"Location: {exp['location']}")
 
                 # Format dates
-                start = exp.get('start_date', '')
-                end = exp.get('end_date') or 'Present'
+                start = exp.get("start_date", "")
+                end = exp.get("end_date") or "Present"
                 if start:
                     sections.append(f"{self._format_date_range(start, end)}")
 
                 # Bullets
-                bullets = exp.get('bullets', [])
+                bullets = exp.get("bullets", [])
                 for bullet in bullets:
                     if isinstance(bullet, dict):
-                        text = bullet.get('text', '')
+                        text = bullet.get("text", "")
                     else:
                         text = str(bullet)
                     if text:
@@ -630,11 +612,11 @@ class LinkedInSync:
             sections.append("\n\nEducation:")
             for edu in education:
                 sections.append(f"\n{edu.get('institution', '')}")
-                if edu.get('degree'):
+                if edu.get("degree"):
                     sections.append(f"{edu.get('degree', '')}")
-                if edu.get('field'):
+                if edu.get("field"):
                     sections.append(f"Field: {edu['field']}")
-                if edu.get('graduation_date'):
+                if edu.get("graduation_date"):
                     sections.append(f"Graduated: {edu['graduation_date']}")
 
         # Certifications
@@ -642,9 +624,9 @@ class LinkedInSync:
         if certifications:
             sections.append("\n\nCertifications:")
             for cert in certifications:
-                name = cert.get('name', '')
-                issuer = cert.get('issuer', '')
-                date = cert.get('date', '')
+                name = cert.get("name", "")
+                issuer = cert.get("issuer", "")
+                date = cert.get("date", "")
                 cert_line = f"• {name}"
                 if issuer:
                     cert_line += f" - {issuer}"

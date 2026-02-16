@@ -10,6 +10,7 @@ from rich.console import Console
 # Load environment variables from .env file if present
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass
@@ -19,12 +20,14 @@ console = Console()
 
 try:
     import anthropic
+
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
 
 try:
     import openai
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
@@ -38,11 +41,7 @@ from .ai_judge import create_ai_judge
 class InterviewQuestionsGenerator:
     """Generate personalized interview questions based on job description and resume."""
 
-    def __init__(
-        self,
-        yaml_path: Optional[Path] = None,
-        config: Optional[Config] = None
-    ):
+    def __init__(self, yaml_path: Optional[Path] = None, config: Optional[Config] = None):
         """
         Initialize interview questions generator.
 
@@ -61,8 +60,7 @@ class InterviewQuestionsGenerator:
         if provider == "anthropic":
             if not ANTHROPIC_AVAILABLE:
                 raise ImportError(
-                    "anthropic package not installed. "
-                    "Install with: pip install 'resume-cli[ai]'"
+                    "anthropic package not installed. " "Install with: pip install 'resume-cli[ai]'"
                 )
             api_key = os.getenv("ANTHROPIC_API_KEY")
             if not api_key:
@@ -70,7 +68,9 @@ class InterviewQuestionsGenerator:
                     "ANTHROPIC_API_KEY environment variable not set. "
                     "Set it with: export ANTHROPIC_API_KEY=your_key"
                 )
-            base_url = os.getenv("ANTHROPIC_BASE_URL") or self.config.get("ai.anthropic_base_url", "")
+            base_url = os.getenv("ANTHROPIC_BASE_URL") or self.config.get(
+                "ai.anthropic_base_url", ""
+            )
             client_kwargs = {"api_key": api_key}
             if base_url:
                 client_kwargs["base_url"] = base_url
@@ -80,8 +80,7 @@ class InterviewQuestionsGenerator:
         elif provider == "openai":
             if not OPENAI_AVAILABLE:
                 raise ImportError(
-                    "openai package not installed. "
-                    "Install with: pip install 'resume-cli[ai]'"
+                    "openai package not installed. " "Install with: pip install 'resume-cli[ai]'"
                 )
             api_key = os.getenv("OPENAI_API_KEY")
             if not api_key:
@@ -117,7 +116,7 @@ class InterviewQuestionsGenerator:
         num_technical: int = 10,
         num_behavioral: int = 5,
         include_system_design: bool = True,
-        flashcard_mode: bool = False
+        flashcard_mode: bool = False,
     ) -> Dict[str, Any]:
         """
         Generate interview questions based on job description.
@@ -140,7 +139,9 @@ class InterviewQuestionsGenerator:
         console.print("[bold blue]Generating interview questions...[/bold blue]")
 
         # Generate resume content for context
-        resume_content = self.template_generator.generate(variant=variant, output_format="md", output_path=None)
+        resume_content = self.template_generator.generate(
+            variant=variant, output_format="md", output_path=None
+        )
 
         # Extract resume experience and skills
         experience = self.yaml_handler.get_experience(variant)
@@ -155,7 +156,7 @@ class InterviewQuestionsGenerator:
             num_technical=num_technical,
             num_behavioral=num_behavioral,
             include_system_design=include_system_design,
-            flashcard_mode=flashcard_mode
+            flashcard_mode=flashcard_mode,
         )
 
         return questions_data
@@ -169,7 +170,7 @@ class InterviewQuestionsGenerator:
         num_technical: int,
         num_behavioral: int,
         include_system_design: bool,
-        flashcard_mode: bool
+        flashcard_mode: bool,
     ) -> Dict[str, Any]:
         """
         Generate questions using AI with multi-generation and judge selection.
@@ -196,7 +197,7 @@ class InterviewQuestionsGenerator:
             num_technical=num_technical,
             num_behavioral=num_behavioral,
             include_system_design=include_system_design,
-            flashcard_mode=flashcard_mode
+            flashcard_mode=flashcard_mode,
         )
 
         # Generate multiple versions
@@ -217,7 +218,9 @@ class InterviewQuestionsGenerator:
                     if extracted_json:
                         versions.append(json.loads(extracted_json))
             except Exception as e:
-                console.print(f"[yellow]Warning:[/yellow] Question generation {i+1} failed: {str(e)}")
+                console.print(
+                    f"[yellow]Warning:[/yellow] Question generation {i+1} failed: {str(e)}"
+                )
                 continue
 
         # If no successful generations, return empty structure
@@ -227,7 +230,7 @@ class InterviewQuestionsGenerator:
                 "technical_questions": [],
                 "behavioral_questions": [],
                 "system_design_questions": [] if include_system_design else None,
-                "job_analysis": {}
+                "job_analysis": {},
             }
 
         # If only one successful generation, return it
@@ -244,7 +247,9 @@ class InterviewQuestionsGenerator:
                 console.print(f"[dim]AI Judge (Interview Questions): Selected best version[/dim]")
                 return selected
             except Exception as e:
-                console.print(f"[yellow]Warning:[/yellow] Judge evaluation failed: {str(e)}. Using first version.")
+                console.print(
+                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {str(e)}. Using first version."
+                )
                 return versions[0]
 
         # Fallback to first version
@@ -259,7 +264,7 @@ class InterviewQuestionsGenerator:
         num_technical: int,
         num_behavioral: int,
         include_system_design: bool,
-        flashcard_mode: bool
+        flashcard_mode: bool,
     ) -> str:
         """Build AI prompt for interview question generation."""
         # Format experience for prompt
@@ -268,7 +273,7 @@ class InterviewQuestionsGenerator:
             company = exp.get("company", "Unknown Company")
             title = exp.get("title", "Unknown Role")
             bullets = exp.get("bullets", [])
-            bullet_text = "\n".join([f"  - {b.get('text', '')}" for b in bullets if b.get('text')])
+            bullet_text = "\n".join([f"  - {b.get('text', '')}" for b in bullets if b.get("text")])
             experience_text += f"\n{title} at {company}\n{bullet_text}\n"
 
         # Format skills for prompt
@@ -277,19 +282,22 @@ class InterviewQuestionsGenerator:
             if skill_list:
                 if isinstance(skill_list[0], dict):
                     # Handle skill objects with emphasize_for
-                    skill_names = [s.get('name', s) for s in skill_list]
+                    skill_names = [s.get("name", s) for s in skill_list]
                 else:
                     skill_names = skill_list
                 skills_text += f"\n{category}: {', '.join(str(s) for s in skill_names[:10])}"
 
         mode_instruction = (
-            "Provide concise, self-contained answers suitable for flashcards (front: question, back: answer). "
-            "Keep answers to 2-3 sentences maximum."
-        ) if flashcard_mode else (
-            "Provide detailed, comprehensive answers with multiple talking points."
+            (
+                "Provide concise, self-contained answers suitable for flashcards (front: question, back: answer). "
+                "Keep answers to 2-3 sentences maximum."
+            )
+            if flashcard_mode
+            else ("Provide detailed, comprehensive answers with multiple talking points.")
         )
 
-        system_design_section = """
+        system_design_section = (
+            """
 **System Design Questions:**
 Generate {num_system} system design questions relevant to the role and technologies.
 
@@ -300,7 +308,12 @@ For each system design question:
 - reference: Specific resume experience relevant to this design challenge
 - talking_points: 4-6 key points to cover in the answer
 - complexity: Difficulty level (easy, medium, hard)
-""".format(num_system=3 if include_system_design else 0) if include_system_design else ""
+""".format(
+                num_system=3 if include_system_design else 0
+            )
+            if include_system_design
+            else ""
+        )
 
         prompt = f"""You are an expert technical interviewer and career coach. Generate relevant interview questions based on a job description and candidate's resume.
 
@@ -577,8 +590,9 @@ Please generate the interview questions JSON:"""
 
         return "\n".join(lines)
 
-    def _format_question(self, question: Dict[str, Any], include_answer: bool = True,
-                        is_behavioral: bool = False) -> List[str]:
+    def _format_question(
+        self, question: Dict[str, Any], include_answer: bool = True, is_behavioral: bool = False
+    ) -> List[str]:
         """Format a single question for Markdown output."""
         lines = []
 
@@ -658,18 +672,18 @@ Please generate the interview questions JSON:"""
             return ""
 
         # Try to extract from code blocks
-        code_block_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response, re.DOTALL)
+        code_block_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", response, re.DOTALL)
         if code_block_match:
             return code_block_match.group(1).strip()
 
         # Look for JSON object
-        obj_match = re.search(r'\{[^{}]*\{[^{}]*\}[^{}]*\}', response, re.DOTALL)
+        obj_match = re.search(r"\{[^{}]*\{[^{}]*\}[^{}]*\}", response, re.DOTALL)
         if obj_match:
             return obj_match.group(0).strip()
 
         # Fallback: return the original response stripped
         stripped = response.strip()
-        if stripped.startswith('{'):
+        if stripped.startswith("{"):
             return stripped
 
         # No valid JSON found
@@ -683,9 +697,7 @@ Please generate the interview questions JSON:"""
             model=model,
             max_tokens=self.config.get("ai.max_tokens", 4000),
             temperature=self.config.get("ai.temperature", 0.7),
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            messages=[{"role": "user", "content": prompt}],
         )
 
         return message.content[0].text
@@ -698,9 +710,7 @@ Please generate the interview questions JSON:"""
             model=model,
             max_tokens=self.config.get("ai.max_tokens", 4000),
             temperature=self.config.get("ai.temperature", 0.7),
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            messages=[{"role": "user", "content": prompt}],
         )
 
         return response.choices[0].message.content

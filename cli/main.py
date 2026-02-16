@@ -994,7 +994,7 @@ def keyword_analysis(ctx, variant: str, job_desc: str, output: Optional[str]):
     console.print(f"  Job description: {job_desc}")
 
     try:
-        from .generators.keyword_density import KeywordDensityGenerator
+        from .utils.keyword_density import KeywordDensityGenerator
 
         # Generate keyword density report
         generator = KeywordDensityGenerator(yaml_path, config=config)

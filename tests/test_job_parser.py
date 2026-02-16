@@ -1,6 +1,5 @@
 """Unit tests for JobParser class."""
 
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -36,7 +35,7 @@ class TestJobDetails:
             responsibilities=["Code"],
         )
         result = job.to_dict()
-        
+
         assert result["company"] == "Test Corp"
         assert result["position"] == "Engineer"
         assert result["requirements"] == ["Python"]
@@ -50,7 +49,7 @@ class TestJobDetails:
             responsibilities=["Code"],
         )
         result = job.to_json()
-        
+
         assert "Test Corp" in result
         assert "Engineer" in result
         assert isinstance(result, str)
@@ -138,7 +137,7 @@ class TestParseFromURL:
     def test_parse_from_url_not_implemented(self):
         """Test parse_from_url raises NotImplementedError."""
         parser = JobParser()
-        
+
         with pytest.raises(NotImplementedError):
             parser.parse_from_url("https://example.com/job")
 
@@ -149,70 +148,70 @@ class TestExtractPatterns:
     def test_extract_pattern_found(self):
         """Test _extract_pattern finds match."""
         parser = JobParser()
-        
+
         result = parser._extract_pattern(
             "company: Test Corp",
             r"company:\s*(.+)",
         )
-        
+
         assert result == "Test Corp"
 
     def test_extract_pattern_not_found(self):
         """Test _extract_pattern returns default when not found."""
         parser = JobParser()
-        
+
         result = parser._extract_pattern(
             "no match here",
             r"company:\s*(\S+)",
             default="Unknown",
         )
-        
+
         assert result == "Unknown"
 
     def test_extract_list(self):
         """Test _extract_list extracts multiple items."""
         parser = JobParser()
-        
+
         text = "Requirements: Python, JavaScript, TypeScript"
         result = parser._extract_list(
             text,
             r"([A-Z][a-z]+)",
             max_items=3,
         )
-        
+
         assert len(result) <= 3
         assert "Python" in result
 
     def test_extract_list_deduplicates(self):
         """Test _extract_list deduplicates items."""
         parser = JobParser()
-        
+
         text = "Python is required. Python experience needed."
         result = parser._extract_list(
             text,
             r"([A-Z][a-z]+)",
             max_items=10,
         )
-        
+
         # Should have limited unique items
         assert len(result) <= 10
 
     def test_extract_items_from_text_bullets(self):
         """Test _extract_items_from_text with bullet points."""
         parser = JobParser()
-        
+
         text = "• First item\n• Second item\n• Third item"
         result = parser._extract_items_from_text(text)
-        
+
         assert len(result) == 3
 
     def test_extract_items_from_text_numbered(self):
         """Test _extract_items_from_text with numbered list."""
         parser = JobParser()
-        
+
         text = "1. First item\n2. Second item\n3. Third item"
         result = parser._extract_items_from_text(text)
-        
+
         assert len(result) == 3
 
 
@@ -222,20 +221,20 @@ class TestCacheOperations:
     def test_get_cache_key(self):
         """Test cache key generation."""
         parser = JobParser()
-        
+
         key1 = parser._get_cache_key("https://example.com/job1")
         key2 = parser._get_cache_key("https://example.com/job1")
         key3 = parser._get_cache_key("https://example.com/job2")
-        
+
         assert key1 == key2  # Same URL should produce same key
         assert key1 != key3  # Different URL should produce different key
 
     def test_get_from_cache_miss(self, temp_dir: Path):
         """Test cache miss returns None."""
         parser = JobParser(cache_dir=temp_dir / "cache")
-        
+
         result = parser._get_from_cache("nonexistent_key")
-        
+
         assert result is None
 
 
@@ -255,7 +254,7 @@ class TestParseJobPosting:
         """)
 
         result = parse_job_posting(file_path=html_file, use_cache=True)
-        
+
         assert result.company == "Test Corp"
 
     def test_parse_job_posting_requires_input(self):
@@ -283,7 +282,7 @@ class TestRemoteDetection:
 
         parser = JobParser()
         job = parser.parse_from_file(html_file)
-        
+
         # The remote field may or may not be set depending on parser logic
         # Just verify job was parsed successfully
         assert job.company == "Remote Corp"
@@ -303,6 +302,6 @@ class TestRemoteDetection:
 
         parser = JobParser()
         job = parser.parse_from_file(html_file)
-        
+
         # Just verify job was parsed successfully
         assert job.company == "Corp"

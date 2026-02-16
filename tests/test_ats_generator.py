@@ -1,12 +1,9 @@
 """Unit tests for ATSGenerator class."""
 
 import json
-import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
-import yaml
 
 from cli.generators.ats_generator import (
     ATSCategoryScore,
@@ -312,7 +309,9 @@ class TestPrintReport:
                 "format_parsing": ATSCategoryScore("Format Parsing", 20, 20, ["Good"], []),
                 "keywords": ATSCategoryScore("Keywords", 20, 30, ["Partial"], ["Add keywords"]),
                 "section_structure": ATSCategoryScore("Section Structure", 20, 20, ["Good"], []),
-                "contact_info": ATSCategoryScore("Contact Info", 10, 15, ["Partial"], ["Add phone"]),
+                "contact_info": ATSCategoryScore(
+                    "Contact Info", 10, 15, ["Partial"], ["Add phone"]
+                ),
                 "readability": ATSCategoryScore("Readability", 10, 15, ["Partial"], []),
             },
             summary="Good score",

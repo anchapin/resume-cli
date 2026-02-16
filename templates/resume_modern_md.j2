@@ -1,0 +1,80 @@
+{# Modern Resume Template #}
+{# Clean, modern design with minimal borders, accent color header, two-column layout #}
+
+# {{ contact.name }}{% if contact.credentials %}{% for cred in contact.credentials %}, {{ cred }}{% endfor %}{% endif %}
+
+**{{ contact.location.city }}, {{ contact.location.state }}** {{ contact.email }} {{ contact.phone }}
+{% if contact.urls.github %}[GitHub]({{ contact.urls.github }}){% endif %}{% if contact.urls.linkedin %}[LinkedIn]({{ contact.urls.linkedin }}){% endif %}
+
+---
+
+## About Me
+
+{{ summary }}
+
+---
+
+## Skills
+
+{% for section_name, skills in skills.items() %}
+**{{ section_name|replace('_',' ')|title }}:** {% for skill in skills %}{% if skill.name %}{{ skill.name }}{% else %}{{ skill }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+
+{% endfor %}
+
+---
+
+## Experience
+
+{% for job in experience %}
+### {{ job.title }} @ {{ job.company }}
+*{{ job.start_date|replace('-','–') }}{% if job.end_date %} – {{ job.end_date|replace('-','–') }}{% else %} – Present{% endif %}{% if job.location %} | {{ job.location }}{% endif %}*
+
+{% for bullet in job.bullets %}
+- {{ bullet.text }}
+{% endfor %}
+
+{% endfor %}
+
+---
+
+## Projects
+
+{% if projects %}
+{% for category, project_list in projects.items() %}
+### {{ category|replace('_',' ')|title }}
+
+{% for project in project_list %}
+- **{{ project.name }}**{% if project.enhanced_description %}: {{ project.enhanced_description }}{% elif project.description %}: {{ project.description }}{% endif %}
+{% if project.url %}[Link]({{ project.url }}){% endif %}
+{% if project.highlighted_technologies %}*Tech: {{ project.highlighted_technologies|join(', ') }}*{% endif %}
+
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+---
+
+## Education
+
+{% for edu in education %}
+**{{ edu.degree }}{% if edu.field %}, {{ edu.field }}{% endif %}** — {{ edu.institution }} ({{ edu.graduation_date|replace('-','–') }})
+
+{% endfor %}
+
+{% if certifications %}
+## Certifications
+
+{% for cert in certifications %}
+- {{ cert.name }}{% if cert.issuer %} — {{ cert.issuer }}{% endif %}
+
+{% endfor %}
+{% endif %}
+
+{% if publications %}
+## Publications
+
+{% for pub in publications %}
+- **{{ pub.title }}**{% if pub.authors %} ({{ pub.authors }}){% endif %}{% if pub.conference %}, *{{ pub.conference }}*{% endif %}
+
+{% endfor %}
+{% endif %}

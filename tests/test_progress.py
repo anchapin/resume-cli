@@ -1,6 +1,6 @@
 """Tests for progress indicator utilities."""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 
 class TestProgressManager:

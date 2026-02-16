@@ -26,6 +26,10 @@ ignore =
     # E226/E225 whitespace around operators (legacy code)
     E226,
     E225,
+    # E402 module level import not at top of file (due to conditional imports)
+    E402,
+    # F811 redefinition of unused (in schema.py)
+    F811,
 
 # Show complexity
 max-complexity = 10

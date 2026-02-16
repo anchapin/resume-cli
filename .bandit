@@ -1,0 +1,5 @@
+[bandit]
+skip_dirs = tests,tracking
+
+# Skip B413 (blacklist) as we use PyYAML which is safe
+skip = B413

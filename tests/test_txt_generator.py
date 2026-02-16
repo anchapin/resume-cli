@@ -1,6 +1,5 @@
 """Tests for TXT resume generator."""
 
-from unittest.mock import patch
 
 
 class TestTxtGeneratorInitialization:

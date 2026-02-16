@@ -1,0 +1,11 @@
+/home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/deps/powerfmt-da3842dc44f823e3.d: /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/lib.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/buf.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/ext.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/smart_display.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/smart_display_impls.rs
+
+/home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/deps/libpowerfmt-da3842dc44f823e3.rlib: /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/lib.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/buf.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/ext.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/smart_display.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/smart_display_impls.rs
+
+/home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/deps/libpowerfmt-da3842dc44f823e3.rmeta: /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/lib.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/buf.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/ext.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/smart_display.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/smart_display_impls.rs
+
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/lib.rs:
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/buf.rs:
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/ext.rs:
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/smart_display.rs:
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0/src/smart_display_impls.rs:

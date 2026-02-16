@@ -1,0 +1,14 @@
+/home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/deps/thiserror-82d9d14be1f25de5.d: /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/build/thiserror-f5b3584ce964266d/out/private.rs
+
+/home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/deps/libthiserror-82d9d14be1f25de5.rlib: /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/build/thiserror-f5b3584ce964266d/out/private.rs
+
+/home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/deps/libthiserror-82d9d14be1f25de5.rmeta: /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/build/thiserror-f5b3584ce964266d/out/private.rs
+
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs:
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs:
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs:
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs:
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs:
+/home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/build/thiserror-f5b3584ce964266d/out/private.rs:
+
+# env-dep:OUT_DIR=/home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/build/thiserror-f5b3584ce964266d/out

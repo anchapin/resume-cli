@@ -1,0 +1,10 @@
+/home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/deps/toml_datetime-93376ce84e94febe.d: /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/lib.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/datetime.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/de.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/ser.rs
+
+/home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/deps/libtoml_datetime-93376ce84e94febe.rlib: /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/lib.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/datetime.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/de.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/ser.rs
+
+/home/alexc/Projects/resume-cli/desktop/src-tauri/target/release/deps/libtoml_datetime-93376ce84e94febe.rmeta: /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/lib.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/datetime.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/de.rs /home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/ser.rs
+
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/lib.rs:
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/datetime.rs:
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/de.rs:
+/home/alexc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-0.7.5+spec-1.1.0/src/ser.rs:

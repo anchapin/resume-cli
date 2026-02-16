@@ -299,32 +299,39 @@ Import LinkedIn profile data into resume.yaml.
 resume-cli linkedin-import [OPTIONS]
 
 Options:
-  --data-file PATH     Path to LinkedIn exported JSON data file (required)
+  --data-file PATH     Path to LinkedIn exported JSON or CSV data file (required)
   --output PATH        Output YAML file path (default: resume.yaml)
   --merge              Merge with existing resume.yaml instead of overwriting
   --dry-run            Preview changes without writing to file
 ```
 
-**Note:** Direct URL import is not supported due to LinkedIn API restrictions. You must export your LinkedIn data first:
+**Important:** Direct URL import is not supported due to LinkedIn API restrictions. You must export your LinkedIn data first.
+
+**To get all your data (experience, education, skills, certifications):**
 
 1. Go to https://www.linkedin.com/psettings/member-data
-2. Request 'Profile' data export
-3. Use the downloaded JSON file with `--data-file`
+2. Click "Request data archive" (NOT just "Profile" data)
+3. Wait for LinkedIn to prepare your download (may take a few minutes to hours)
+4. Download the ZIP file containing your data
+5. Extract the ZIP file - look for JSON files (e.g., `profile.json`, `experience.json`, `education.json`, `skills.json`)
+6. Use the main profile JSON file with `--data-file`
+
+**Note:** The basic "Profile" export (Profile.csv) only contains basic fields (name, headline, summary). It does NOT include experience, education, skills, or certifications. You must request the full data archive to get those.
 
 **Examples:**
 
 ```bash
 # Import from exported JSON (creates new resume.yaml)
-resume-cli linkedin-import --data-file linkedin_data.json
+resume-cli linkedin-import --data-file profile.json
 
 # Merge with existing resume.yaml
-resume-cli linkedin-import --data-file linkedin_data.json --merge
+resume-cli linkedin-import --data-file profile.json --merge
 
 # Preview changes before importing
-resume-cli linkedin-import --data-file linkedin_data.json --dry-run
+resume-cli linkedin-import --data-file profile.json --dry-run
 
 # Import to custom path
-resume-cli linkedin-import --data-file linkedin_data.json --output my-resume.yaml
+resume-cli linkedin-import --data-file profile.json --output my-resume.yaml
 ```
 
 **Field Mapping:**

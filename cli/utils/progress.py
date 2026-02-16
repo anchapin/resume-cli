@@ -245,9 +245,7 @@ class ProgressManager:
             console=console,
         )
         self._progress.start()
-        self._task_id = self._progress.add_task(
-            "[cyan]Compiling LaTeX to PDF..."
-        )
+        self._task_id = self._progress.add_task("[cyan]Compiling LaTeX to PDF...")
 
         return self
 

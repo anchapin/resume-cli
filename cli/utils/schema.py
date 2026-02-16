@@ -91,9 +91,35 @@ RESUME_SCHEMA = {
 
 
 class ValidationError:
-    """Represents a validation error."""
+    """Represents a validation error with actionable guidance."""
 
-    def __init__(self, path: str, message: str, level: str = "error"):
+    # Error message templates with "What to do" guidance
+    ERROR_GUIDANCE = {
+        "contact.email": {
+            "invalid": 'The email "{value}" is not a valid format.\n\nWhat to do:\n  • Check your email in resume.yaml\n  • Format should be: user@domain.com\n  • Example: john@example.com',
+        },
+        "contact.name": {
+            "missing": 'Missing required "name" field in contact section.\n\nWhat to do:\n  • Add your full name to the contact section in resume.yaml\n  • Example: name: "John Doe"',
+        },
+        "contact.phone": {
+            "missing": 'Missing required "phone" field in contact section.\n\nWhat to do:\n  • Add your phone number to the contact section in resume.yaml\n  • Example: phone: "+1 (555) 123-4567"',
+        },
+        "root": {
+            "file_not_found": '{message}\n\nWhat to do:\n  • Run "resume-cli init --from-existing" to create resume.yaml\n  • Or manually create resume.yaml from the sample template\n  • See: https://github.com/anchapin/resume-cli#getting-started',
+            "yaml_error": "{message}\n\nWhat to do:\n  • Check your resume.yaml for syntax errors\n  • Common issues: inconsistent indentation, missing colons, unquoted special characters\n  • Use a YAML validator: https://www.yamllint.com/\n  • See: https://github.com/anchapin/resume-cli#troubleshooting",
+        },
+        "experience": {
+            "missing": 'Missing required "experience" section.\n\nWhat to do:\n  • Add an experience section to resume.yaml\n  • See example: https://github.com/anchapin/resume-cli#adding-a-new-jobexperience',
+        },
+        "education": {
+            "missing": 'Missing required "education" section.\n\nWhat to do:\n  • Add an education section to resume.yaml',
+        },
+        "skills": {
+            "missing": 'Missing required "skills" section.\n\nWhat to do:\n  • Add a skills section to resume.yaml\n  • Example: skills:\n    programming: [Python, JavaScript]\n    tools: [Git, Docker]',
+        },
+    }
+
+    def __init__(self, path: str, message: str, level: str = "error", guidance: str = None):
         """
         Initialize validation error.
 
@@ -101,14 +127,19 @@ class ValidationError:
             path: Dot-notation path to error location (e.g., "experience.0.company")
             message: Error message
             level: Error level (error, warning, info)
+            guidance: Optional actionable guidance message
         """
         self.path = path
         self.message = message
         self.level = level
+        self.guidance = guidance
 
     def __str__(self) -> str:
         level_str = self.level.upper().ljust(7)
-        return f"[{level_str}] {self.path}: {self.message}"
+        base_msg = f"[{level_str}] {self.path}: {self.message}"
+        if self.guidance:
+            return f"{base_msg}\n\n{self.guidance}"
+        return base_msg
 
     def __repr__(self) -> str:
         return (
@@ -166,7 +197,10 @@ class ResumeValidator:
         # Check required top-level keys
         for key, spec in RESUME_SCHEMA.items():
             if spec.get("required", False) and key not in data:
-                self.errors.append(ValidationError(key, f"Missing required section", "error"))
+                guidance = self._get_guidance(key, "missing")
+                self.errors.append(
+                    ValidationError(key, f"Missing required section", "error", guidance)
+                )
 
             # Check type
             if key in data:
@@ -179,6 +213,29 @@ class ResumeValidator:
                             "error",
                         )
                     )
+
+    def _get_guidance(self, path: str, error_type: str = "missing", value: str = None) -> str:
+        """Get actionable guidance for an error."""
+        key = path
+        # Try to get guidance for this path and error type
+        if key in self.ERROR_GUIDANCE:
+            template = self.ERROR_GUIDANCE[key].get(error_type, "")
+            if template:
+                if value and "{value}" in template:
+                    return template.replace("{value}", value)
+                if "{message}" in template:
+                    return template.replace("{message}", f"{path}: Missing required section")
+                return template
+
+        # Try just the path as the key
+        if path in self.ERROR_GUIDANCE:
+            template = self.ERROR_GUIDANCE[path].get(error_type, "")
+            if template:
+                if value and "{value}" in template:
+                    return template.replace("{value}", value)
+                return template
+
+        return ""
 
     def _validate_contact(self, data: Dict[str, Any]) -> None:
         """Validate contact information."""
@@ -193,14 +250,18 @@ class ResumeValidator:
 
         for field in required_fields:
             if field not in contact or not contact[field]:
+                guidance = self._get_guidance(f"contact.{field}", "missing")
                 self.errors.append(
-                    ValidationError(f"contact.{field}", "Missing required field", "error")
+                    ValidationError(f"contact.{field}", "Missing required field", "error", guidance)
                 )
 
         # Validate email format
         email = contact.get("email", "")
         if email and "@" not in email:
-            self.errors.append(ValidationError("contact.email", "Invalid email format", "error"))
+            guidance = self._get_guidance("contact.email", "invalid", email)
+            self.errors.append(
+                ValidationError("contact.email", "Invalid email format", "error", guidance)
+            )
 
     def _validate_experience(self, data: Dict[str, Any]) -> None:
         """Validate experience entries."""

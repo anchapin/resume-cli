@@ -47,4 +47,3 @@ class CoverLetterRequest(BaseModel):
     motivation: Optional[str] = None
     company_resonance: Optional[str] = None
     connections: Optional[str] = None
-

@@ -1,0 +1,90 @@
+{# ATS-Friendly Plain Text Resume Template #}
+{# This template is optimized for ATS systems - minimal formatting, ASCII-safe #}
+
+{% if contact.name %}{{ contact.name }}{% if contact.credentials %}{% for cred in contact.credentials %}, {{ cred }}{% endfor %}{% endif %}
+{% endif %}
+
+{% if contact.location.city %}{{ contact.location.city }}{% if contact.location.state %}, {{ contact.location.state }}{% endif %}{% if contact.location.zip %} {{ contact.location.zip }}{% endif %}{% endif %}
+{% if contact.email %}{{ contact.email }}{% endif %}{% if contact.phone %} | {{ contact.phone }}{% endif %}
+{% if contact.urls.github %}{{ contact.urls.github }}{% endif %}{% if contact.urls.linkedin %} | {{ contact.urls.linkedin }}{% endif %}
+
+================================================================================
+
+PROFESSIONAL SUMMARY
+
+{{ summary }}
+
+{% if projects %}
+================================================================================
+
+PROJECTS
+
+{% for category, project_list in projects.items() %}
+{{ category|replace('_',' ')|upper }}
+{% for project in project_list %}
+- {{ project.name }}
+{% if project.enhanced_description %}{{ project.enhanced_description }}{% elif project.description %}{{ project.description }}{% endif %}
+{% if project.url %}URL: {{ project.url }}{% endif %}
+{% if project.highlighted_technologies %}TECHNOLOGIES: {{ project.highlighted_technologies|join(', ') }}{% endif %}
+{% if project.achievement_highlights %}
+{% for achievement in project.achievement_highlights %}  - {{ achievement }}
+{% endfor %}{% endif %}
+
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+================================================================================
+
+PROFESSIONAL EXPERIENCE
+
+{% for job in experience %}
+{{ job.title }}
+{{ job.company }}{% if job.location %} | {{ job.location }}{% endif %}
+
+{% if job.end_date %}{{ job.start_date }} - {{ job.end_date }}{% else %}{{ job.start_date }} - Present{% endif %}
+{% for bullet in job.bullets %}
+- {{ bullet.text }}
+{% endfor %}
+
+{% endfor %}
+
+================================================================================
+
+EDUCATION
+
+{% for edu in education %}
+{{ edu.institution }}{% if edu.location %} | {{ edu.location }}{% endif %}
+{{ edu.degree }}{% if edu.field %}, {{ edu.field }}{% endif %} | Graduated {{ edu.graduation_date }}
+
+{% endfor %}
+
+================================================================================
+
+SKILLS
+
+{% for section_name, skills in skills.items() %}
+{{ section_name|replace('_',' ')|title }}:
+{% for skill in skills %}{% if skill.name %}{{ skill.name }}{% else %}{{ skill }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+
+{% endfor %}
+
+{% if certifications %}
+================================================================================
+
+CERTIFICATIONS
+
+{% for cert in certifications %}
+- {{ cert.name }}{% if cert.issuer %} - {{ cert.issuer }}{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if publications %}
+================================================================================
+
+PUBLICATIONS
+
+{% for pub in publications %}
+- {{ pub.title }}{% if pub.authors %} ({{ pub.authors }}){% endif %}{% if pub.year %}, {{ pub.year }}{% endif %}
+{% endfor %}
+{% endif %}

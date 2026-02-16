@@ -25,6 +25,9 @@ python-dateutil>=2.8.0
 # HTTP Requests
 requests>=2.31.0
 
+# Document Generation
+python-docx>=1.1.0
+
 # Testing (dev)
 pytest>=7.0.0
 pytest-cov>=4.0.0

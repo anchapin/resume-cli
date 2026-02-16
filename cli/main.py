@@ -118,7 +118,7 @@ def validate(ctx):
 @cli.command()
 @click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to generate")
 @click.option(
-    "-f", "--format", type=click.Choice(["md", "tex", "pdf"]), default="md", help="Output format"
+    "-f", "--format", type=click.Choice(["md", "tex", "pdf", "txt", "docx"]), default="md", help="Output format"
 )
 @click.option(
     "-o", "--output", type=click.Path(), help="Output file path (default: auto-generated)"
@@ -175,8 +175,39 @@ def generate(
         else:
             output_path = None
 
-        # Generate
-        if ai or job_description:
+        # Handle new ATS formats (txt, docx)
+        if format in ("txt", "docx"):
+            # Use template generator for txt, docx generator for docx
+            if format == "txt":
+                generator = TemplateGenerator(yaml_path, config=config)
+                
+                if output_path is None and not no_save:
+                    output_path = generator.get_output_path(variant, format)
+                
+                content = generator.generate(
+                    variant=variant, output_format=format, output_path=output_path
+                )
+            else:  # docx
+                from .generators.docx_generator import DocxGenerator
+                
+                generator = DocxGenerator(yaml_path, config=config)
+                
+                if output_path is None and not no_save:
+                    # Use template generator to get the right path structure
+                    base_path = TemplateGenerator(yaml_path, config=config).get_output_path(
+                        variant, "md"
+                    )
+                    output_path = base_path.parent / f"{base_path.stem}.docx"
+                
+                generator.generate(
+                    variant=variant, 
+                    output_path=output_path,
+                    enhanced_context=None
+                )
+                content = None  # DOCX is saved directly
+
+        # Standard generation (md, tex, pdf) with optional AI enhancement
+        elif ai or job_description:
             from .generators.ai_generator import AIGenerator
 
             console.print("[cyan]Using AI-powered generation...[/cyan]")
@@ -206,7 +237,7 @@ def generate(
                 variant=variant, output_format=format, output_path=output_path
             )
 
-        if no_save:
+        if no_save and content:
             console.print("\n" + "-" * 80)
             console.print(content)
             console.print("-" * 80)

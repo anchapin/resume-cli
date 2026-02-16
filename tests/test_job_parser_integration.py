@@ -9,7 +9,6 @@ LinkedIn, Indeed, and generic job boards.
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -282,7 +281,7 @@ class TestJobParserInitialization:
     def test_cache_dir_created_if_not_exists(self, tmp_path):
         """Test that cache directory is created if it doesn't exist."""
         cache_dir = tmp_path / "new_cache"
-        parser = JobParser(cache_dir=cache_dir)
+        JobParser(cache_dir=cache_dir)
         assert cache_dir.exists()
 
 

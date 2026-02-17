@@ -108,7 +108,9 @@ def convert(input_file: Path, output_file: Path, direction: str, format: str, no
             with open(input_file, "r", encoding="utf-8") as f:
                 json_data = json.load(f)
 
-            yaml_data = JSONResumeConverter.json_resume_to_yaml(json_data, include_variants=not no_variants)
+            yaml_data = JSONResumeConverter.json_resume_to_yaml(
+                json_data, include_variants=not no_variants
+            )
 
             # Save using yaml_parser
             from ..utils.yaml_parser import ResumeYAML

@@ -38,10 +38,10 @@ RESUME_SCHEMA = {
         },
     },
     "skills": {
-        "required": True, 
-        "type": dict, 
+        "required": True,
+        "type": dict,
         "fields": {},
-        "description": "Skills can use multiple formats:\n  - Simple: {category: [skill1, skill2]}\n  - Extended: {category: [{name: skill1, level: Expert, years: 5}, ...]}\n  - JSON Resume: [{name: category, keywords: [skill1, skill2]}, ...]"
+        "description": "Skills can use multiple formats:\n  - Simple: {category: [skill1, skill2]}\n  - Extended: {category: [{name: skill1, level: Expert, years: 5}, ...]}\n  - JSON Resume: [{name: category, keywords: [skill1, skill2]}, ...]",
     },  # Dynamic categories
     "experience": {
         "required": True,
@@ -233,7 +233,7 @@ class ResumeValidator:
                                 "error",
                             )
                         )
-        
+
         # Validate skills with support for multiple formats
         self._validate_skills(data)
 
@@ -329,7 +329,7 @@ class ResumeValidator:
                 self.errors.append(
                     ValidationError(f"{prefix}.institution", "Missing required field", "error")
                 )
-            
+
             # Check that at least one of degree/studyType or graduation_date/endDate is present
             has_degree = edu.get("degree") or edu.get("studyType")
             has_date = edu.get("graduation_date") or edu.get("endDate")
@@ -337,9 +337,9 @@ class ResumeValidator:
                 # This is just a warning - some education entries might be minimal
                 self.warnings.append(
                     ValidationError(
-                        f"{prefix}", 
-                        "Education entry missing degree and date information", 
-                        "warning"
+                        f"{prefix}",
+                        "Education entry missing degree and date information",
+                        "warning",
                     )
                 )
 
@@ -433,26 +433,30 @@ class ResumeValidator:
     def _validate_skills(self, data: Dict[str, Any]) -> None:
         """
         Validate skills section with support for multiple formats.
-        
+
         Supported formats:
         - Simple: {category: [skill1, skill2]}
         - Extended: {category: [{name: skill1, level: Expert, years: 5}, ...]}
         - JSON Resume: [{name: category, keywords: [skill1, skill2]}]
         """
         skills = data.get("skills")
-        
+
         # Check if skills exists
         if not skills:
             guidance = self._get_guidance("skills", "missing")
-            self.errors.append(ValidationError("skills", "Missing required section", "error", guidance))
+            self.errors.append(
+                ValidationError("skills", "Missing required section", "error", guidance)
+            )
             return
-        
+
         # Support JSON Resume format (list of objects with name and keywords)
         if isinstance(skills, list):
             for i, skill in enumerate(skills):
                 if not isinstance(skill, dict):
                     self.errors.append(
-                        ValidationError(f"skills.{i}", "Skill must be an object with name and keywords", "error")
+                        ValidationError(
+                            f"skills.{i}", "Skill must be an object with name and keywords", "error"
+                        )
                     )
                 elif "name" not in skill:
                     self.errors.append(
@@ -461,17 +465,23 @@ class ResumeValidator:
                 elif "keywords" not in skill:
                     # Keywords are optional in JSON Resume format
                     self.warnings.append(
-                        ValidationError(f"skills.{i}.keywords", "Skill should have keywords for best compatibility", "warning")
+                        ValidationError(
+                            f"skills.{i}.keywords",
+                            "Skill should have keywords for best compatibility",
+                            "warning",
+                        )
                     )
             return
-        
+
         # Support resume-cli formats (dict with categories)
         if not isinstance(skills, dict):
             self.errors.append(
-                ValidationError("skills", f"Expected dict or list, got {type(skills).__name__}", "error")
+                ValidationError(
+                    "skills", f"Expected dict or list, got {type(skills).__name__}", "error"
+                )
             )
             return
-            
+
         # Validate each skill category
         for category, skill_data in skills.items():
             if isinstance(skill_data, list):
@@ -484,17 +494,17 @@ class ResumeValidator:
                         if "name" not in skill:
                             self.errors.append(
                                 ValidationError(
-                                    f"skills.{category}.{i}", 
-                                    "Skill object must have a 'name' field", 
-                                    "error"
+                                    f"skills.{category}.{i}",
+                                    "Skill object must have a 'name' field",
+                                    "error",
                                 )
                             )
                     else:
                         self.errors.append(
                             ValidationError(
-                                f"skills.{category}.{i}", 
-                                f"Expected string or dict, got {type(skill).__name__}", 
-                                "error"
+                                f"skills.{category}.{i}",
+                                f"Expected string or dict, got {type(skill).__name__}",
+                                "error",
                             )
                         )
             elif skill_data is not None:
@@ -502,9 +512,9 @@ class ResumeValidator:
                 # This is less common but valid
                 self.warnings.append(
                     ValidationError(
-                        f"skills.{category}", 
-                        "Skill category should be a list for best compatibility", 
-                        "warning"
+                        f"skills.{category}",
+                        "Skill category should be a list for best compatibility",
+                        "warning",
                     )
                 )
 

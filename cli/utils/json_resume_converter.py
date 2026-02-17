@@ -30,12 +30,12 @@ class JSONResumeConverter:
     def convert_skills_to_json_resume_format(skills: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Convert resume-cli skills to JSON Resume format.
-        
+
         Supports both extended format ({name, level, years, services}) and simple format (string).
-        
+
         Args:
             skills: Skills dictionary from resume-cli YAML
-            
+
         Returns:
             List of skills in JSON Resume format
         """
@@ -51,25 +51,29 @@ class JSONResumeConverter:
                         name = skill.get("name", "")
                         if name:
                             keywords.append(name)
-                skill_list.append({
-                    "name": category,
-                    "keywords": keywords,
-                })
+                skill_list.append(
+                    {
+                        "name": category,
+                        "keywords": keywords,
+                    }
+                )
             else:
-                skill_list.append({
-                    "name": category,
-                    "keywords": [str(skill_data)] if skill_data else [],
-                })
+                skill_list.append(
+                    {
+                        "name": category,
+                        "keywords": [str(skill_data)] if skill_data else [],
+                    }
+                )
         return skill_list
 
     @staticmethod
     def convert_skills_to_extended_format(skills: List[Dict[str, Any]]) -> Dict[str, List[Any]]:
         """
         Convert JSON Resume skills format to resume-cli extended format.
-        
+
         Args:
             skills: List of skills in JSON Resume format
-            
+
         Returns:
             Dictionary with categories as keys and skill lists as values
         """
@@ -145,7 +149,9 @@ class JSONResumeConverter:
         # Convert certifications
         certifications = yaml_data.get("certifications", [])
         if certifications:
-            json_resume["certificates"] = JSONResumeConverter._convert_certifications(certifications)
+            json_resume["certificates"] = JSONResumeConverter._convert_certifications(
+                certifications
+            )
 
         # Convert affiliations
         affiliations = yaml_data.get("affiliations", [])
@@ -155,7 +161,9 @@ class JSONResumeConverter:
         return json_resume
 
     @staticmethod
-    def json_resume_to_yaml(json_data: Dict[str, Any], include_variants: bool = True) -> Dict[str, Any]:
+    def json_resume_to_yaml(
+        json_data: Dict[str, Any], include_variants: bool = True
+    ) -> Dict[str, Any]:
         """
         Convert JSON Resume format to resume-cli YAML format.
 
@@ -190,18 +198,23 @@ class JSONResumeConverter:
 
             location = basics.get("location", {})
             if location:
-                location_str = ", ".join(filter(None, [
-                    location.get("city", ""),
-                    location.get("region", ""),
-                    location.get("countryCode", ""),
-                ]))
+                location_str = ", ".join(
+                    filter(
+                        None,
+                        [
+                            location.get("city", ""),
+                            location.get("region", ""),
+                            location.get("countryCode", ""),
+                        ],
+                    )
+                )
 
             yaml_data["contact"] = {
                 "name": basics.get("name", ""),
                 "title": basics.get("label", ""),
                 "email": basics.get("email", ""),
                 "phone": basics.get("phone", ""),
-                "location": location_str if 'location_str' in dir() else "",
+                "location": location_str if "location_str" in dir() else "",
                 "urls": urls,
             }
 
@@ -234,19 +247,25 @@ class JSONResumeConverter:
         # Convert publications
         publications = json_data.get("publications", [])
         if publications:
-            yaml_data["publications"] = JSONResumeConverter._convert_publications_to_yaml(publications)
+            yaml_data["publications"] = JSONResumeConverter._convert_publications_to_yaml(
+                publications
+            )
 
         # Convert certificates
         certificates = json_data.get("certificates", [])
         if certificates:
-            yaml_data["certifications"] = JSONResumeConverter._convert_certificates_to_yaml(certificates)
+            yaml_data["certifications"] = JSONResumeConverter._convert_certificates_to_yaml(
+                certificates
+            )
 
         # Add variants if requested
         if include_variants:
             yaml_data["variants"] = {
                 "base": {
                     "description": "Standard resume variant",
-                    "skill_sections": list(yaml_data.get("skills", {}).keys()) if "skills" in yaml_data else [],
+                    "skill_sections": (
+                        list(yaml_data.get("skills", {}).keys()) if "skills" in yaml_data else []
+                    ),
                 }
             }
 
@@ -281,11 +300,13 @@ class JSONResumeConverter:
 
         for key, (network, username) in url_mapping.items():
             if key in urls:
-                profiles.append({
-                    "network": network,
-                    "username": username,
-                    "url": urls[key],
-                })
+                profiles.append(
+                    {
+                        "network": network,
+                        "username": username,
+                        "url": urls[key],
+                    }
+                )
 
         return profiles
 
@@ -300,7 +321,9 @@ class JSONResumeConverter:
                 "startDate": job.get("start_date", ""),
                 "endDate": job.get("end_date", ""),
                 "summary": "",  # YAML doesn't have a summary field
-                "highlights": JSONResumeConverter._convert_bullets_to_highlights(job.get("bullets", [])),
+                "highlights": JSONResumeConverter._convert_bullets_to_highlights(
+                    job.get("bullets", [])
+                ),
             }
 
             location = job.get("location")
@@ -359,15 +382,19 @@ class JSONResumeConverter:
                         keywords.append(skill)
                     elif isinstance(skill, dict):
                         keywords.append(skill.get("name", ""))
-                skill_list.append({
-                    "name": category,
-                    "keywords": keywords,
-                })
+                skill_list.append(
+                    {
+                        "name": category,
+                        "keywords": keywords,
+                    }
+                )
             else:
-                skill_list.append({
-                    "name": category,
-                    "keywords": [str(skill_data)] if skill_data else [],
-                })
+                skill_list.append(
+                    {
+                        "name": category,
+                        "keywords": [str(skill_data)] if skill_data else [],
+                    }
+                )
         return skill_list
 
     @staticmethod
@@ -421,11 +448,13 @@ class JSONResumeConverter:
         cert_list = []
         for cert in certifications:
             if isinstance(cert, dict):
-                cert_list.append({
-                    "name": cert.get("name", ""),
-                    "date": cert.get("date", ""),
-                    "issuer": cert.get("issuer", ""),
-                })
+                cert_list.append(
+                    {
+                        "name": cert.get("name", ""),
+                        "date": cert.get("date", ""),
+                        "issuer": cert.get("issuer", ""),
+                    }
+                )
             else:
                 cert_list.append({"name": str(cert)})
         return cert_list
@@ -436,10 +465,12 @@ class JSONResumeConverter:
         ref_list = []
         for aff in affiliations:
             if isinstance(aff, dict):
-                ref_list.append({
-                    "name": aff.get("name", ""),
-                    "reference": aff.get("role", ""),
-                })
+                ref_list.append(
+                    {
+                        "name": aff.get("name", ""),
+                        "reference": aff.get("role", ""),
+                    }
+                )
         return ref_list
 
     # Methods for reverse conversion (JSON Resume -> YAML)
@@ -508,7 +539,9 @@ class JSONResumeConverter:
         return skill_dict
 
     @staticmethod
-    def _convert_projects_to_yaml(projects: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    def _convert_projects_to_yaml(
+        projects: List[Dict[str, Any]],
+    ) -> Dict[str, List[Dict[str, Any]]]:
         """Convert projects to YAML format."""
         project_dict = {}
         for project in projects:
@@ -565,7 +598,9 @@ class JSONResumeConverter:
         return cert_list
 
 
-def convert_yaml_to_json_resume(yaml_path: Union[str, Path], output_path: Optional[Path] = None) -> Dict[str, Any]:
+def convert_yaml_to_json_resume(
+    yaml_path: Union[str, Path], output_path: Optional[Path] = None
+) -> Dict[str, Any]:
     """
     Convert resume-cli YAML file to JSON Resume format.
 
@@ -585,6 +620,7 @@ def convert_yaml_to_json_resume(yaml_path: Union[str, Path], output_path: Option
 
     if output_path:
         import json
+
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(json_resume, f, indent=2)
 
@@ -611,7 +647,9 @@ if __name__ == "__main__":
     import argparse
     import json
 
-    parser = argparse.ArgumentParser(description="Convert between resume-cli YAML and JSON Resume formats")
+    parser = argparse.ArgumentParser(
+        description="Convert between resume-cli YAML and JSON Resume formats"
+    )
     parser.add_argument("input", help="Input file path")
     parser.add_argument("output", help="Output file path")
     parser.add_argument("--to-json", action="store_true", help="Convert YAML to JSON Resume")

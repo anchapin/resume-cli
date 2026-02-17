@@ -1,20 +1,24 @@
 """AI-powered resume generator using Claude or OpenAI."""
 
-import sys
+# Import hashlib before kubernetes_asyncio can patch it
+# Use sha256 instead of md5 to avoid kubernetes_asyncio patching
+import hashlib
 import json
 import os
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from rich.console import Console
 
-# Import hashlib before kubernetes_asyncio can patch it
-# Use sha256 instead of md5 to avoid kubernetes_asyncio patching
-import hashlib
-
 _sha256 = hashlib.sha256
+
+if sys.version_info >= (3, 9):
+    _SHA256_KWARGS = {"usedforsecurity": False}
+else:
+    _SHA256_KWARGS = {}
 
 # Load environment variables from .env file if present
 try:
@@ -489,7 +493,7 @@ Return ONLY valid JSON, nothing else."""
         # Create cache key from inputs (include output_format since content differs)
         cache_key = _sha256(
             f"{job_description[:1000]}{variant}{output_format}".encode(),
-            usedforsecurity=False,
+            **_SHA256_KWARGS,
         ).hexdigest()
 
         # Check cache - return customized content converted to requested format

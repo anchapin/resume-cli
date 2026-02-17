@@ -1,4 +1,5 @@
 import logging
+import os
 import tempfile
 from pathlib import Path
 
@@ -22,6 +23,15 @@ from cli.utils.config import Config
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+# Configure CORS
+origins_str = os.getenv("ALLOWED_ORIGINS", "")
+if origins_str:
+    origins = [origin.strip() for origin in origins_str.split(",")]
+else:
+    # Default to empty list for security (fail closed)
+    # Users must explicitly configure ALLOWED_ORIGINS
+    origins = []
 
 app = FastAPI(
     title="Resume CLI API",
@@ -51,7 +61,7 @@ All endpoints (except `/health`) require an API key passed via the `X-API-Key` h
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

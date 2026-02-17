@@ -4,12 +4,10 @@ Interactive tutorials for Resume CLI commands.
 """
 
 import click
-from rich.console import Console
-from rich.markdown import Markdown
-from rich.panel import Panel
-from rich.prompt import Prompt
 
-console = Console()
+from ..utils.lazy import LazyConsole
+
+console = LazyConsole()
 
 # Tutorial content definitions
 TUTORIALS = {
@@ -234,6 +232,10 @@ def list_tutorials():
 
 def run_tutorial(tutorial_key: str):
     """Run an interactive tutorial."""
+    from rich.markdown import Markdown
+    from rich.panel import Panel
+    from rich.prompt import Prompt
+
     if tutorial_key not in TUTORIALS:
         console.print(f"[red]Tutorial '{tutorial_key}' not found.[/red]")
         console.print("\nAvailable tutorials:")

@@ -4,9 +4,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import yaml
-
-
 class ResumeYAML:
     """Handler for reading and writing resume.yaml."""
 
@@ -40,6 +37,8 @@ class ResumeYAML:
                 f"Resume file not found: {self.yaml_path}\n" f"Run 'resume-cli init' to create it."
             )
 
+        import yaml
+
         with open(self.yaml_path, encoding="utf-8") as f:
             self._data = yaml.safe_load(f)
 
@@ -70,6 +69,8 @@ class ResumeYAML:
 
         # Create parent directories if needed
         self.yaml_path.parent.mkdir(parents=True, exist_ok=True)
+
+        import yaml
 
         with open(self.yaml_path, "w", encoding="utf-8") as f:
             yaml.dump(self._data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)

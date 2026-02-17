@@ -4,9 +4,6 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import yaml
-
-
 class Config:
     """Configuration manager for resume CLI."""
 
@@ -74,6 +71,8 @@ class Config:
 
     def load(self, config_path: Path) -> None:
         """Load configuration from file."""
+        import yaml
+
         with open(config_path) as f:
             user_config = yaml.safe_load(f) or {}
             self._merge_config(user_config)
@@ -134,6 +133,8 @@ class Config:
 
     def save(self, path: Optional[Path] = None) -> None:
         """Save configuration to file."""
+        import yaml
+
         save_path = path or self.config_path
         if not save_path:
             raise ValueError("No config path specified")

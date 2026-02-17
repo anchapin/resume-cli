@@ -68,5 +68,6 @@ setup(
     include_package_data=True,
     package_data={
         "": ["templates/*.j2", "config/*.yaml"],
+        "resume_pdf_lib": ["*.md"],
     },
 )

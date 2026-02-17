@@ -11,6 +11,13 @@ from ..utils.config import Config
 from ..utils.template_filters import latex_escape, proper_title
 from ..utils.yaml_parser import ResumeYAML
 
+# Optional: resume_pdf_lib for enhanced PDF generation
+try:
+    from resume_pdf_lib import PDFGenerator as ResumePDFLibGenerator
+    RESUME_PDF_LIB_AVAILABLE = True
+except ImportError:
+    RESUME_PDF_LIB_AVAILABLE = False
+
 
 class TemplateGenerator:
     """Generate resumes from Jinja2 templates."""
@@ -336,3 +343,122 @@ class TemplateGenerator:
         for template_file in self.template_dir.glob("*.j2"):
             templates.append(template_file.stem)
         return templates
+
+    def get_pdf_generator(self) -> Optional["ResumePDFLibGenerator"]:
+        """
+        Get a PDFGenerator instance from resume-pdf-lib.
+
+        Returns:
+            ResumePDFLibGenerator instance if available, None otherwise
+        """
+        if not RESUME_PDF_LIB_AVAILABLE:
+            return None
+
+        try:
+            return ResumePDFLibGenerator(templates_dir=str(self.template_dir))
+        except Exception:
+            return None
+
+    def generate_pdf_with_resume_pdf_lib(
+        self,
+        output_path: Path,
+        variant: str = "base",
+    ) -> None:
+        """
+        Generate PDF using resume-pdf-lib package.
+
+        Args:
+            output_path: Output PDF path
+            variant: Template variant name
+
+        Raises:
+            ImportError: If resume-pdf-lib is not available
+            RuntimeError: If PDF generation fails
+        """
+        if not RESUME_PDF_LIB_AVAILABLE:
+            raise ImportError(
+                "resume-pdf-lib is not installed. "
+                "Install it with: pip install resume-pdf-lib"
+            )
+
+        pdf_gen = self.get_pdf_generator()
+        if pdf_gen is None:
+            raise RuntimeError("Failed to initialize PDF generator from resume-pdf-lib")
+
+        # Prepare resume data in JSON Resume format
+        resume_data = self._prepare_json_resume_format(variant)
+
+        # Generate PDF
+        pdf_gen.generate_pdf(resume_data, variant=variant, output_path=str(output_path))
+
+    def _prepare_json_resume_format(self, variant: str) -> Dict[str, Any]:
+        """
+        Prepare resume data in JSON Resume format for resume-pdf-lib.
+
+        Args:
+            variant: Variant name
+
+        Returns:
+            Resume data in JSON Resume format
+        """
+        variant_key = variant.replace("v1.", "").replace("v2.", "").split("-")[0]
+        if variant_key.endswith(".0"):
+            variant_key = variant_key.split(".")[0] + "." + variant_key.split(".")[1] + ".0"
+
+        # Get variant config to determine summary key
+        variant_config = self.yaml_handler.get_variant(variant)
+        if not variant_config:
+            if "backend" in variant:
+                summary_key = "backend"
+            elif "ml" in variant or "ai" in variant:
+                summary_key = "ml_ai"
+            elif "fullstack" in variant or "full" in variant:
+                summary_key = "fullstack"
+            elif "devops" in variant:
+                summary_key = "devops"
+            elif "leadership" in variant:
+                summary_key = "leadership"
+            else:
+                summary_key = "base"
+        else:
+            summary_key = variant_config.get("summary_key", "base")
+
+        contact = self.yaml_handler.get_contact()
+
+        # Build JSON Resume format
+        resume_data = {
+            "basics": {
+                "name": contact.get("name", ""),
+                "email": contact.get("email", ""),
+                "phone": contact.get("phone", ""),
+                "summary": self.yaml_handler.get_summary(summary_key),
+            },
+            "work": self.yaml_handler.get_experience(variant),
+            "education": self.yaml_handler.get_education(variant),
+            "skills": self.yaml_handler.get_skills(variant),
+            "projects": self.yaml_handler.get_projects(variant),
+            "publications": self.yaml_handler.data.get("publications", []),
+            "certifications": self.yaml_handler.data.get("certifications", []),
+        }
+
+        # Add location if available
+        if "location" in contact:
+            location = contact["location"]
+            resume_data["basics"]["location"] = {
+                "city": location.get("city", ""),
+                "region": location.get("state", ""),
+                "postalCode": location.get("zip", ""),
+                "country": location.get("country", ""),
+            }
+
+        # Add URLs if available
+        if "urls" in contact:
+            urls = contact["urls"]
+            if "github" in urls:
+                resume_data["basics"]["url"] = urls["github"]
+            if "linkedin" in urls:
+                resume_data["basics"]["profiles"] = [
+                    {"network": "LinkedIn", "url": urls["linkedin"]}
+                ]
+
+        return resume_data

@@ -4,6 +4,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+
 class Config:
     """Configuration manager for resume CLI."""
 

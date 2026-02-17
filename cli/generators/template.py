@@ -129,7 +129,7 @@ class TemplateGenerator:
             contact["location"] = {"city": "", "state": "", "zip": ""}
         if "urls" not in contact:
             contact["urls"] = {"city": "", "state": "", "zip": ""}
-        
+
         context = {
             "contact": contact,
             "summary": self.yaml_handler.get_summary(summary_key),

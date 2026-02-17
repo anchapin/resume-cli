@@ -1,4 +1,5 @@
 """Lazy loading utilities for CLI performance."""
+
 from typing import Any
 
 

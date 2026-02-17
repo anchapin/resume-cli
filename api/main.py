@@ -12,6 +12,10 @@ from api.auth import get_api_key
 from api.models import (
     ATSRequest,
     CoverLetterRequest,
+    JSONResumeRequest,
+    JSONResumeResponse,
+    ResumeListResponse,
+    ResumeMetadata,
     ResumeRequest,
     TailorRequest,
 )
@@ -363,6 +367,235 @@ async def generate_cover_letter(request: CoverLetterRequest):
     except Exception as e:
         logger.exception("Error during cover letter generation", exc_info=e)
         raise HTTPException(status_code=500, detail="Cover letter generation failed")
+
+
+# =========================================================================
+# JSON Resume API Endpoints
+# =========================================================================
+
+# In-memory storage for resumes (in production, use a database)
+_resume_storage: dict = {}
+
+
+@app.get(
+    "/v1/resumes",
+    dependencies=[Security(get_api_key)],
+    summary="List resumes",
+    description="Returns all stored resumes in JSON Resume format.",
+    response_description="List of resume metadata",
+    responses={
+        200: {"description": "Successfully retrieved resume list"},
+        401: {"description": "Invalid or missing API key"},
+    },
+)
+async def list_resumes():
+    """List all stored resumes."""
+    resumes = [
+        ResumeMetadata(
+            id=resume_id,
+            name=data.get("basics", {}).get("name", "Unknown"),
+            variant=data.get("variant", "base"),
+            created_at=data.get("created_at", ""),
+            updated_at=data.get("updated_at", ""),
+        )
+        for resume_id, data in _resume_storage.items()
+    ]
+    return ResumeListResponse(resumes=resumes, total=len(resumes))
+
+
+@app.post(
+    "/v1/resumes",
+    dependencies=[Security(get_api_key)],
+    summary="Create resume from JSON Resume format",
+    description="Creates a new resume from JSON Resume format data. Converts to internal YAML format for storage and processing.",
+    response_description="Created resume in JSON Resume format",
+    responses={
+        200: {"description": "Resume successfully created"},
+        400: {"description": "Invalid request data"},
+        401: {"description": "Invalid or missing API key"},
+        500: {"description": "Resume creation failed"},
+    },
+)
+async def create_resume(request: JSONResumeRequest):
+    """Create a new resume from JSON Resume format."""
+    import uuid
+    from datetime import datetime
+
+    try:
+        from cli.utils.json_resume_converter import JSONResumeConverter
+
+        # Convert JSON Resume to YAML format
+        converter = JSONResumeConverter()
+        yaml_data = converter.json_resume_to_yaml(request.json_resume, include_variants=True)
+
+        # Generate a unique ID
+        resume_id = str(uuid.uuid4())
+        timestamp = datetime.now().isoformat()
+
+        # Store the resume
+        _resume_storage[resume_id] = {
+            "json_resume": request.json_resume,
+            "yaml_data": yaml_data,
+            "variant": request.variant,
+            "created_at": timestamp,
+            "updated_at": timestamp,
+        }
+
+        return JSONResumeResponse(
+            json_resume=request.json_resume,
+            variant=request.variant,
+            created_at=timestamp,
+        )
+
+    except Exception as e:
+        logger.exception("Error creating resume", exc_info=e)
+        raise HTTPException(status_code=500, detail="Resume creation failed")
+
+
+@app.get(
+    "/v1/resumes/{resume_id}",
+    dependencies=[Security(get_api_key)],
+    summary="Get resume in JSON Resume format",
+    description="Returns a specific resume in JSON Resume format by its ID.",
+    response_description="Resume in JSON Resume format",
+    responses={
+        200: {"description": "Successfully retrieved resume"},
+        401: {"description": "Invalid or missing API key"},
+        404: {"description": "Resume not found"},
+    },
+)
+async def get_resume(resume_id: str):
+    """Get a specific resume by ID."""
+    if resume_id not in _resume_storage:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    data = _resume_storage[resume_id]
+    return JSONResumeResponse(
+        json_resume=data["json_resume"],
+        variant=data["variant"],
+        created_at=data["created_at"],
+    )
+
+
+@app.put(
+    "/v1/resumes/{resume_id}",
+    dependencies=[Security(get_api_key)],
+    summary="Update resume from JSON Resume format",
+    description="Updates an existing resume with new JSON Resume format data.",
+    response_description="Updated resume in JSON Resume format",
+    responses={
+        200: {"description": "Resume successfully updated"},
+        400: {"description": "Invalid request data"},
+        401: {"description": "Invalid or missing API key"},
+        404: {"description": "Resume not found"},
+        500: {"description": "Resume update failed"},
+    },
+)
+async def update_resume(resume_id: str, request: JSONResumeRequest):
+    """Update an existing resume."""
+    from datetime import datetime
+
+    if resume_id not in _resume_storage:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    try:
+        timestamp = datetime.now().isoformat()
+
+        # Update the resume
+        _resume_storage[resume_id] = {
+            "json_resume": request.json_resume,
+            "variant": request.variant,
+            "created_at": _resume_storage[resume_id]["created_at"],
+            "updated_at": timestamp,
+        }
+
+        return JSONResumeResponse(
+            json_resume=request.json_resume,
+            variant=request.variant,
+            created_at=timestamp,
+        )
+
+    except Exception as e:
+        logger.exception("Error updating resume", exc_info=e)
+        raise HTTPException(status_code=500, detail="Resume update failed")
+
+
+@app.delete(
+    "/v1/resumes/{resume_id}",
+    dependencies=[Security(get_api_key)],
+    summary="Delete resume",
+    description="Deletes a resume by its ID.",
+    response_description="Deletion confirmation",
+    responses={
+        200: {"description": "Resume successfully deleted"},
+        401: {"description": "Invalid or missing API key"},
+        404: {"description": "Resume not found"},
+    },
+)
+async def delete_resume(resume_id: str):
+    """Delete a resume by ID."""
+    if resume_id not in _resume_storage:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    del _resume_storage[resume_id]
+    return {"message": "Resume deleted successfully", "id": resume_id}
+
+
+@app.post(
+    "/v1/resumes/{resume_id}/render/pdf",
+    dependencies=[Security(get_api_key)],
+    summary="Render resume as PDF",
+    description="Generates a PDF from a stored resume using JSON Resume format.",
+    response_description="PDF file binary for download",
+    responses={
+        200: {"description": "PDF file successfully generated"},
+        401: {"description": "Invalid or missing API key"},
+        404: {"description": "Resume not found"},
+        500: {"description": "PDF generation failed"},
+    },
+)
+async def render_resume_pdf(resume_id: str, variant: str = "base"):
+    """Render a stored resume as PDF."""
+    if resume_id not in _resume_storage:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        resume_yaml_path = temp_path / "resume.yaml"
+
+        # Convert JSON Resume to YAML and save
+        from cli.utils.json_resume_converter import JSONResumeConverter
+
+        converter = JSONResumeConverter()
+        yaml_data = converter.json_resume_to_yaml(_resume_storage[resume_id]["json_resume"])
+
+        with open(resume_yaml_path, "w", encoding="utf-8") as f:
+            yaml.dump(yaml_data, f, default_flow_style=False)
+
+        try:
+            generator = TemplateGenerator(yaml_path=resume_yaml_path)
+            output_pdf = temp_path / "output.pdf"
+
+            generator.generate(variant=variant, output_format="pdf", output_path=output_pdf)
+
+            if not output_pdf.exists():
+                raise HTTPException(status_code=500, detail="PDF generation failed")
+
+            content = output_pdf.read_bytes()
+
+            return Response(
+                content=content,
+                media_type="application/pdf",
+                headers={
+                    "Content-Disposition": f"attachment; filename=resume-{resume_id}.pdf"
+                },
+            )
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.exception("Error rendering resume PDF", exc_info=e)
+            raise HTTPException(status_code=500, detail="PDF generation failed")
 
 
 # =========================================================================

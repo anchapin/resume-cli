@@ -22,3 +22,5 @@ safety>=2.3.0
 # Documentation
 sphinx>=5.0.0
 sphinx-rtd-theme>=1.2.0
+types-PyYAML>=6.0
+types-requests>=2.31.0

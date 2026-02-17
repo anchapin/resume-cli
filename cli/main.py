@@ -1073,6 +1073,13 @@ from .commands.templates import templates as templates_group
 
 cli.add_command(templates_group, name="templates")
 
+# Add convert commands for JSON Resume interoperability
+from .commands.convert import convert, import_json_resume, export_json_resume
+
+cli.add_command(convert)
+cli.add_command(import_json_resume, name="import-json-resume")
+cli.add_command(export_json_resume, name="export-json-resume")
+
 
 @cli.command("ats-check")
 @click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to check")

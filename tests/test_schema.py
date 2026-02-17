@@ -315,17 +315,19 @@ class TestValidateEducation:
         inst_errors = [e for e in validator.errors if "institution" in e.path]
         assert len(inst_errors) > 0
 
-    def test_validate_education_missing_graduation_date(self, temp_dir: Path):
-        """Test education validation detects missing graduation_date."""
-        invalid_yaml = temp_dir / "no_grad_date.yaml"
-        with open(invalid_yaml, "w") as f:
-            yaml.dump({"education": [{"institution": "University", "degree": "BS"}]}, f)
+    def test_validate_education_optional_fields(self, temp_dir: Path):
+        """Test education validation passes with optional fields missing (now optional)."""
+        valid_yaml = temp_dir / "optional_fields.yaml"
+        with open(valid_yaml, "w") as f:
+            # graduation_date and degree are now optional
+            yaml.dump({"education": [{"institution": "University"}]}, f)
 
-        validator = ResumeValidator(invalid_yaml)
+        validator = ResumeValidator(valid_yaml)
         validator.validate_all()
 
-        grad_errors = [e for e in validator.errors if "graduation_date" in e.path]
-        assert len(grad_errors) > 0
+        # Should have no errors about graduation_date or degree being missing
+        edu_errors = [e for e in validator.errors if e.path.startswith("education.")]
+        assert len(edu_errors) == 0
 
 
 class TestValidateVariants:

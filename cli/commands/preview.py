@@ -13,7 +13,7 @@ from threading import Timer
 from typing import Optional
 
 import click
-import yaml
+import yaml as yaml_module
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 
@@ -93,7 +93,7 @@ def preview(
     # Load resume data
     click.echo(f"Loading resume from {yaml}...")
     with open(yaml, "r", encoding="utf-8") as f:
-        resume_data = yaml.safe_load(f)
+        resume_data = yaml_module.safe_load(f)
 
     # Generate HTML preview
     click.echo(f"Generating {format} preview...")
@@ -119,18 +119,34 @@ def generate_html_preview(resume_data: dict, variant: str) -> str:
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
-        output_html = temp_path / "preview.html"
+        output_md = temp_path / "preview.md"
 
-        # Generate HTML using TemplateGenerator
+        # Generate Markdown using TemplateGenerator (then convert to HTML)
         generator = TemplateGenerator(yaml_path=None)
         generator.generate(
             variant=variant,
-            output_format="html",
-            output_path=output_html,
+            output_format="md",
+            output_path=output_md,
             resume_data=resume_data,
         )
 
-        return output_html.read_text(encoding="utf-8")
+        md_content = output_md.read_text(encoding="utf-8")
+
+        # Convert Markdown to HTML using markdown library
+        try:
+            import markdown
+
+            html = markdown.markdown(
+                md_content,
+                extensions=["extra", "codehilite", "tables", "toc"],
+            )
+            return wrap_in_html_template(html, "Resume Preview")
+        except ImportError:
+            # Fallback: wrap raw markdown in pre tags
+            return wrap_in_html_template(
+                f'<pre style="white-space: pre-wrap;">{md_content}</pre>',
+                "Resume Preview",
+            )
 
 
 def generate_markdown_preview(resume_data: dict, variant: str) -> str:

@@ -37,7 +37,12 @@ RESUME_SCHEMA = {
             "variants": {"required": False, "type": dict},
         },
     },
-    "skills": {"required": True, "type": dict, "fields": {}},  # Dynamic categories
+    "skills": {
+        "required": True, 
+        "type": dict, 
+        "fields": {},
+        "description": "Skills can use multiple formats:\n  - Simple: {category: [skill1, skill2]}\n  - Extended: {category: [{name: skill1, level: Expert, years: 5}, ...]}\n  - JSON Resume: [{name: category, keywords: [skill1, skill2]}, ...]"
+    },  # Dynamic categories
     "experience": {
         "required": True,
         "type": list,
@@ -205,8 +210,8 @@ class ResumeValidator:
                     ValidationError(key, "Missing required section", "error", guidance)
                 )
 
-            # Check type
-            if key in data:
+            # Check type (skip for skills - they have special validation)
+            if key in data and key != "skills":
                 expected_type = spec.get("type")
                 if expected_type:
                     # Handle tuple types (e.g., (dict, list) for projects)
@@ -228,6 +233,9 @@ class ResumeValidator:
                                 "error",
                             )
                         )
+        
+        # Validate skills with support for multiple formats
+        self._validate_skills(data)
 
     def _get_guidance(self, path: str, error_type: str = "missing", value: str = None) -> str:
         """Get actionable guidance for an error."""
@@ -420,6 +428,84 @@ class ResumeValidator:
             if "@" not in email or "." not in email.split("@")[-1]:
                 self.errors.append(
                     ValidationError("contact.email", "Invalid email format", "error")
+                )
+
+    def _validate_skills(self, data: Dict[str, Any]) -> None:
+        """
+        Validate skills section with support for multiple formats.
+        
+        Supported formats:
+        - Simple: {category: [skill1, skill2]}
+        - Extended: {category: [{name: skill1, level: Expert, years: 5}, ...]}
+        - JSON Resume: [{name: category, keywords: [skill1, skill2]}]
+        """
+        skills = data.get("skills")
+        
+        # Check if skills exists
+        if not skills:
+            guidance = self._get_guidance("skills", "missing")
+            self.errors.append(ValidationError("skills", "Missing required section", "error", guidance))
+            return
+        
+        # Support JSON Resume format (list of objects with name and keywords)
+        if isinstance(skills, list):
+            for i, skill in enumerate(skills):
+                if not isinstance(skill, dict):
+                    self.errors.append(
+                        ValidationError(f"skills.{i}", "Skill must be an object with name and keywords", "error")
+                    )
+                elif "name" not in skill:
+                    self.errors.append(
+                        ValidationError(f"skills.{i}.name", "Skill must have a name field", "error")
+                    )
+                elif "keywords" not in skill:
+                    # Keywords are optional in JSON Resume format
+                    self.warnings.append(
+                        ValidationError(f"skills.{i}.keywords", "Skill should have keywords for best compatibility", "warning")
+                    )
+            return
+        
+        # Support resume-cli formats (dict with categories)
+        if not isinstance(skills, dict):
+            self.errors.append(
+                ValidationError("skills", f"Expected dict or list, got {type(skills).__name__}", "error")
+            )
+            return
+            
+        # Validate each skill category
+        for category, skill_data in skills.items():
+            if isinstance(skill_data, list):
+                for i, skill in enumerate(skill_data):
+                    # Support simple string format
+                    if isinstance(skill, str):
+                        continue
+                    # Support extended format with name, level, years, services
+                    elif isinstance(skill, dict):
+                        if "name" not in skill:
+                            self.errors.append(
+                                ValidationError(
+                                    f"skills.{category}.{i}", 
+                                    "Skill object must have a 'name' field", 
+                                    "error"
+                                )
+                            )
+                    else:
+                        self.errors.append(
+                            ValidationError(
+                                f"skills.{category}.{i}", 
+                                f"Expected string or dict, got {type(skill).__name__}", 
+                                "error"
+                            )
+                        )
+            elif skill_data is not None:
+                # Allow simple string value for a category (e.g., tools: "Development")
+                # This is less common but valid
+                self.warnings.append(
+                    ValidationError(
+                        f"skills.{category}", 
+                        "Skill category should be a list for best compatibility", 
+                        "warning"
+                    )
                 )
 
     def print_results(self) -> None:

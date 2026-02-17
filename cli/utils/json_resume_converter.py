@@ -20,6 +20,76 @@ class JSONResumeConverter:
     # Mapping from resume-cli field names to JSON Resume field names
     # JSON Resume uses camelCase for most fields
 
+    # Skill format compatibility
+    # resume-cli can use either format:
+    #   - Extended: {name: string, level: string, years: number, services: string[]}
+    #   - Simple: string
+    # JSON Resume uses: {name: string, keywords: string[]}
+
+    @staticmethod
+    def convert_skills_to_json_resume_format(skills: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Convert resume-cli skills to JSON Resume format.
+        
+        Supports both extended format ({name, level, years, services}) and simple format (string).
+        
+        Args:
+            skills: Skills dictionary from resume-cli YAML
+            
+        Returns:
+            List of skills in JSON Resume format
+        """
+        skill_list = []
+        for category, skill_data in skills.items():
+            if isinstance(skill_data, list):
+                keywords = []
+                for skill in skill_data:
+                    if isinstance(skill, str):
+                        keywords.append(skill)
+                    elif isinstance(skill, dict):
+                        # Extended format: extract name and optionally level/years/services
+                        name = skill.get("name", "")
+                        if name:
+                            keywords.append(name)
+                skill_list.append({
+                    "name": category,
+                    "keywords": keywords,
+                })
+            else:
+                skill_list.append({
+                    "name": category,
+                    "keywords": [str(skill_data)] if skill_data else [],
+                })
+        return skill_list
+
+    @staticmethod
+    def convert_skills_to_extended_format(skills: List[Dict[str, Any]]) -> Dict[str, List[Any]]:
+        """
+        Convert JSON Resume skills format to resume-cli extended format.
+        
+        Args:
+            skills: List of skills in JSON Resume format
+            
+        Returns:
+            Dictionary with categories as keys and skill lists as values
+        """
+        skill_dict = {}
+        for skill in skills:
+            name = skill.get("name", "")
+            keywords = skill.get("keywords", [])
+            if name and keywords:
+                # Convert simple keywords to extended format
+                extended_skills = []
+                for kw in keywords:
+                    if isinstance(kw, str):
+                        extended_skills.append({"name": kw})
+                    else:
+                        extended_skills.append(kw)
+                skill_dict[name] = extended_skills
+            elif name:
+                skill_dict[name] = []
+        return skill_dict
+
     @staticmethod
     def yaml_to_json_resume(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
         """

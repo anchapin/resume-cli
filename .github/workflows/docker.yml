@@ -8,6 +8,9 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  DOCKER_BUILDKIT: 1
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,6 +37,100 @@ jobs:
         run: |
           # Create a minimal test
           docker run --rm -v ${{ github.workspace }}:/app resume-cli:latest python -m cli.main --help
+
+  build-slim:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build slim Docker image (without LaTeX)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.slim
+          push: false
+          tags: resume-cli:slim
+          load: true
+
+      - name: Test slim Docker image
+        run: |
+          docker run --rm resume-cli:slim python -m cli.main --help
+
+  build-multiplatform:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    needs: [build, build-slim]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata for main image
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            anchapin/resume-cli
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+            # Semantic versioning tags from git tags
+            type=match,pattern=v(.*),group=1
+            type=match,pattern=v(.*).*,group=1
+
+      - name: Build and push multi-platform main image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Enable OCI digest publishing for reproducible builds
+          provenance: mode=max
+
+      - name: Extract metadata for slim image
+        id: meta-slim
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            anchapin/resume-cli-slim
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+            # Semantic versioning tags from git tags
+            type=match,pattern=v(.*),group=1
+            type=match,pattern=v(.*).*,group=1
+
+      - name: Build and push multi-platform slim image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.slim
+          push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta-slim.outputs.tags }}
+          labels: ${{ steps.meta-slim.outputs.labels }}
+          # Enable OCI digest publishing for reproducible builds
+          provenance: mode=max
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -63,6 +160,9 @@ jobs:
             type=ref,event=branch
             type=sha,prefix=
             type=raw,value=latest,enable={{is_default_branch}}
+            # Semantic versioning tags from git tags
+            type=match,pattern=v(.*),group=1
+            type=match,pattern=v(.*).*,group=1
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -71,3 +171,5 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Enable OCI digest publishing for reproducible builds
+          provenance: mode=max

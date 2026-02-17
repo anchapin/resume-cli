@@ -5,7 +5,6 @@ Tests for resume-pdf-lib.
 import pytest
 from pathlib import Path
 import tempfile
-import os
 
 from resume_pdf_lib import (
     PDFGenerator,
@@ -64,7 +63,7 @@ class TestLatexEscape:
     def test_escape_backslash(self):
         """Test backslash escaping."""
         assert latex_escape(r"path\to\file") == Markup(
-            r"path\to\textbackslash{}file"
+            r"path\textbackslash{}to\textbackslash{}file"
         )
 
     def test_none_input(self):
@@ -94,7 +93,7 @@ class TestProperTitle:
 
     def test_first_word_capitalized(self):
         """Test first word is always capitalized."""
-        assert proper_title("a story") == "A story"
+        assert proper_title("a story") == "A Story"
 
     def test_empty_string(self):
         """Test empty string returns empty."""

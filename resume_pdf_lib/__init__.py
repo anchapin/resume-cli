@@ -11,7 +11,7 @@ Usage:
     pdf_bytes = generator.generate_pdf(resume_data, variant="modern")
 """
 
-from .generator import PDFGenerator, latex_escape, proper_title
+from .generator import PDFGenerator, latex_escape, proper_title, get_generator
 from .exceptions import (
     PDFGenerationError,
     TemplateNotFoundError,
@@ -25,6 +25,7 @@ __all__ = [
     "PDFGenerator",
     "latex_escape",
     "proper_title",
+    "get_generator",
     "PDFGenerationError",
     "TemplateNotFoundError",
     "InvalidVariantError",

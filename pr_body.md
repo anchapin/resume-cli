@@ -1,21 +1,26 @@
 ## Summary
 
-Improves error messages throughout the CLI to provide clear, actionable guidance as described in issue #9.
+Integrate the resume-pdf-lib package into resume-cli for shared PDF generation functionality.
 
 ## Changes
 
-- Enhanced ValidationError class with guidance parameter
-- Added ERROR_GUIDANCE dictionary with What to do instructions
-- Improved validation output with actionable guidance
+- Add resume-pdf-lib package to resume-cli
+- Update TemplateGenerator to optionally use resume-pdf-lib for PDF generation
+- Add methods for generating PDFs using the shared library:
+  - `get_pdf_generator()` - Get a PDFGenerator instance
+  - `generate_pdf_with_resume_pdf_lib()` - Generate PDF using resume-pdf-lib
+  - `_prepare_json_resume_format()` - Convert YAML data to JSON Resume format
+- Add support for JSON Resume format conversion
+- Add tests for resume-pdf-lib
 
-## Coverage
+## Benefits
 
-- Missing contact fields (name, phone, email)
-- Invalid email format
-- Missing required sections (experience, education, skills)
-- File not found errors
-- YAML parsing errors
+- Single source of truth for PDF generation
+- Consistent PDF output across both applications
+- Easier maintenance - single place to update
+- Backward compatible - falls back to existing PDF generation if resume-pdf-lib is not available
 
-## Related Issues
+## Related
 
-- Resolves #9 (Improve error messages with actionable guidance)
+- Issue #127: Create resume-pdf-lib package structure
+- Issue #129: Publish resume-pdf-lib to production PyPI (depends on this)

@@ -573,11 +573,17 @@ def proper_title(text: str) -> str:
 
     for i, word in enumerate(words):
         if i == 0:
-            result.append(word.capitalize())
+            # First word: capitalize first letter only, keep rest as-is
+            if word:
+                result.append(word[0].upper() + word[1:] if len(word) > 1 else word.upper())
         elif word.lower() in small_words:
             result.append(word.lower())
         else:
-            result.append(word.capitalize())
+            # Other words: capitalize first letter only, keep rest as-is
+            if word:
+                result.append(word[0].upper() + word[1:] if len(word) > 1 else word.upper())
+            else:
+                result.append(word)
 
     return " ".join(result)
 

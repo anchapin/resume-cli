@@ -20,7 +20,6 @@ from .exceptions import (
     InvalidVariantError,
     LaTeXCompilationError,
     TemplateNotFoundError,
-    ValidationError,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -104,7 +103,7 @@ class PDFGenerator:
         resume_data: Dict[str, Any],
         variant: Optional[str] = None,
         output_path: Optional[str] = None,
-    ) -> bytes:
+    ) -> Optional[bytes]:
         """Generate a PDF resume from structured data."""
         variant = variant or self.default_variant
 

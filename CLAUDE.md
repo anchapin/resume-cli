@@ -697,6 +697,44 @@ ats:
     readability: 15
 ```
 
+## ResumeAI Integration
+
+resume-cli and ResumeAI use different data schemas:
+- **resume-cli**: Uses YAML format with variants support
+- **ResumeAI**: Uses JSON Resume format (https://jsonresume.org/schema/)
+
+### Converting Between Formats
+
+The CLI provides conversion commands:
+
+```bash
+# Export resume-cli YAML to JSON Resume (for ResumeAI)
+resume-cli convert resume.yaml resume.json --to-json
+
+# Or use the convenience command
+resume-cli export-json-resume resume.yaml -o resume.json
+
+# Import JSON Resume to resume-cli YAML
+resume-cli convert resume.json resume.yaml --to-yaml
+
+# Or use the convenience command
+resume-cli import-json-resume resume.json -o resume.yaml
+```
+
+### JSON Resume Converter
+
+The `cli/utils/json_resume_converter.py` module provides bidirectional conversion:
+- `JSONResumeConverter.yaml_to_json_resume()`: Convert YAML to JSON Resume format
+- `JSONResumeConverter.json_resume_to_yaml()`: Convert JSON Resume to YAML format
+
+### Schema Compatibility
+
+The schema validator (`cli/utils/schema.py`) supports both formats:
+- Fields like `studyType`, `endDate`, `area` are accepted (JSON Resume format)
+- Projects can be either dict or list format
+
+This ensures compatibility between the two systems.
+
 ## Error Handling and Troubleshooting
 
 ### Common Issues

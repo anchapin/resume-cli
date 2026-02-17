@@ -1,12 +1,13 @@
 """
 CLI command for converting between resume formats.
 
-This module provides the 'convert' command for bidirectional conversion
-between resume-cli YAML format and JSON Resume format.
+This module provides the 'convert', 'import', and 'export' commands for 
+bidirectional conversion between resume-cli YAML format and JSON Resume format.
 """
 
 import json
 from pathlib import Path
+from typing import Optional
 
 import click
 
@@ -214,3 +215,213 @@ def export_json_resume(yaml_file: Path, output: Path):
 
     click.echo(f"✓ Successfully exported to: {output}")
     click.echo("  You can now use this file with ResumeAI or other JSON Resume tools")
+
+
+# New import/export commands as requested in Issue #118
+
+@click.command(name="import")
+@click.argument("input_file", type=click.Path(exists=True, path_type=Path))
+@click.option(
+    "--format",
+    "-f",
+    "fmt",
+    type=click.Choice(["json", "yaml"]),
+    default=None,
+    help="Input format (auto-detected from extension if not specified)",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Output file path (default: resume.yaml for YAML, auto-named for JSON)",
+)
+@click.option(
+    "--no-variants",
+    is_flag=True,
+    default=False,
+    help="Don't add default variants configuration when importing to YAML",
+)
+def import_resume(input_file: Path, fmt: Optional[str], output: Optional[Path], no_variants: bool):
+    """
+    Import resume data from external formats.
+
+    Supports importing from:
+    - JSON Resume format (https://jsonresume.org/schema/)
+    - YAML format (resume-cli format)
+
+    INPUT_FILE: Path to input file
+
+    Examples:
+
+        # Import JSON Resume (auto-detected from .json extension):
+        resume-cli import resume.json
+
+        # Import JSON Resume with explicit format:
+        resume-cli import resume.json --format json
+
+        # Import to custom output path:
+        resume-cli import resume.json -o my-resume.yaml
+    """
+    # Auto-detect format from extension if not specified
+    if fmt is None:
+        ext = input_file.suffix.lower()
+        if ext == ".json":
+            fmt = "json"
+        elif ext in [".yaml", ".yml"]:
+            fmt = "yaml"
+        else:
+            click.echo(
+                f"Error: Could not auto-detect format from extension '{ext}'. "
+                "Please specify --format explicitly.",
+                err=True,
+            )
+            raise click.Abort()
+
+    if fmt == "json":
+        # Import from JSON Resume
+        if output is None:
+            output = Path("resume.yaml")
+        
+        click.echo(f"Importing JSON Resume from {input_file}...")
+
+        with open(input_file, "r", encoding="utf-8") as f:
+            json_data = json.load(f)
+
+        yaml_data = JSONResumeConverter.json_resume_to_yaml(
+            json_data, include_variants=not no_variants
+        )
+
+        from ..utils.yaml_parser import ResumeYAML
+
+        yaml_handler = ResumeYAML(output)
+        yaml_handler.save(yaml_data)
+
+        click.echo(f"✓ Successfully imported to: {output}")
+        
+        # Show summary
+        contact = yaml_data.get("contact", {})
+        click.echo(f"  Name: {contact.get('name', 'N/A')}")
+        
+        exp_count = len(yaml_data.get("experience", []))
+        click.echo(f"  Experience entries: {exp_count}")
+        
+        skill_count = len(yaml_data.get("skills", {}))
+        click.echo(f"  Skills categories: {skill_count}")
+        
+    elif fmt == "yaml":
+        # Import from YAML - just copy/reference
+        if output is None:
+            output = Path("resume.yaml")
+        
+        if input_file.resolve() == output.resolve():
+            click.echo(f"Input and output are the same file: {output}")
+            return
+            
+        click.echo(f"Copying YAML file from {input_file} to {output}...")
+        
+        import shutil
+        shutil.copy2(input_file, output)
+        
+        click.echo(f"✓ Successfully copied to: {output}")
+    
+    else:
+        click.echo(f"Error: Unsupported format '{fmt}'", err=True)
+        raise click.Abort()
+
+
+@click.command(name="export")
+@click.argument("input_file", type=click.Path(exists=True, path_type=Path))
+@click.option(
+    "--format",
+    "-f",
+    "fmt",
+    type=click.Choice(["json", "yaml"]),
+    default=None,
+    help="Output format (auto-detected from extension if not specified)",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Output file path (default: resume.json for JSON, auto-named for YAML)",
+)
+def export_resume(input_file: Path, fmt: Optional[str], output: Optional[Path]):
+    """
+    Export resume data to external formats.
+
+    Supports exporting to:
+    - JSON Resume format (https://jsonresume.org/schema/)
+    - YAML format (resume-cli format)
+
+    INPUT_FILE: Path to input file (resume.yaml or JSON Resume)
+
+    Examples:
+
+        # Export to JSON Resume (auto-detected from .yaml extension):
+        resume-cli export resume.yaml
+
+        # Export to JSON Resume with explicit format:
+        resume-cli export resume.yaml --format json
+
+        # Export to custom output path:
+        resume-cli export resume.yaml -o resume.json
+    """
+    # Auto-detect format from extension if not specified
+    if fmt is None:
+        ext = input_file.suffix.lower()
+        if ext == ".json":
+            fmt = "json"
+        elif ext in [".yaml", ".yml"]:
+            fmt = "yaml"
+        else:
+            click.echo(
+                f"Error: Could not auto-detect format from extension '{ext}'. "
+                "Please specify --format explicitly.",
+                err=True,
+            )
+            raise click.Abort()
+
+    if fmt == "json":
+        # Export to JSON Resume
+        if output is None:
+            output = Path("resume.json")
+        
+        click.echo("Exporting to JSON Resume format...")
+        
+        json_resume = convert_yaml_to_json_resume(input_file, output)
+        
+        click.echo(f"✓ Successfully exported to: {output}")
+        
+        # Show summary
+        basics = json_resume.get("basics", {})
+        click.echo(f"  Name: {basics.get('name', 'N/A')}")
+        
+        work_count = len(json_resume.get("work", []))
+        click.echo(f"  Work entries: {work_count}")
+        
+        skill_count = len(json_resume.get("skills", []))
+        click.echo(f"  Skills categories: {skill_count}")
+        
+        click.echo("  You can now use this file with ResumeAI or other JSON Resume tools")
+        
+    elif fmt == "yaml":
+        # Export to YAML - just copy/reference
+        if output is None:
+            output = Path("resume-export.yaml")
+        
+        if input_file.resolve() == output.resolve():
+            click.echo(f"Error: Input and output cannot be the same file: {output}", err=True)
+            return
+            
+        click.echo(f"Copying YAML file from {input_file} to {output}...")
+        
+        import shutil
+        shutil.copy2(input_file, output)
+        
+        click.echo(f"✓ Successfully exported to: {output}")
+    
+    else:
+        click.echo(f"Error: Unsupported format '{fmt}'", err=True)
+        raise click.Abort()

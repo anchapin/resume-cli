@@ -1074,11 +1074,20 @@ from .commands.templates import templates as templates_group
 cli.add_command(templates_group, name="templates")
 
 # Add convert commands for JSON Resume interoperability
-from .commands.convert import convert, export_json_resume, import_json_resume
+from .commands.convert import (
+    convert,
+    export_json_resume,
+    export_resume,
+    import_json_resume,
+    import_resume,
+)
 
 cli.add_command(convert)
 cli.add_command(import_json_resume, name="import-json-resume")
 cli.add_command(export_json_resume, name="export-json-resume")
+# New import/export commands per Issue #118
+cli.add_command(import_resume, name="import")
+cli.add_command(export_resume, name="export")
 
 # Add preview command
 from .commands.preview import preview

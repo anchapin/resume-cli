@@ -155,7 +155,7 @@ class MockInterviewGenerator:
             base_url = os.getenv("ANTHROPIC_BASE_URL") or self.config.get(
                 "ai.anthropic_base_url", ""
             )
-            client_kwargs = {"api_key": api_key}
+            client_kwargs: Dict[str, Any] = {"api_key": api_key}
             if base_url:
                 client_kwargs["base_url"] = base_url
             self.client = anthropic.Anthropic(**client_kwargs)

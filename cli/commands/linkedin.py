@@ -5,9 +5,10 @@ from pathlib import Path
 from typing import Optional
 
 import click
-from rich.console import Console
 
-console = Console()
+from ..utils.lazy import LazyConsole
+
+console = LazyConsole()
 
 
 @click.command()

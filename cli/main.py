@@ -9,15 +9,14 @@ from pathlib import Path
 from typing import Optional
 
 import click
-from rich.console import Console
-from rich.table import Table
 
 from . import __version__
 from .utils.config import Config
+from .utils.lazy import LazyConsole
 from .utils.yaml_parser import ResumeYAML
 
 # Initialize rich console
-console = Console()
+console = LazyConsole()
 
 # Default paths
 DEFAULT_YAML_PATH = Path(__file__).parent.parent / "resume.yaml"
@@ -216,8 +215,8 @@ def generate(
             from .generators.multi_language_generator import MultiLanguageResumeGenerator
 
             console.print(f"[cyan]Translating resume to {language}...[/cyan]")
-            generator = MultiLanguageResumeGenerator(yaml_path, config=config)
-            content = generator.generate(
+            multi_lang_gen = MultiLanguageResumeGenerator(yaml_path, config=config)
+            content = multi_lang_gen.generate(
                 target_language=language,
                 variant=variant,
                 output_format=format,
@@ -238,7 +237,7 @@ def generate(
             from .generators.ai_generator import AIGenerator
 
             console.print("[cyan]Using AI-powered generation...[/cyan]")
-            generator = AIGenerator(yaml_path, config=config)
+            ai_gen = AIGenerator(yaml_path, config=config)
 
             if output_path is None and not no_save:
                 # Add -ai suffix to filename
@@ -248,7 +247,7 @@ def generate(
                 stem = base_path.stem
                 output_path = base_path.parent / f"{stem}-ai{base_path.suffix}"
 
-            content = generator.generate(
+            content = ai_gen.generate(
                 variant=variant,
                 job_description=job_description,
                 output_format=format,
@@ -256,28 +255,28 @@ def generate(
                 custom_template_path=custom_template_path,
             )
         else:
-            generator = TemplateGenerator(yaml_path, config=config)
+            template_gen = TemplateGenerator(yaml_path, config=config)
 
             if output_path is None and not no_save:
-                output_path = generator.get_output_path(variant, format)
+                output_path = template_gen.get_output_path(variant, format)
 
             # Handle custom template or built-in template selection
             if custom_template_path:
-                content = generator.generate(
+                content = template_gen.generate(
                     variant=variant,
                     output_format=format,
                     output_path=output_path,
                     custom_template_path=custom_template_path,
                 )
             elif template != "base":
-                content = generator.generate(
+                content = template_gen.generate(
                     variant=variant,
                     output_format=format,
                     output_path=output_path,
                     template=template,
                 )
             else:
-                content = generator.generate(
+                content = template_gen.generate(
                     variant=variant, output_format=format, output_path=output_path
                 )
 
@@ -545,6 +544,8 @@ def generate_package(
 @click.pass_context
 def variants(ctx):
     """List available resume variants."""
+    from rich.table import Table
+
     yaml_handler = ctx.obj["yaml_handler"]
 
     try:
@@ -813,6 +814,8 @@ def analyze(ctx, days: int, top_companies: int, simple: bool):
 
 def _print_simple_stats(console, dashboard_data: dict):
     """Print simple statistics table."""
+    from rich.table import Table
+
     overview = dashboard_data.get("overview", {})
     by_status = dashboard_data.get("by_status", {})
 
@@ -880,6 +883,8 @@ def _create_progress_bar(percentage: float, width: int = 30) -> str:
 
 def _print_status_breakdown(console, dashboard_data: dict):
     """Print applications by status as a visual breakdown."""
+    from rich.table import Table
+
     by_status = dashboard_data.get("by_status", {})
 
     if not by_status:
@@ -916,6 +921,8 @@ def _print_status_breakdown(console, dashboard_data: dict):
 
 def _print_variant_performance(console, dashboard_data: dict):
     """Print variant performance comparison."""
+    from rich.table import Table
+
     variants = dashboard_data.get("variant_performance", [])
 
     if not variants:
@@ -944,6 +951,8 @@ def _print_variant_performance(console, dashboard_data: dict):
 
 def _print_source_breakdown(console, dashboard_data: dict):
     """Print application sources breakdown."""
+    from rich.table import Table
+
     sources = dashboard_data.get("source_breakdown", [])
 
     if not sources:
@@ -970,6 +979,8 @@ def _print_source_breakdown(console, dashboard_data: dict):
 
 def _print_top_companies(console, dashboard_data: dict, limit: int = 5):
     """Print top companies by applications."""
+    from rich.table import Table
+
     companies = dashboard_data.get("company_analytics", [])
 
     if not companies:
@@ -1014,14 +1025,16 @@ def _print_timeline_summary(console, dashboard_data: dict, days: int = 90):
     # Aggregate by week
     from datetime import datetime
 
-    weekly_counts = {}
+    weekly_counts: dict[str, int] = {}
     for entry in timeline:
         try:
             date = datetime.strptime(entry.get("date", ""), "%Y-%m-%d")
             # Get ISO week
             year, week, _ = date.isocalendar()
             week_key = f"{year}-W{week:02d}"
-            weekly_counts[week_key] = weekly_counts.get(week_key, 0) + entry.get("count", 0)
+            count = entry.get("count", 0)
+            if isinstance(count, int):
+                weekly_counts[week_key] = weekly_counts.get(week_key, 0) + count
         except (ValueError, TypeError):
             continue
 
@@ -1843,6 +1856,8 @@ def offer_compare(output: Optional[str]):
 @offer.command("list")
 def offer_list():
     """List all stored offers."""
+    from rich.table import Table
+
     from .integrations.offer_comparison import OfferComparison
 
     try:

@@ -7,13 +7,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import click
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
 
 from ..utils.config import Config
+from ..utils.lazy import LazyConsole
 
-console = Console()
+console = LazyConsole()
 
 # Default template marketplace registry path
 DEFAULT_MARKETPLACE_REGISTRY = Path(__file__).parent.parent.parent / "marketplace" / "registry.json"
@@ -531,6 +529,8 @@ def templates():
 @click.pass_context
 def list_templates(ctx, category: Optional[str], tag: Optional[str]):
     """List available templates."""
+    from rich.table import Table
+
     marketplace = TemplateMarketplace()
 
     templates = marketplace.list_templates(category=category, tag=tag)
@@ -583,6 +583,8 @@ def list_categories(ctx):
 @click.pass_context
 def preview_template(ctx, name: str, lines: int):
     """Preview a template."""
+    from rich.panel import Panel
+
     marketplace = TemplateMarketplace()
 
     template = marketplace.get_template(name)
@@ -760,6 +762,8 @@ def show_reviews(ctx, name: str):
 @click.pass_context
 def search_templates(ctx, query: str):
     """Search templates."""
+    from rich.table import Table
+
     marketplace = TemplateMarketplace()
 
     results = marketplace.search_templates(query)

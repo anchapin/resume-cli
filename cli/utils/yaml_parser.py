@@ -4,8 +4,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import yaml
-
 
 class ResumeYAML:
     """Handler for reading and writing resume.yaml."""
@@ -40,8 +38,11 @@ class ResumeYAML:
                 f"Resume file not found: {self.yaml_path}\n" f"Run 'resume-cli init' to create it."
             )
 
+        import yaml
+
         with open(self.yaml_path, encoding="utf-8") as f:
-            self._data = yaml.safe_load(f)
+            data = yaml.safe_load(f)
+            self._data = data if isinstance(data, dict) else {}
 
         return self._data
 
@@ -71,12 +72,15 @@ class ResumeYAML:
         # Create parent directories if needed
         self.yaml_path.parent.mkdir(parents=True, exist_ok=True)
 
+        import yaml
+
         with open(self.yaml_path, "w", encoding="utf-8") as f:
             yaml.dump(self._data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
 
     def get_contact(self) -> Dict[str, Any]:
         """Get contact information."""
-        return self.data.get("contact", {})
+        contact = self.data.get("contact", {})
+        return contact if isinstance(contact, dict) else {}
 
     def get_summary(self, variant: str = "base") -> str:
         """
@@ -89,9 +93,14 @@ class ResumeYAML:
             Summary text for the variant
         """
         summaries = self.data.get("professional_summary", {})
+        if not isinstance(summaries, dict):
+            return ""
         if variant == "base" or variant not in summaries.get("variants", {}):
-            return summaries.get("base", "")
-        return summaries.get("variants", {}).get(variant, summaries.get("base", ""))
+            return str(summaries.get("base", ""))
+        variants = summaries.get("variants", {})
+        if isinstance(variants, dict):
+            return str(variants.get(variant, summaries.get("base", "")))
+        return str(summaries.get("base", ""))
 
     def get_skills(
         self, variant: Optional[str] = None, prioritize_technologies: Optional[list] = None
@@ -107,12 +116,16 @@ class ResumeYAML:
             Dictionary of skill categories
         """
         all_skills = self.data.get("skills", {})
+        if not isinstance(all_skills, dict):
+            return {}
 
+        filtered_skills: Dict[str, list]
         if variant is None:
             filtered_skills = all_skills
         else:
             # Get variant config
-            variant_config = self.data.get("variants", {}).get(variant, {})
+            variants = self.data.get("variants", {})
+            variant_config = variants.get(variant, {}) if isinstance(variants, dict) else {}
             skill_sections = variant_config.get("skill_sections", list(all_skills.keys()))
 
             # Filter and reorder skills
@@ -130,7 +143,7 @@ class ResumeYAML:
                             )
                             or (isinstance(s, str))
                         ]
-                    else:
+                    elif isinstance(section_skills, list):  # Make mypy happy about list type
                         filtered_skills[section] = section_skills
 
         # Apply technology prioritization if specified
@@ -187,22 +200,29 @@ class ResumeYAML:
             List of experience entries
         """
         experience = self.data.get("experience", [])
+        if not isinstance(experience, list):
+            return []
 
         if variant is None:
             return experience
 
-        variant_config = self.data.get("variants", {}).get(variant, {})
+        variants = self.data.get("variants", {})
+        variant_config = variants.get(variant, {}) if isinstance(variants, dict) else {}
         max_bullets = variant_config.get("max_bullets_per_job", 4)
         emphasize_keywords = variant_config.get("emphasize_keywords", [])
 
         filtered_exp = []
         for job in experience:
+            if not isinstance(job, dict):
+                continue
             job_copy = job.copy()
             bullets = job.get("bullets", [])
 
             # Filter bullets by emphasize_for or keywords
             filtered_bullets = []
             for bullet in bullets:
+                if not isinstance(bullet, dict):
+                    continue
                 emphasize_for = bullet.get("emphasize_for", [])
                 text = bullet.get("text", "")
 
@@ -236,12 +256,12 @@ class ResumeYAML:
             List of education entries
         """
         education = self.data.get("education", [])
+        if not isinstance(education, list):
+            return []
 
         if variant is None:
             return education
 
-        # Future: could filter/reorder education by variant
-        self.data.get("variants", {}).get(variant, {})
         return education
 
     def get_projects(self, variant: Optional[str] = None) -> Dict[str, list]:
@@ -255,11 +275,14 @@ class ResumeYAML:
             Dictionary of project categories
         """
         all_projects = self.data.get("projects", {})
+        if not isinstance(all_projects, dict):
+            return {}
 
         if variant is None:
             return all_projects
 
-        variant_config = self.data.get("variants", {}).get(variant, {})
+        variants = self.data.get("variants", {})
+        variant_config = variants.get(variant, {}) if isinstance(variants, dict) else {}
         categories = variant_config.get("project_categories", list(all_projects.keys()))
 
         filtered_projects = {}
@@ -271,11 +294,15 @@ class ResumeYAML:
 
     def get_variants(self) -> Dict[str, Dict[str, Any]]:
         """Get all available variants."""
-        return self.data.get("variants", {})
+        variants = self.data.get("variants", {})
+        return variants if isinstance(variants, dict) else {}
 
     def get_variant(self, variant_name: str) -> Optional[Dict[str, Any]]:
         """Get specific variant configuration."""
-        return self.data.get("variants", {}).get(variant_name)
+        variants = self.data.get("variants", {})
+        if isinstance(variants, dict):
+            return variants.get(variant_name)
+        return None
 
     def list_variants(self) -> list:
         """List all variant names."""

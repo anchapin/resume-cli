@@ -75,7 +75,7 @@ class AIGenerator:
                 )
             # Check env var first, then config file
             base_url = os.getenv("ANTHROPIC_BASE_URL") or self.config.anthropic_base_url
-            client_kwargs = {"api_key": api_key}
+            client_kwargs: Dict[str, Any] = {"api_key": api_key}
             if base_url:
                 client_kwargs["base_url"] = base_url
             self.client = anthropic.Anthropic(**client_kwargs)
@@ -108,7 +108,7 @@ class AIGenerator:
         self.judge_enabled = self.config.get("ai.judge_enabled", True)
 
         # Cache to avoid regenerating content for same inputs
-        self._content_cache = {}
+        self._content_cache: Dict[str, str] = {}
 
     def clear_cache(self):
         """Clear the content cache. Useful when generating for different jobs."""

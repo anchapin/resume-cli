@@ -53,9 +53,9 @@ class TestListTutorials:
 class TestRunTutorial:
     """Tests for run_tutorial function."""
 
-    @patch("cli.commands.tutorials.Prompt")
-    @patch("cli.commands.tutorials.Markdown")
-    @patch("cli.commands.tutorials.Panel")
+    @patch("rich.prompt.Prompt")
+    @patch("rich.markdown.Markdown")
+    @patch("rich.panel.Panel")
     @patch("cli.commands.tutorials.console")
     def test_run_tutorial_valid(self, mock_console, mock_panel, mock_markdown, mock_prompt):
         """Test run_tutorial with valid tutorial key."""
@@ -83,9 +83,9 @@ class TestRunTutorial:
         # Should have printed error message
         mock_console.print.assert_called()
 
-    @patch("cli.commands.tutorials.Prompt")
-    @patch("cli.commands.tutorials.Markdown")
-    @patch("cli.commands.tutorials.Panel")
+    @patch("rich.prompt.Prompt")
+    @patch("rich.markdown.Markdown")
+    @patch("rich.panel.Panel")
     @patch("cli.commands.tutorials.console")
     def test_run_tutorial_generate(self, mock_console, mock_panel, mock_markdown, mock_prompt):
         """Test run_tutorial with generate tutorial."""

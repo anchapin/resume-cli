@@ -98,7 +98,7 @@ class TrackingIntegration:
 
     def _read_csv(self) -> list:
         """Read all entries from CSV."""
-        entries = []
+        entries: list[Any] = []
 
         if not self.csv_path.exists():
             return entries

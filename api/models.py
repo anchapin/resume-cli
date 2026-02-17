@@ -144,3 +144,85 @@ class CoverLetterRequest(BaseModel):
         description="Any connections at the company (e.g., referrals)",
         examples=["Know someone on the engineering team"],
     )
+
+
+# =========================================================================
+# JSON Resume API Models
+# =========================================================================
+
+
+class JSONResumeRequest(BaseModel):
+    """Request model for creating/updating resume from JSON Resume format."""
+
+    json_resume: Dict[str, Any] = Field(
+        ...,
+        description="Resume data in JSON Resume format (https://jsonresume.org/schema/)",
+        examples=[
+            {
+                "basics": {
+                    "name": "John Doe",
+                    "label": "Software Engineer",
+                    "email": "john@example.com",
+                    "phone": "+1234567890",
+                    "summary": "Experienced software engineer",
+                    "location": {"city": "San Francisco", "region": "CA"},
+                    "profiles": [
+                        {
+                            "network": "GitHub",
+                            "username": "johndoe",
+                            "url": "https://github.com/johndoe",
+                        }
+                    ],
+                },
+                "work": [
+                    {
+                        "company": "Tech Corp",
+                        "position": "Software Engineer",
+                        "startDate": "2020-01",
+                        "summary": "Worked on backend services",
+                        "highlights": ["Built API gateway", "Optimized database queries"],
+                    }
+                ],
+                "education": [
+                    {
+                        "institution": "University of Technology",
+                        "area": "Computer Science",
+                        "studyType": "Bachelor",
+                    }
+                ],
+                "skills": [
+                    {"name": "Programming Languages", "keywords": ["Python", "JavaScript"]}
+                ],
+            }
+        ],
+    )
+    variant: str = Field(
+        default="base",
+        description="Resume variant to use for generation",
+        examples=["base", "v1.0.0-base"],
+    )
+
+
+class JSONResumeResponse(BaseModel):
+    """Response model for JSON Resume format."""
+
+    json_resume: Dict[str, Any] = Field(..., description="Resume data in JSON Resume format")
+    variant: str = Field(..., description="Resume variant used")
+    created_at: str = Field(..., description="Timestamp of creation")
+
+
+class ResumeMetadata(BaseModel):
+    """Metadata for a stored resume."""
+
+    id: str = Field(..., description="Unique identifier for the resume")
+    name: str = Field(..., description="Resume name (from basics.name)")
+    variant: str = Field(..., description="Resume variant")
+    created_at: str = Field(..., description="Creation timestamp")
+    updated_at: str = Field(..., description="Last update timestamp")
+
+
+class ResumeListResponse(BaseModel):
+    """Response model for listing resumes."""
+
+    resumes: List[ResumeMetadata] = Field(default_factory=list, description="List of resumes")
+    total: int = Field(..., description="Total number of resumes")

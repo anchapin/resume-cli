@@ -21,6 +21,11 @@ A unified command-line interface for generating job-specific resumes from a sing
 
 ## Installation
 
+### Prerequisites
+
+- **Python**: 3.8, 3.9, 3.10, 3.11, or 3.12 (tested in CI)
+- **LaTeX** (optional, for PDF generation): See PDF Generation section
+
 ### From Source
 
 ```bash

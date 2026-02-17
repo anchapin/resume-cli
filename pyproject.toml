@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resume-pdf-lib"
+version = "0.1.0"
+description = "Shared Python library for PDF resume generation using LaTeX"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Alex C", email = "alex@example.com"}
+]
+keywords = ["resume", "pdf", "latex", "jinja2", "generation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "jinja2>=3.0.0",
+    "markupsafe>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/anchapin/resume-cli"
+Repository = "https://github.com/anchapin/resume-cli"
+Issues = "https://github.com/anchapin/resume-cli/issues"
+
+[project.entry-points]
+resume_pdf = "resume_pdf_lib"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["resume_pdf_lib*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=resume_pdf_lib --cov-report=html --cov-report=term"
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311', 'py312']
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false

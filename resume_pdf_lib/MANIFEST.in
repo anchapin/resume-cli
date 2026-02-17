@@ -1,0 +1,4 @@
+include README.md
+include pyproject.toml
+recursive-include resume_pdf_lib *.py
+recursive-include resume_pdf_lib templates/

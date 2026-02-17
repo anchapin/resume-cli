@@ -37,3 +37,6 @@ dev = [
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["resume_pdf_lib*"]
+
+[tool.setuptools.package-data]
+resume_pdf_lib = ["templates/*.j2", "templates/**/*"]

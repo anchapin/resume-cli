@@ -55,10 +55,13 @@ RESUME_SCHEMA = {
         "type": list,
         "item_fields": {
             "institution": {"required": True, "type": str},
-            "degree": {"required": True, "type": str},
-            "graduation_date": {"required": True, "type": str},
+            "degree": {"required": False, "type": str},  # Optional - some resumes don't have degree
+            "studyType": {"required": False, "type": str},  # JSON Resume format compatibility
+            "graduation_date": {"required": False, "type": str},  # Optional - can be inferred
+            "endDate": {"required": False, "type": str},  # JSON Resume format compatibility
             "location": {"required": False, "type": str},
             "field": {"required": False, "type": str},
+            "area": {"required": False, "type": str},  # JSON Resume format compatibility
         },
     },
     "publications": {
@@ -79,7 +82,7 @@ RESUME_SCHEMA = {
     },
     "certifications": {"required": False, "type": list},
     "affiliations": {"required": False, "type": list},
-    "projects": {"required": False, "type": dict},
+    "projects": {"required": False, "type": (dict, list)},  # Accept both dict and list formats
     "variants": {
         "required": True,
         "type": dict,
@@ -205,14 +208,26 @@ class ResumeValidator:
             # Check type
             if key in data:
                 expected_type = spec.get("type")
-                if expected_type and not isinstance(data[key], expected_type):
-                    self.errors.append(
-                        ValidationError(
-                            key,
-                            f"Expected type {expected_type.__name__}, got {type(data[key]).__name__}",
-                            "error",
+                if expected_type:
+                    # Handle tuple types (e.g., (dict, list) for projects)
+                    if isinstance(expected_type, tuple):
+                        if not isinstance(data[key], expected_type):
+                            type_names = " or ".join(t.__name__ for t in expected_type)
+                            self.errors.append(
+                                ValidationError(
+                                    key,
+                                    f"Expected type {type_names}, got {type(data[key]).__name__}",
+                                    "error",
+                                )
+                            )
+                    elif not isinstance(data[key], expected_type):
+                        self.errors.append(
+                            ValidationError(
+                                key,
+                                f"Expected type {expected_type.__name__}, got {type(data[key]).__name__}",
+                                "error",
+                            )
                         )
-                    )
 
     def _get_guidance(self, path: str, error_type: str = "missing", value: str = None) -> str:
         """Get actionable guidance for an error."""
@@ -301,12 +316,24 @@ class ResumeValidator:
         for i, edu in enumerate(education):
             prefix = f"education.{i}"
 
-            # Check required fields
-            for field in ["institution", "degree", "graduation_date"]:
-                if field not in edu or not edu[field]:
-                    self.errors.append(
-                        ValidationError(f"{prefix}.{field}", "Missing required field", "error")
+            # Check required fields - only institution is required
+            if "institution" not in edu or not edu["institution"]:
+                self.errors.append(
+                    ValidationError(f"{prefix}.institution", "Missing required field", "error")
+                )
+            
+            # Check that at least one of degree/studyType or graduation_date/endDate is present
+            has_degree = edu.get("degree") or edu.get("studyType")
+            has_date = edu.get("graduation_date") or edu.get("endDate")
+            if not has_degree and not has_date:
+                # This is just a warning - some education entries might be minimal
+                self.warnings.append(
+                    ValidationError(
+                        f"{prefix}", 
+                        "Education entry missing degree and date information", 
+                        "warning"
                     )
+                )
 
     def _validate_variants(self, data: Dict[str, Any]) -> None:
         """Validate variant configurations."""

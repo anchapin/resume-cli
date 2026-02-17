@@ -210,7 +210,7 @@ def export_json_resume(yaml_file: Path, output: Path):
 
     click.echo("Exporting to JSON Resume format...")
 
-    json_resume = convert_yaml_to_json_resume(yaml_file, output)
+    convert_yaml_to_json_resume(yaml_file, output)
 
     click.echo(f"✓ Successfully exported to: {output}")
     click.echo("  You can now use this file with ResumeAI or other JSON Resume tools")

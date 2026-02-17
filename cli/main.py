@@ -215,8 +215,8 @@ def generate(
             from .generators.multi_language_generator import MultiLanguageResumeGenerator
 
             console.print(f"[cyan]Translating resume to {language}...[/cyan]")
-            generator = MultiLanguageResumeGenerator(yaml_path, config=config)
-            content = generator.generate(
+            multi_lang_gen = MultiLanguageResumeGenerator(yaml_path, config=config)
+            content = multi_lang_gen.generate(
                 target_language=language,
                 variant=variant,
                 output_format=format,
@@ -237,7 +237,7 @@ def generate(
             from .generators.ai_generator import AIGenerator
 
             console.print("[cyan]Using AI-powered generation...[/cyan]")
-            generator = AIGenerator(yaml_path, config=config)
+            ai_gen = AIGenerator(yaml_path, config=config)
 
             if output_path is None and not no_save:
                 # Add -ai suffix to filename
@@ -247,7 +247,7 @@ def generate(
                 stem = base_path.stem
                 output_path = base_path.parent / f"{stem}-ai{base_path.suffix}"
 
-            content = generator.generate(
+            content = ai_gen.generate(
                 variant=variant,
                 job_description=job_description,
                 output_format=format,
@@ -255,28 +255,28 @@ def generate(
                 custom_template_path=custom_template_path,
             )
         else:
-            generator = TemplateGenerator(yaml_path, config=config)
+            template_gen = TemplateGenerator(yaml_path, config=config)
 
             if output_path is None and not no_save:
-                output_path = generator.get_output_path(variant, format)
+                output_path = template_gen.get_output_path(variant, format)
 
             # Handle custom template or built-in template selection
             if custom_template_path:
-                content = generator.generate(
+                content = template_gen.generate(
                     variant=variant,
                     output_format=format,
                     output_path=output_path,
                     custom_template_path=custom_template_path,
                 )
             elif template != "base":
-                content = generator.generate(
+                content = template_gen.generate(
                     variant=variant,
                     output_format=format,
                     output_path=output_path,
                     template=template,
                 )
             else:
-                content = generator.generate(
+                content = template_gen.generate(
                     variant=variant, output_format=format, output_path=output_path
                 )
 
@@ -1025,14 +1025,16 @@ def _print_timeline_summary(console, dashboard_data: dict, days: int = 90):
     # Aggregate by week
     from datetime import datetime
 
-    weekly_counts = {}
+    weekly_counts: dict[str, int] = {}
     for entry in timeline:
         try:
             date = datetime.strptime(entry.get("date", ""), "%Y-%m-%d")
             # Get ISO week
             year, week, _ = date.isocalendar()
             week_key = f"{year}-W{week:02d}"
-            weekly_counts[week_key] = weekly_counts.get(week_key, 0) + entry.get("count", 0)
+            count = entry.get("count", 0)
+            if isinstance(count, int):
+                weekly_counts[week_key] = weekly_counts.get(week_key, 0) + count
         except (ValueError, TypeError):
             continue
 

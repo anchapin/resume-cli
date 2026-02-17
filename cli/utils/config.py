@@ -148,91 +148,91 @@ class Config:
     @property
     def output_dir(self) -> Path:
         """Get output directory path."""
-        return Path(self.get("output.directory", "output"))
+        return Path(str(self.get("output.directory", "output")))
 
     @property
     def default_variant(self) -> str:
         """Get default variant name."""
-        return self.get("generation.default_variant", "v1.0.0-base")
+        return str(self.get("generation.default_variant", "v1.0.0-base"))
 
     @property
     def default_format(self) -> str:
         """Get default output format."""
-        return self.get("generation.default_format", "md")
+        return str(self.get("generation.default_format", "md"))
 
     @property
     def ai_provider(self) -> str:
         """Get AI provider name."""
-        return self.get("ai.provider", "anthropic")
+        return str(self.get("ai.provider", "anthropic"))
 
     @property
     def ai_model(self) -> str:
         """Get AI model name."""
-        return self.get("ai.model", "claude-3-5-sonnet-20241022")
+        return str(self.get("ai.model", "claude-3-5-sonnet-20241022"))
 
     @property
     def fallback_to_template(self) -> bool:
         """Whether to fallback to template on AI failure."""
-        return self.get("ai.fallback_to_template", True)
+        return bool(self.get("ai.fallback_to_template", True))
 
     @property
     def tracking_enabled(self) -> bool:
         """Whether tracking is enabled."""
-        return self.get("tracking.enabled", True)
+        return bool(self.get("tracking.enabled", True))
 
     @property
     def tracking_csv_path(self) -> Path:
         """Get tracking CSV path."""
-        return Path(self.get("tracking.csv_path", "tracking/resume_experiment.csv"))
+        return Path(str(self.get("tracking.csv_path", "tracking/resume_experiment.csv")))
 
     @property
     def github_username(self) -> str:
         """Get GitHub username."""
-        return self.get("github.username", "anchapin")
+        return str(self.get("github.username", "anchapin"))
 
     @property
     def github_sync_months(self) -> int:
         """Get GitHub sync months."""
-        return self.get("github.sync_months", 3)
+        return int(self.get("github.sync_months", 3))
 
     @property
     def anthropic_base_url(self) -> Optional[str]:
         """Get Anthropic API base URL (None if not set)."""
         url = self.get("ai.anthropic_base_url", "")
-        return url if url else None
+        return str(url) if url else None
 
     @property
     def openai_base_url(self) -> Optional[str]:
         """Get OpenAI API base URL (None if not set)."""
         url = self.get("ai.openai_base_url", "")
-        return url if url else None
+        return str(url) if url else None
 
     @property
     def cover_letter_enabled(self) -> bool:
         """Whether cover letter generation is enabled."""
-        return self.get("cover_letter.enabled", True)
+        return bool(self.get("cover_letter.enabled", True))
 
     @property
     def cover_letter_formats(self) -> list:
         """Get cover letter output formats."""
-        return self.get("cover_letter.formats", ["md", "pdf"])
+        return list(self.get("cover_letter.formats", ["md", "pdf"]))
 
     @property
     def cover_letter_smart_guesses(self) -> bool:
         """Whether to use smart guesses in non-interactive mode."""
-        return self.get("cover_letter.smart_guesses", True)
+        return bool(self.get("cover_letter.smart_guesses", True))
 
     @property
     def cover_letter_tone(self) -> str:
         """Get cover letter tone."""
-        return self.get("cover_letter.tone", "professional")
+        return str(self.get("cover_letter.tone", "professional"))
 
     @property
     def cover_letter_max_length(self) -> int:
         """Get cover letter max length in words."""
-        return self.get("cover_letter.max_length", 400)
+        return int(self.get("cover_letter.max_length", 400))
 
     @property
     def ats_enabled(self) -> bool:
         """Whether ATS checking is enabled."""
-        return self.get("ats.enabled", True)
+        return bool(self.get("ats.enabled", True))

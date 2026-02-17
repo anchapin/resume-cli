@@ -143,7 +143,7 @@ class ResumeYAML:
                             )
                             or (isinstance(s, str))
                         ]
-                    elif isinstance(section_skills, list): # Make mypy happy about list type
+                    elif isinstance(section_skills, list):  # Make mypy happy about list type
                         filtered_skills[section] = section_skills
 
         # Apply technology prioritization if specified

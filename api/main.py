@@ -365,9 +365,6 @@ async def generate_cover_letter(request: CoverLetterRequest):
         raise HTTPException(status_code=500, detail="Cover letter generation failed")
 
 
-
 # =========================================================================
 # Analytics Endpoints for Dashboard
 # =========================================================================
-
-

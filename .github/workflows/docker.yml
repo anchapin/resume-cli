@@ -28,7 +28,7 @@ jobs:
 
       - name: Test Docker image runs
         run: |
-          docker run --rm resume-cli:latest --version
+          docker run --rm resume-cli:latest python -m cli.main --version
 
       - name: Test Docker image validate command
         run: |

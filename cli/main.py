@@ -1080,6 +1080,11 @@ cli.add_command(convert)
 cli.add_command(import_json_resume, name="import-json-resume")
 cli.add_command(export_json_resume, name="export-json-resume")
 
+# Add preview command
+from .commands.preview import preview
+
+cli.add_command(preview)
+
 
 @cli.command("ats-check")
 @click.option("-v", "--variant", default="v1.0.0-base", help="Resume variant to check")

@@ -1074,7 +1074,7 @@ from .commands.templates import templates as templates_group
 cli.add_command(templates_group, name="templates")
 
 # Add convert commands for JSON Resume interoperability
-from .commands.convert import convert, import_json_resume, export_json_resume
+from .commands.convert import convert, export_json_resume, import_json_resume
 
 cli.add_command(convert)
 cli.add_command(import_json_resume, name="import-json-resume")

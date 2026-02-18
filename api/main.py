@@ -586,9 +586,7 @@ async def render_resume_pdf(resume_id: str, variant: str = "base"):
             return Response(
                 content=content,
                 media_type="application/pdf",
-                headers={
-                    "Content-Disposition": f"attachment; filename=resume-{resume_id}.pdf"
-                },
+                headers={"Content-Disposition": f"attachment; filename=resume-{resume_id}.pdf"},
             )
 
         except HTTPException:

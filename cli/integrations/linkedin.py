@@ -64,18 +64,26 @@ class LinkedInSync:
 
     def import_from_json(self, json_path: Path) -> Dict[str, Any]:
         """
-        Import LinkedIn profile data from JSON or CSV file.
+        Import LinkedIn profile data from JSON, CSV, or folder export.
 
         Automatically detects file format based on extension and content.
+        Supports:
+        - Single JSON file (LinkedIn JSON export)
+        - Single CSV file (basic Profile.csv)
+        - Folder with multiple CSV files (full LinkedIn data export)
 
         Args:
-            json_path: Path to LinkedIn export file (JSON or CSV)
+            json_path: Path to LinkedIn export file (JSON, CSV, or folder)
 
         Returns:
             Dictionary of profile data
         """
         if not json_path.exists():
             raise FileNotFoundError(f"LinkedIn data file not found: {json_path}")
+
+        # Check if it's a directory (folder-based LinkedIn export)
+        if json_path.is_dir():
+            return self._import_from_folder(json_path)
 
         # Check file extension to determine format
         suffix = json_path.suffix.lower()
@@ -87,6 +95,79 @@ class LinkedInSync:
         else:
             # Try to detect format by reading first character
             return self._import_from_json_file(json_path)
+
+    def _import_from_folder(self, folder_path: Path) -> Dict[str, Any]:
+        """
+        Import LinkedIn profile data from a folder export.
+
+        Handles LinkedIn's full data export folder containing multiple CSV files.
+
+        Args:
+            folder_path: Path to LinkedIn export folder
+
+        Returns:
+            Dictionary of profile data
+        """
+        linkedin_data = {}
+
+        # Define the expected CSV files and their data keys
+        csv_mappings = {
+            "Profile.csv": "profile",
+            "Positions.csv": "positions",
+            "Education.csv": "education",
+            "Skills.csv": "skills",
+            "Certifications.csv": "certifications",
+        }
+
+        for csv_file, data_key in csv_mappings.items():
+            csv_path = folder_path / csv_file
+            if csv_path.exists():
+                try:
+                    data = self._read_csv_file(csv_path, csv_file)
+                    if data:
+                        linkedin_data[data_key] = data
+                except Exception as e:
+                    # Log but continue - some files may be missing or malformed
+                    import logging
+                    logging.warning(f"Error reading {csv_file}: {e}")
+
+        # Also check for Profile Summary.csv
+        profile_summary_path = folder_path / "Profile Summary.csv"
+        if profile_summary_path.exists():
+            try:
+                summary_data = self._read_csv_file(profile_summary_path, "Profile Summary.csv")
+                if summary_data and len(summary_data) > 0:
+                    # The Profile Summary CSV typically has 'Summary' column
+                    row = summary_data[0]
+                    if "Summary" in row and row["Summary"]:
+                        linkedin_data["profile"]["summary"] = row["Summary"]
+            except Exception:
+                pass
+
+        # Map LinkedIn data to resume.yaml structure
+        resume_data = self._map_linkedin_to_resume(linkedin_data)
+
+        return resume_data
+
+    def _read_csv_file(self, csv_path: Path, file_name: str) -> List[Dict[str, Any]]:
+        """
+        Read a CSV file and return list of dictionaries.
+
+        Args:
+            csv_path: Path to CSV file
+            file_name: Name of file for field mapping
+
+        Returns:
+            List of row dictionaries
+        """
+        rows = []
+        with open(csv_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                # Clean up empty values
+                cleaned_row = {k: v.strip() if v else "" for k, v in row.items()}
+                rows.append(cleaned_row)
+        return rows
 
     def _import_from_json_file(self, json_path: Path) -> Dict[str, Any]:
         """
@@ -202,19 +283,25 @@ class LinkedInSync:
         # LinkedIn export data structure varies by export format
         # Try multiple common paths
         profile_data = (
-            linkedin_data.get("profile", {}) or linkedin_data.get("Profile", {}) or linkedin_data
+            linkedin_data.get("profile", []) or linkedin_data.get("Profile", {}) or linkedin_data
         )
 
-        # Extract name
+        # Handle list format from CSV (folder export)
+        if isinstance(profile_data, list) and len(profile_data) > 0:
+            profile_data = profile_data[0]
+
+        # Extract name - handle CSV format with "First Name" and "Last Name"
         first_name = (
             profile_data.get("firstName")
             or profile_data.get("first_name")
             or profile_data.get("FirstName")
+            or profile_data.get("First Name")
         )
         last_name = (
             profile_data.get("lastName")
             or profile_data.get("last_name")
             or profile_data.get("LastName")
+            or profile_data.get("Last Name")
         )
 
         if first_name and last_name:
@@ -222,44 +309,44 @@ class LinkedInSync:
         elif profile_data.get("fullName") or profile_data.get("full_name"):
             contact["name"] = profile_data.get("fullName") or profile_data.get("full_name")
 
-        # Extract email
-        email = (
-            profile_data.get("email")
-            or profile_data.get("emailAddress")
-            or profile_data.get("email_address")
+        # Extract headline (for profile display)
+        headline = (
+            profile_data.get("headline")
+            or profile_data.get("Headline")
+            or profile_data.get("Headline")
         )
-        if email:
-            contact["email"] = email
+        if headline:
+            contact["headline"] = headline
 
-        # Extract phone
-        phone = (
-            profile_data.get("phone")
-            or profile_data.get("phoneNumber")
-            or profile_data.get("phone_number")
+        # Extract location - handle CSV format with "Geo Location"
+        location = (
+            profile_data.get("location")
+            or profile_data.get("Location")
+            or profile_data.get("geoLocation")
+            or profile_data.get("Geo Location")
         )
-        if phone:
-            contact["phone"] = phone
-
-        # Extract location
-        location = profile_data.get("location") or profile_data.get("Location", {})
-        if isinstance(location, dict):
-            city = location.get("city") or location.get("City")
-            region = location.get("region") or location.get("Region")
-            if city and region:
-                contact["location"] = {"city": city, "state": region}
-            elif city:
-                contact["location"] = {"city": city}
-        elif isinstance(location, str):
+        if location:
             contact["location"] = {"full": location}
 
-        # Extract URLs
-        urls = {}
-        if profile_data.get("website") or profile_data.get("Website"):
-            urls["website"] = profile_data.get("website") or profile_data.get("Website")
-        if profile_data.get("linkedinUrl") or profile_data.get("linkedin_url"):
-            urls["linkedin"] = profile_data.get("linkedinUrl") or profile_data.get("linkedin_url")
-        if urls:
-            contact["urls"] = urls
+        # Extract URLs from Websites field (CSV format)
+        websites = profile_data.get("websites") or profile_data.get("Websites") or ""
+        if websites:
+            urls = {}
+            # Parse website URLs (may be comma-separated)
+            if isinstance(websites, str):
+                website_list = [w.strip() for w in websites.split(",") if w.strip()]
+                for i, url in enumerate(website_list[:3]):  # Limit to 3 URLs
+                    if i == 0:
+                        urls["website"] = url
+                    else:
+                        urls[f"website_{i+1}"] = url
+            if urls:
+                contact["urls"] = urls
+
+        # Extract industry (for reference)
+        industry = profile_data.get("industry") or profile_data.get("Industry")
+        if industry:
+            contact["industry"] = industry
 
         return contact
 
@@ -268,6 +355,10 @@ class LinkedInSync:
         profile_data = (
             linkedin_data.get("profile", {}) or linkedin_data.get("Profile", {}) or linkedin_data
         )
+
+        # Handle list format from CSV (folder export)
+        if isinstance(profile_data, list) and len(profile_data) > 0:
+            profile_data = profile_data[0]
 
         summary = (
             profile_data.get("summary")
@@ -287,7 +378,7 @@ class LinkedInSync:
             # Try nested structure
             skills_data = []
 
-        # Extract skill names
+        # Extract skill names - handle CSV format with "Name" column
         skill_names = []
         for skill in skills_data:
             if isinstance(skill, dict):
@@ -454,24 +545,61 @@ class LinkedInSync:
             if not isinstance(exp, dict):
                 continue
 
-            company = exp.get("company") or exp.get("CompanyName") or exp.get("companyName") or ""
+            # Handle different CSV column names from folder export
+            # CSV format: "Company Name", "Title", "Description", "Location", "Started On", "Finished On"
+            company = (
+                exp.get("company")
+                or exp.get("CompanyName")
+                or exp.get("companyName")
+                or exp.get("Company Name")
+                or ""
+            )
 
-            title = exp.get("title") or exp.get("Title") or exp.get("jobTitle") or ""
+            title = (
+                exp.get("title")
+                or exp.get("Title")
+                or exp.get("jobTitle")
+                or exp.get("Job Title")
+                or ""
+            )
 
             if not company or not title:
                 continue
 
-            # Parse dates
-            start_date = self._parse_linkedin_date(exp.get("startDate") or exp.get("start_date"))
-            end_date = self._parse_linkedin_date(exp.get("endDate") or exp.get("end_date"))
-
-            # Location
-            location = (
-                exp.get("location") or exp.get("Location") or exp.get("companyLocation") or ""
+            # Parse dates - handle CSV format "Started On", "Finished On"
+            start_date = self._parse_linkedin_date(
+                exp.get("startDate")
+                or exp.get("start_date")
+                or exp.get("Started On")
+                or exp.get("start_date")
+            )
+            end_date = self._parse_linkedin_date(
+                exp.get("endDate")
+                or exp.get("end_date")
+                or exp.get("Finished On")
+                or exp.get("end_date")
             )
 
-            # Description/bullets
-            description = exp.get("description") or exp.get("Description") or ""
+            # Handle empty end date (current position)
+            if end_date == "" or end_date is None:
+                end_date = "Present"
+
+            # Location - handle CSV format
+            location = (
+                exp.get("location")
+                or exp.get("Location")
+                or exp.get("companyLocation")
+                or exp.get("Company Location")
+                or ""
+            )
+
+            # Description/bullets - handle CSV format
+            description = (
+                exp.get("description")
+                or exp.get("Description")
+                or exp.get("Description")
+                or ""
+            )
 
             bullets = self._parse_description_to_bullets(description)
 
@@ -564,29 +692,51 @@ class LinkedInSync:
             if not isinstance(edu, dict):
                 continue
 
+            # Handle CSV column names from folder export
+            # CSV format: "School Name", "Start Date", "End Date", "Notes", "Degree Name", "Activities"
             institution = (
                 edu.get("school")
                 or edu.get("School")
                 or edu.get("schoolName")
                 or edu.get("institution")
+                or edu.get("School Name")
                 or ""
             )
 
-            degree = edu.get("degree") or edu.get("Degree") or edu.get("degreeName") or ""
+            degree = (
+                edu.get("degree")
+                or edu.get("Degree")
+                or edu.get("degreeName")
+                or edu.get("Degree Name")
+                or ""
+            )
 
             if not institution:
                 continue
 
-            # Parse graduation date
+            # Parse graduation date - handle CSV format "End Date"
             grad_date = self._parse_linkedin_date(
-                edu.get("endDate") or edu.get("end_date") or edu.get("graduationYear")
+                edu.get("endDate")
+                or edu.get("end_date")
+                or edu.get("graduationYear")
+                or edu.get("End Date")
             )
 
-            # Location
-            location = edu.get("schoolLocation") or edu.get("location") or ""
+            # Location (not typically in CSV, but handle anyway)
+            location = edu.get("schoolLocation") or edu.get("location") or edu.get("Location") or ""
 
-            # Field of study
-            field = edu.get("fieldOfStudy") or edu.get("field_of_study") or edu.get("field") or ""
+            # Field of study - handle CSV "Notes" column sometimes contains field info
+            field = (
+                edu.get("fieldOfStudy")
+                or edu.get("field_of_study")
+                or edu.get("field")
+                or edu.get("Field of Study")
+                or ""
+            )
+
+            # If field is empty but Notes contains info, use Notes for field
+            if not field and edu.get("Notes"):
+                field = edu.get("Notes")
 
             education_entry = {
                 "institution": institution,
@@ -620,26 +770,42 @@ class LinkedInSync:
             if not isinstance(cert, dict):
                 continue
 
-            name = cert.get("name") or cert.get("Name") or cert.get("certificationName") or ""
+            # Handle CSV column names from folder export
+            # CSV format: "Name", "Url", "Authority", "Started On", "Finished On", "License Number"
+            name = (
+                cert.get("name")
+                or cert.get("Name")
+                or cert.get("certificationName")
+                or cert.get("Certification Name")
+                or ""
+            )
 
             if not name:
                 continue
 
-            # Issuing organization
+            # Issuing organization - handle CSV "Authority" column
             authority = (
                 cert.get("authority")
                 or cert.get("Authority")
                 or cert.get("issuingOrganization")
+                or cert.get("Issuer")
                 or ""
             )
 
-            # Date
+            # Date - handle CSV "Started On" and "Finished On" columns
             date = self._parse_linkedin_date(
-                cert.get("startDate") or cert.get("start_date") or cert.get("issueDate")
+                cert.get("startDate")
+                or cert.get("start_date")
+                or cert.get("issueDate")
+                or cert.get("Started On")
+                or cert.get("Finished On")
             )
 
             # URL
-            url = cert.get("url") or cert.get("Url") or ""
+            url = cert.get("url") or cert.get("Url") or cert.get("URL") or ""
+
+            # License number (may be useful)
+            license_num = cert.get("License Number") or cert.get("licenseNumber") or ""
 
             certifications.append(
                 {"name": name, "issuer": authority, "date": date or "", "url": url}

@@ -98,7 +98,10 @@ class TestLatexEscapeFilter:
         filter_func = gen.env.filters["latex_escape"]
 
         result = filter_func(None)
-        assert result is None
+        # Updated to return empty Markup for safety instead of None
+        from markupsafe import Markup
+
+        assert result == Markup("")
 
     def test_latex_escape_empty(self):
         """Test latex_escape handles empty string."""

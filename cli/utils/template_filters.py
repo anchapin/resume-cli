@@ -89,7 +89,7 @@ def latex_escape(text):
     # 5. Convert Markdown bold (**text**) to LaTeX \textbf{text}
     text = re.sub(r"\*\*([^*]+)\*\*", r"\\textbf{\1}", text)
 
-    return Markup(text)
+    return Markup(text)  # nosec B704
 
 
 def proper_title(text):

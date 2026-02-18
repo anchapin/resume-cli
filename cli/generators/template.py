@@ -5,10 +5,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-
 from ..utils.config import Config
-from ..utils.template_filters import latex_escape, proper_title
+from ..utils.template_utils import get_jinja_env
 from ..utils.yaml_parser import ResumeYAML
 
 # Optional: resume_pdf_lib for enhanced PDF generation
@@ -21,8 +19,6 @@ except ImportError:
 
 class TemplateGenerator:
     """Generate resumes from Jinja2 templates."""
-
-    _ENV_CACHE = {}
 
     def __init__(
         self,
@@ -48,22 +44,8 @@ class TemplateGenerator:
 
         self.template_dir = Path(template_dir)
 
-        # Set up Jinja2 environment (with caching)
-        cache_key = str(self.template_dir.resolve())
-        if cache_key in self._ENV_CACHE:
-            self.env = self._ENV_CACHE[cache_key]
-        else:
-            self.env = Environment(
-                loader=FileSystemLoader(self.template_dir),
-                autoescape=select_autoescape(),
-                trim_blocks=True,
-                lstrip_blocks=True,
-            )
-            # Add filters
-            self.env.filters["latex_escape"] = latex_escape
-            self.env.filters["proper_title"] = proper_title
-
-            self._ENV_CACHE[cache_key] = self.env
+        # Set up Jinja2 environment (cached via template_utils)
+        self.env = get_jinja_env(self.template_dir)
 
     def generate(
         self,

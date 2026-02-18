@@ -1,9 +1,9 @@
-import pytest
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
+from markupsafe import Markup
+
 from cli.generators.template import TemplateGenerator
 from cli.utils.template_filters import latex_escape
-from markupsafe import Markup
 
 
 def test_latex_escape_security():
@@ -34,7 +34,7 @@ def test_template_generator_autoescape():
     # Mock ResumeYAML and Config
     with patch("cli.generators.template.ResumeYAML") as MockResumeYAML, patch(
         "cli.generators.template.Config"
-    ) as MockConfig:
+    ):
 
         mock_yaml = MockResumeYAML.return_value
         mock_yaml.get_contact.return_value = {"name": "Alice & Bob"}
@@ -64,9 +64,9 @@ def test_template_generator_autoescape():
 
 def test_custom_template_loading():
     """Test that custom templates are loaded with the correct environment."""
-    with patch("cli.generators.template.ResumeYAML") as MockResumeYAML, patch(
+    with patch("cli.generators.template.ResumeYAML"), patch(
         "cli.generators.template.Config"
-    ) as MockConfig, patch("pathlib.Path.exists", return_value=True), patch(
+    ), patch("pathlib.Path.exists", return_value=True), patch(
         "pathlib.Path.read_text", return_value="{{ '&'|latex_escape }}"
     ):
 

@@ -1,6 +1,7 @@
 """Jinja2 template filters for resume CLI."""
 
 import re
+
 from markupsafe import Markup
 
 # LaTeX special character replacements

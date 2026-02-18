@@ -2,19 +2,20 @@
 Tests for resume-pdf-lib.
 """
 
-import pytest
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
+import pytest
+from markupsafe import Markup
 
 from resume_pdf_lib import (
-    PDFGenerator,
-    latex_escape,
-    proper_title,
-    TemplateNotFoundError,
     InvalidVariantError,
     LaTeXCompilationError,
+    PDFGenerator,
+    TemplateNotFoundError,
+    latex_escape,
+    proper_title,
 )
-from markupsafe import Markup
 
 
 class TestLatexEscape:
@@ -230,10 +231,10 @@ class TestExceptions:
     def test_exception_inheritance(self):
         """Test exception inheritance hierarchy."""
         from resume_pdf_lib import (
-            PDFGenerationError,
-            TemplateNotFoundError,
             InvalidVariantError,
             LaTeXCompilationError,
+            PDFGenerationError,
+            TemplateNotFoundError,
         )
 
         assert issubclass(TemplateNotFoundError, PDFGenerationError)

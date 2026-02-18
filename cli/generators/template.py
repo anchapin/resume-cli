@@ -48,6 +48,29 @@ class TemplateGenerator:
         # Set up Jinja2 environment (cached via template_utils)
         self.env = get_jinja_env(self.template_dir)
 
+        # Set up Jinja2 environment for LaTeX (with caching)
+        # Separate environment for LaTeX to handle automatic escaping via finalize
+        tex_cache_key = cache_key + "_tex"
+        if tex_cache_key in self._ENV_CACHE:
+            self.tex_env = self._ENV_CACHE[tex_cache_key]
+        else:
+            self.tex_env = Environment(
+                loader=FileSystemLoader(self.template_dir),
+                autoescape=select_autoescape(["tex"]),
+                trim_blocks=True,
+                lstrip_blocks=True,
+            )
+            # Add filters
+            self.tex_env.filters["latex_escape"] = latex_escape
+            self.tex_env.filters["proper_title"] = proper_title
+
+            # Auto-escape all variables for LaTeX
+            self.tex_env.finalize = lambda x: (
+                latex_escape(x) if isinstance(x, str) and not isinstance(x, Markup) else x
+            )
+
+            self._ENV_CACHE[tex_cache_key] = self.tex_env
+
     def generate(
         self,
         variant: str,
@@ -151,6 +174,10 @@ class TemplateGenerator:
         # Select template (PDF uses TEX template, other formats use the selected style)
         template_format = "tex" if output_format == "pdf" else output_format
 
+        # Select environment based on format
+        # Use specialized LaTeX environment for tex/pdf to ensure security
+        env = self.tex_env if template_format == "tex" else self.env
+
         # Handle custom template path
         if custom_template_path:
             try:
@@ -162,10 +189,10 @@ class TemplateGenerator:
                 # Read custom template content
                 template_content = custom_template.read_text(encoding="utf-8")
 
-                # Create a temporary template from string
-                from jinja2 import Template
+                # Create a temporary template from string using the correct environment
+                # This ensures filters and finalize hooks are available
+                template = env.from_string(template_content)
 
-                template = Template(template_content)
             except Exception as e:
                 if "Custom template not found" in str(e):
                     raise
@@ -179,7 +206,7 @@ class TemplateGenerator:
                 template_name = f"resume_{template_format}.j2"
 
             try:
-                template = self.env.get_template(template_name)
+                template = env.get_template(template_name)
             except Exception:
                 raise ValueError(f"Template not found: {template_name}")
 

@@ -24,7 +24,7 @@ except ImportError:
 class TemplateGenerator:
     """Generate resumes from Jinja2 templates."""
 
-    _ENV_CACHE = {}
+    _ENV_CACHE: Dict[str, Environment] = {}
 
     def __init__(
         self,

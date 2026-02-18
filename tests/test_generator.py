@@ -117,12 +117,10 @@ class TestPDFGenerator:
             template_dir = templates_path / "base"
             template_dir.mkdir()
             template_file = template_dir / "main.tex"
-            template_file.write_text(
-                r"""\documentclass{article}
+            template_file.write_text(r"""\documentclass{article}
 \begin{document}
 Hello \VAR{resume.basics.name}!
-\end{document}"""
-            )
+\end{document}""")
 
             yield str(templates_path)
 
@@ -183,9 +181,7 @@ Hello \VAR{resume.basics.name}!
 
     def test_generate_pdf_requires_latex(self, templates_dir, resume_data):
         """Test that PDF generation requires LaTeX compiler."""
-        generator = PDFGenerator(
-            templates_dir=templates_dir, latex_compiler="nonexistent"
-        )
+        generator = PDFGenerator(templates_dir=templates_dir, latex_compiler="nonexistent")
         with pytest.raises(LaTeXCompilationError):
             generator.generate_pdf(resume_data, variant="base")
 

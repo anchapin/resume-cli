@@ -205,11 +205,7 @@ def generate_latex_preview(resume_data: dict, variant: str) -> str:
         tex_content = output_tex.read_text(encoding="utf-8")
 
         # Escape for HTML display
-        escaped = (
-            tex_content.replace("&", "&")
-            .replace("<", "<")
-            .replace(">", ">")
-        )
+        escaped = tex_content.replace("&", "&").replace("<", "<").replace(">", ">")
         return wrap_in_html_template(
             f'<pre style="white-space: pre-wrap; font-size: 12px;">{escaped}</pre>',
             "LaTeX Preview",

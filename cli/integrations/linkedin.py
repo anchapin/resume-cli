@@ -129,6 +129,7 @@ class LinkedInSync:
                 except Exception as e:
                     # Log but continue - some files may be missing or malformed
                     import logging
+
                     logging.warning(f"Error reading {csv_file}: {e}")
 
         # Also check for Profile Summary.csv
@@ -309,16 +310,30 @@ class LinkedInSync:
         elif profile_data.get("fullName") or profile_data.get("full_name"):
             contact["name"] = profile_data.get("fullName") or profile_data.get("full_name")
 
-        # Extract headline (for profile display)
-        headline = (
-            profile_data.get("headline")
-            or profile_data.get("Headline")
-            or profile_data.get("Headline")
+        # Extract email
+        email = (
+            profile_data.get("email")
+            or profile_data.get("Email")
+            or profile_data.get("emailAddress")
         )
+        if email:
+            contact["email"] = email
+
+        # Extract phone
+        phone = (
+            profile_data.get("phone")
+            or profile_data.get("Phone")
+            or profile_data.get("phoneNumber")
+        )
+        if phone:
+            contact["phone"] = phone
+
+        # Extract headline (for profile display)
+        headline = profile_data.get("headline") or profile_data.get("Headline")
         if headline:
             contact["headline"] = headline
 
-        # Extract location - handle CSV format with "Geo Location"
+        # Extract location - handle dict format (JSON) and string format (CSV)
         location = (
             profile_data.get("location")
             or profile_data.get("Location")
@@ -326,7 +341,14 @@ class LinkedInSync:
             or profile_data.get("Geo Location")
         )
         if location:
-            contact["location"] = {"full": location}
+            if isinstance(location, dict):
+                # JSON format: {"city": "...", "region": "..."}
+                city = location.get("city", "")
+                state = location.get("region") or location.get("state", "")
+                contact["location"] = {"city": city, "state": state}
+            else:
+                # CSV format: plain string
+                contact["location"] = {"full": location}
 
         # Extract URLs from Websites field (CSV format)
         websites = profile_data.get("websites") or profile_data.get("Websites") or ""
@@ -595,10 +617,7 @@ class LinkedInSync:
 
             # Description/bullets - handle CSV format
             description = (
-                exp.get("description")
-                or exp.get("Description")
-                or exp.get("Description")
-                or ""
+                exp.get("description") or exp.get("Description") or exp.get("Description") or ""
             )
 
             bullets = self._parse_description_to_bullets(description)

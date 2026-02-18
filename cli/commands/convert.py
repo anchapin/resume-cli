@@ -1,7 +1,7 @@
 """
 CLI command for converting between resume formats.
 
-This module provides the 'convert', 'import', and 'export' commands for 
+This module provides the 'convert', 'import', and 'export' commands for
 bidirectional conversion between resume-cli YAML format and JSON Resume format.
 """
 
@@ -219,6 +219,7 @@ def export_json_resume(yaml_file: Path, output: Path):
 
 # New import/export commands as requested in Issue #118
 
+
 @click.command(name="import")
 @click.argument("input_file", type=click.Path(exists=True, path_type=Path))
 @click.option(
@@ -282,7 +283,7 @@ def import_resume(input_file: Path, fmt: Optional[str], output: Optional[Path], 
         # Import from JSON Resume
         if output is None:
             output = Path("resume.yaml")
-        
+
         click.echo(f"Importing JSON Resume from {input_file}...")
 
         with open(input_file, "r", encoding="utf-8") as f:
@@ -298,33 +299,34 @@ def import_resume(input_file: Path, fmt: Optional[str], output: Optional[Path], 
         yaml_handler.save(yaml_data)
 
         click.echo(f"✓ Successfully imported to: {output}")
-        
+
         # Show summary
         contact = yaml_data.get("contact", {})
         click.echo(f"  Name: {contact.get('name', 'N/A')}")
-        
+
         exp_count = len(yaml_data.get("experience", []))
         click.echo(f"  Experience entries: {exp_count}")
-        
+
         skill_count = len(yaml_data.get("skills", {}))
         click.echo(f"  Skills categories: {skill_count}")
-        
+
     elif fmt == "yaml":
         # Import from YAML - just copy/reference
         if output is None:
             output = Path("resume.yaml")
-        
+
         if input_file.resolve() == output.resolve():
             click.echo(f"Input and output are the same file: {output}")
             return
-            
+
         click.echo(f"Copying YAML file from {input_file} to {output}...")
-        
+
         import shutil
+
         shutil.copy2(input_file, output)
-        
+
         click.echo(f"✓ Successfully copied to: {output}")
-    
+
     else:
         click.echo(f"Error: Unsupported format '{fmt}'", err=True)
         raise click.Abort()
@@ -387,41 +389,42 @@ def export_resume(input_file: Path, fmt: Optional[str], output: Optional[Path]):
         # Export to JSON Resume
         if output is None:
             output = Path("resume.json")
-        
+
         click.echo("Exporting to JSON Resume format...")
-        
+
         json_resume = convert_yaml_to_json_resume(input_file, output)
-        
+
         click.echo(f"✓ Successfully exported to: {output}")
-        
+
         # Show summary
         basics = json_resume.get("basics", {})
         click.echo(f"  Name: {basics.get('name', 'N/A')}")
-        
+
         work_count = len(json_resume.get("work", []))
         click.echo(f"  Work entries: {work_count}")
-        
+
         skill_count = len(json_resume.get("skills", []))
         click.echo(f"  Skills categories: {skill_count}")
-        
+
         click.echo("  You can now use this file with ResumeAI or other JSON Resume tools")
-        
+
     elif fmt == "yaml":
         # Export to YAML - just copy/reference
         if output is None:
             output = Path("resume-export.yaml")
-        
+
         if input_file.resolve() == output.resolve():
             click.echo(f"Error: Input and output cannot be the same file: {output}", err=True)
             return
-            
+
         click.echo(f"Copying YAML file from {input_file} to {output}...")
-        
+
         import shutil
+
         shutil.copy2(input_file, output)
-        
+
         click.echo(f"✓ Successfully exported to: {output}")
-    
+
     else:
         click.echo(f"Error: Unsupported format '{fmt}'", err=True)
         raise click.Abort()

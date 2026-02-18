@@ -5,11 +5,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-from markupsafe import Markup
-
 from ..utils.config import Config
-from ..utils.template_filters import latex_escape, proper_title
+from ..utils.template_utils import get_jinja_env, get_jinja_tex_env
 from ..utils.yaml_parser import ResumeYAML
 
 # Optional: resume_pdf_lib for enhanced PDF generation
@@ -23,8 +20,6 @@ except ImportError:
 
 class TemplateGenerator:
     """Generate resumes from Jinja2 templates."""
-
-    _ENV_CACHE: Dict[str, Environment] = {}
 
     def __init__(
         self,
@@ -50,45 +45,12 @@ class TemplateGenerator:
 
         self.template_dir = Path(template_dir)
 
-        # Set up Jinja2 environment (with caching)
-        cache_key = str(self.template_dir.resolve())
-        if cache_key in self._ENV_CACHE:
-            self.env = self._ENV_CACHE[cache_key]
-        else:
-            self.env = Environment(
-                loader=FileSystemLoader(self.template_dir),
-                autoescape=select_autoescape(),
-                trim_blocks=True,
-                lstrip_blocks=True,
-            )
-            # Add filters
-            self.env.filters["latex_escape"] = latex_escape
-            self.env.filters["proper_title"] = proper_title
+        # Set up Jinja2 environment (cached via template_utils)
+        self.env = get_jinja_env(self.template_dir)
 
-            self._ENV_CACHE[cache_key] = self.env
-
-        # Set up Jinja2 environment for LaTeX (with caching)
-        # Separate environment for LaTeX to handle automatic escaping via finalize
-        tex_cache_key = cache_key + "_tex"
-        if tex_cache_key in self._ENV_CACHE:
-            self.tex_env = self._ENV_CACHE[tex_cache_key]
-        else:
-            self.tex_env = Environment(
-                loader=FileSystemLoader(self.template_dir),
-                autoescape=select_autoescape(["tex"]),
-                trim_blocks=True,
-                lstrip_blocks=True,
-            )
-            # Add filters
-            self.tex_env.filters["latex_escape"] = latex_escape
-            self.tex_env.filters["proper_title"] = proper_title
-
-            # Auto-escape all variables for LaTeX
-            self.tex_env.finalize = lambda x: (
-                latex_escape(x) if isinstance(x, str) and not isinstance(x, Markup) else x
-            )
-
-            self._ENV_CACHE[tex_cache_key] = self.tex_env
+        # Set up Jinja2 environment for LaTeX (cached via template_utils)
+        # Separate environment for LaTeX with automatic escaping to prevent injection
+        self.tex_env = get_jinja_tex_env(self.template_dir)
 
     def generate(
         self,

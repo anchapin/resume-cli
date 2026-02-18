@@ -316,7 +316,7 @@ class TestGenerateSingleVersion:
 class TestGenerateInteractive:
     """Test generate_interactive method."""
 
-    def test_generate_interactive(self, sample_yaml_file: Path, monkeypatch, mocker):
+    def test_generate_interactive(self, sample_yaml_file: Path, monkeypatch):
         """Test interactive generation with mocked input."""
         monkeypatch.setenv("AI_PROVIDER", "anthropic")
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
@@ -333,10 +333,9 @@ class TestGenerateInteractive:
         )
 
         # Mock input to return values
-        mocker.patch("builtins.input", return_value="I am excited about this role.")
-
-        job_desc = "Looking for senior engineer"
-        outputs, job_details = gen.generate_interactive(job_desc, company_name="Acme Corp")
+        with patch("builtins.input", return_value="I am excited about this role."):
+            job_desc = "Looking for senior engineer"
+            outputs, job_details = gen.generate_interactive(job_desc, company_name="Acme Corp")
 
         assert isinstance(outputs, dict)
         assert "md" in outputs
@@ -451,19 +450,18 @@ class TestClearCache:
 class TestGenerateCoverLetterFunction:
     """Test generate_cover_letter function."""
 
-    def test_generate_cover_letter_interactive(self, sample_yaml_file: Path, monkeypatch, mocker):
+    def test_generate_cover_letter_interactive(self, sample_yaml_file: Path, monkeypatch):
         """Test generate_cover_letter in interactive mode."""
         monkeypatch.setenv("AI_PROVIDER", "anthropic")
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
 
-        mocker.patch("builtins.input", return_value="Excited about role")
-
-        outputs, job_details = generate_cover_letter(
-            job_description="Job description",
-            company_name="Acme",
-            yaml_path=sample_yaml_file,
-            interactive=True,
-        )
+        with patch("builtins.input", return_value="Excited about role"):
+            outputs, job_details = generate_cover_letter(
+                job_description="Job description",
+                company_name="Acme",
+                yaml_path=sample_yaml_file,
+                interactive=True,
+            )
 
         assert isinstance(outputs, dict)
         assert job_details["company"] == "Acme"

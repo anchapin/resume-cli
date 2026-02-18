@@ -17,7 +17,7 @@ setup(
     description="A unified CLI for generating job-specific resumes from YAML",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/anchapin/job-hunt",
+    url="https://github.com/anchapin/resume-cli",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",

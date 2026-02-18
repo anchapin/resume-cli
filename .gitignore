@@ -72,6 +72,13 @@ resumes/
 job-posting*.txt
 job*.txt
 
+# LinkedIn data exports (personal data)
+*.zip
+Basic_LinkedIn*.zip
+
+# Temporary PR body files
+pr_body.md
+
 # Quint - Personal knowledge management system
 .quint/
 

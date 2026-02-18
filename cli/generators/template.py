@@ -14,6 +14,7 @@ from ..utils.yaml_parser import ResumeYAML
 # Optional: resume_pdf_lib for enhanced PDF generation
 try:
     from resume_pdf_lib import PDFGenerator as ResumePDFLibGenerator
+
     RESUME_PDF_LIB_AVAILABLE = True
 except ImportError:
     RESUME_PDF_LIB_AVAILABLE = False
@@ -377,8 +378,7 @@ class TemplateGenerator:
         """
         if not RESUME_PDF_LIB_AVAILABLE:
             raise ImportError(
-                "resume-pdf-lib is not installed. "
-                "Install it with: pip install resume-pdf-lib"
+                "resume-pdf-lib is not installed. " "Install it with: pip install resume-pdf-lib"
             )
 
         pdf_gen = self.get_pdf_generator()

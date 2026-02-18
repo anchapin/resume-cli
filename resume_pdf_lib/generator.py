@@ -88,9 +88,7 @@ class PDFGenerator:
     def _validate_templates_dir(self) -> None:
         """Ensure the templates directory exists."""
         if not self.templates_dir.exists():
-            raise TemplateNotFoundError(
-                f"Templates directory not found: {self.templates_dir}"
-            )
+            raise TemplateNotFoundError(f"Templates directory not found: {self.templates_dir}")
         logger.info(f"Templates directory: {self.templates_dir}")
 
     def _setup_jinja2(self) -> None:
@@ -123,9 +121,7 @@ class PDFGenerator:
 
         # Set up finalize function to auto-escape unfiltered variables
         self.jinja_env.finalize = lambda x: (
-            latex_escape(x)
-            if isinstance(x, str) and not isinstance(x, Markup)
-            else x
+            latex_escape(x) if isinstance(x, str) and not isinstance(x, Markup) else x
         )
 
         self._env_cache[cache_key] = self.jinja_env
@@ -175,8 +171,7 @@ class PDFGenerator:
         if not has_variant_dir and not has_single_template:
             available = self.list_variants()
             raise InvalidVariantError(
-                f"Variant '{variant}' not found. "
-                f"Available variants: {available}"
+                f"Variant '{variant}' not found. " f"Available variants: {available}"
             )
 
         # Validate and normalize resume data
@@ -189,13 +184,9 @@ class PDFGenerator:
             try:
                 # Render template
                 if has_variant_dir:
-                    rendered_tex = self._render_variant_template(
-                        variant, normalized_data
-                    )
+                    rendered_tex = self._render_variant_template(variant, normalized_data)
                 else:
-                    rendered_tex = self._render_single_template(
-                        variant, normalized_data
-                    )
+                    rendered_tex = self._render_single_template(variant, normalized_data)
 
                 # Write rendered LaTeX to temp directory
                 tex_file = temp_path / "resume.tex"
@@ -232,9 +223,7 @@ class PDFGenerator:
                 logger.error(f"PDF generation error: {e}")
                 raise LaTeXCompilationError(f"PDF generation failed: {e}")
 
-    def _render_variant_template(
-        self, variant: str, resume_data: Dict[str, Any]
-    ) -> str:
+    def _render_variant_template(self, variant: str, resume_data: Dict[str, Any]) -> str:
         """Render a variant-style template (ResumeAI style)."""
         template_file = self.templates_dir / variant / "main.tex"
         if not template_file.exists():
@@ -245,9 +234,7 @@ class PDFGenerator:
         template = self.jinja_env.get_template(f"{variant}/main.tex")
         return template.render(resume=resume_data)
 
-    def _render_single_template(
-        self, variant: str, resume_data: Dict[str, Any]
-    ) -> str:
+    def _render_single_template(self, variant: str, resume_data: Dict[str, Any]) -> str:
         """Render a single-file template (resume-cli style)."""
         # For resume-cli style, the template expects individual variables
         # Convert from resume dict to individual context variables
@@ -263,9 +250,7 @@ class PDFGenerator:
 
         return template.render(**context)
 
-    def _prepare_template_context(
-        self, resume_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _prepare_template_context(self, resume_data: Dict[str, Any]) -> Dict[str, Any]:
         """Prepare template context from resume data."""
         context = {}
 
@@ -288,9 +273,7 @@ class PDFGenerator:
 
         return context
 
-    def _normalize_resume_data(
-        self, resume_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _normalize_resume_data(self, resume_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Normalize resume data to a consistent format.
 
@@ -475,9 +458,7 @@ class PDFGenerator:
             try:
                 template = self.jinja_env.get_template(template_name)
             except Exception:
-                raise TemplateNotFoundError(
-                    f"Markdown template not found for variant '{variant}'"
-                )
+                raise TemplateNotFoundError(f"Markdown template not found for variant '{variant}'")
 
         return template.render(**context)
 

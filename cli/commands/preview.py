@@ -14,8 +14,6 @@ from typing import Optional
 
 import click
 import yaml as yaml_module
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-from markupsafe import Markup
 
 
 @click.command()
@@ -336,7 +334,7 @@ def start_preview_server(html_content: str, port: int, no_open: bool):
         url = f"http://localhost:{port}/preview.html"
 
         click.echo(f"\n✓ Preview server running at: {url}")
-        click.echo(f"  Press Ctrl+C to stop the server\n")
+        click.echo("  Press Ctrl+C to stop the server\n")
 
         # Open browser
         if not no_open:

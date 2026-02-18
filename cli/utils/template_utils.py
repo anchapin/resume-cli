@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 

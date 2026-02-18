@@ -6,7 +6,6 @@ This module extracts and consolidates the rendering logic from the existing
 TemplateGenerator class.
 """
 
-import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional
 

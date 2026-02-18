@@ -823,9 +823,6 @@ class LinkedInSync:
             # URL
             url = cert.get("url") or cert.get("Url") or cert.get("URL") or ""
 
-            # License number (may be useful)
-            license_num = cert.get("License Number") or cert.get("licenseNumber") or ""
-
             certifications.append(
                 {"name": name, "issuer": authority, "date": date or "", "url": url}
             )

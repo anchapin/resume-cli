@@ -11,13 +11,13 @@ Usage:
     pdf_bytes = generator.generate_pdf(resume_data, variant="modern")
 """
 
-from .generator import PDFGenerator, latex_escape, proper_title, get_generator
 from .exceptions import (
-    PDFGenerationError,
-    TemplateNotFoundError,
     InvalidVariantError,
     LaTeXCompilationError,
+    PDFGenerationError,
+    TemplateNotFoundError,
 )
+from .generator import PDFGenerator, get_generator, latex_escape, proper_title
 
 __version__ = "0.1.0"
 

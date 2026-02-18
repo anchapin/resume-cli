@@ -2,15 +2,17 @@
 
 import re
 
+from markupsafe import Markup
+
 # LaTeX special character replacements
 LATEX_REPLACEMENTS = {
+    # Escape characters that have special meaning in LaTeX
     "&": r"\&",
     "%": r"\%",
     "$": r"\$",
     "#": r"\#",
     "_": r"\_",
-    "{": r"\{",
-    "}": r"\}",
+    # { and } are handled separately in the regex construction
     "~": r"\textasciitilde{}",
     "^": r"\^{}",
     "™": r"\textsuperscript{TM}",
@@ -55,26 +57,39 @@ TITLE_SMALL_WORDS = {
 
 def latex_escape(text):
     """Escape special LaTeX characters and convert Markdown bold to LaTeX."""
-    if not text:
+    if text is None:
+        return Markup("")
+
+    # If already Markup, return as is to prevent double escaping
+    if isinstance(text, Markup):
         return text
 
-    # First, convert Markdown bold (**text**) to LaTeX \textbf{text}
-    # This must happen before character escaping
-    text = re.sub(r"\*\*([^*]+)\*\*", r"\\textbf{\1}", text)
+    text = str(text)
 
-    # Convert "degrees" to degree symbol first
+    # 1. Convert "degrees" to degree symbol
     text = text.replace("degrees", "°")
 
-    # Escape special characters
-    for old, new in LATEX_REPLACEMENTS.items():
-        text = text.replace(old, new)
+    # 2. Build replacements dictionary including \ { }
+    replacements = LATEX_REPLACEMENTS.copy()
+    replacements["\\"] = r"\textbackslash{}"
+    replacements["{"] = r"\{"
+    replacements["}"] = r"\}"
 
-    # Fix up LaTeX commands by unescaping their braces
-    # Pattern matches \command\{...\} and converts to \command{...}
-    # This handles \textbf, \textsuperscript, \textasciitilde, etc.
-    text = re.sub(r"\\([a-zA-Z]+)\\{(.+?)\\}", r"\\\1{\2}", text)
+    # 3. Build regex pattern (keys sorted by length descending to match longest first)
+    # Escape keys to handle regex special characters in the keys themselves
+    keys = sorted(replacements.keys(), key=len, reverse=True)
+    pattern = "|".join(map(re.escape, keys))
 
-    return text
+    # 4. Perform single-pass replacement
+    def replace(match):
+        return replacements[match.group(0)]
+
+    text = re.sub(pattern, replace, text)
+
+    # 5. Convert Markdown bold (**text**) to LaTeX \textbf{text}
+    text = re.sub(r"\*\*([^*]+)\*\*", r"\\textbf{\1}", text)
+
+    return Markup(text)  # nosec B704
 
 
 def proper_title(text):

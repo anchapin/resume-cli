@@ -6,7 +6,6 @@ This module extracts and consolidates the rendering logic from the existing
 TemplateGenerator class.
 """
 
-import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -18,7 +17,7 @@ from ..utils.template_filters import latex_escape, proper_title
 class PDFRenderer:
     """
     Handles LaTeX template rendering for PDF generation.
-    
+
     This class provides a clean interface for rendering Jinja2 templates
     to LaTeX format, which can then be converted to PDF.
     """
@@ -28,14 +27,14 @@ class PDFRenderer:
     def __init__(self, template_dir: Optional[Path] = None):
         """
         Initialize the PDF renderer.
-        
+
         Args:
             template_dir: Path to the templates directory.
                         Defaults to templates/ in the parent directory.
         """
         if template_dir is None:
             template_dir = Path(__file__).parent.parent.parent / "templates"
-        
+
         self.template_dir = Path(template_dir)
         self._setup_environment()
 
@@ -54,7 +53,7 @@ class PDFRenderer:
             # Add filters
             self.env.filters["latex_escape"] = latex_escape
             self.env.filters["proper_title"] = proper_title
-            
+
             self._ENV_CACHE[cache_key] = self.env
 
     def render(
@@ -64,11 +63,11 @@ class PDFRenderer:
     ) -> str:
         """
         Render a LaTeX template with the given context.
-        
+
         Args:
             template_name: Name of the Jinja2 template file
             context: Dictionary of template variables
-            
+
         Returns:
             Rendered LaTeX content as string
         """
@@ -83,7 +82,7 @@ class PDFRenderer:
     ) -> None:
         """
         Render a LaTeX template and save to file.
-        
+
         Args:
             template_name: Name of the Jinja2 template file
             context: Dictionary of template variables
@@ -92,14 +91,14 @@ class PDFRenderer:
         content = self.render(template_name, context)
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(content)
 
     def list_templates(self) -> list:
         """
         List available LaTeX templates.
-        
+
         Returns:
             List of available template names
         """

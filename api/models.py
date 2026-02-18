@@ -190,9 +190,7 @@ class JSONResumeRequest(BaseModel):
                         "studyType": "Bachelor",
                     }
                 ],
-                "skills": [
-                    {"name": "Programming Languages", "keywords": ["Python", "JavaScript"]}
-                ],
+                "skills": [{"name": "Programming Languages", "keywords": ["Python", "JavaScript"]}],
             }
         ],
     )

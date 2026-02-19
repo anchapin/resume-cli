@@ -1,7 +1,7 @@
 import os
-import pytest
-from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from cli.generators.cover_letter_generator import CoverLetterGenerator
 from cli.utils.config import Config

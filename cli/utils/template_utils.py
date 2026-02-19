@@ -79,6 +79,9 @@ def get_jinja_tex_env(template_dir: Path) -> Environment:
     tex_env.filters["latex_escape"] = latex_escape
     tex_env.filters["proper_title"] = proper_title
 
+    # Add globals
+    tex_env.globals["now"] = datetime.now
+
     # Auto-escape all variables for LaTeX to prevent injection
     tex_env.finalize = lambda x: (
         latex_escape(x) if isinstance(x, str) and not isinstance(x, Markup) else x

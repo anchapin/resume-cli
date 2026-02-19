@@ -40,7 +40,7 @@ except ImportError:
     OPENAI_AVAILABLE = False
 
 from ..utils.config import Config
-from ..utils.template_utils import get_jinja_env
+from ..utils.template_utils import get_jinja_env, get_jinja_tex_env
 from ..utils.yaml_parser import ResumeYAML
 from .ai_judge import create_ai_judge
 
@@ -65,6 +65,7 @@ class CoverLetterGenerator:
 
         # Set up Jinja2 environment (cached via template_utils)
         self.env = get_jinja_env(template_dir)
+        self.tex_env = get_jinja_tex_env(template_dir)
 
         # Initialize AI client (same as AIGenerator)
         provider = self.config.ai_provider
@@ -678,7 +679,7 @@ Return ONLY valid JSON, nothing else."""
         """Render LaTeX cover letter template."""
         contact = self.yaml_handler.get_contact()
 
-        template = self.env.get_template("cover_letter_tex.j2")
+        template = self.tex_env.get_template("cover_letter_tex.j2")
 
         context = {
             "contact": contact,

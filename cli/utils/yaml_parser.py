@@ -8,19 +8,23 @@ from typing import Any, Dict, Optional
 class ResumeYAML:
     """Handler for reading and writing resume.yaml."""
 
-    def __init__(self, yaml_path: Optional[Path] = None):
+    def __init__(
+        self, yaml_path: Optional[Path] = None, resume_data: Optional[Dict[str, Any]] = None
+    ):
         """
         Initialize YAML handler.
 
         Args:
             yaml_path: Path to resume.yaml. Defaults to ../resume.yaml from cli/ dir
+            resume_data: Optional dictionary containing resume data. If provided,
+                        loads from this dict instead of reading file.
         """
         if yaml_path is None:
             # Default to resume.yaml in parent directory
             yaml_path = Path(__file__).parent.parent.parent / "resume.yaml"
 
         self.yaml_path = Path(yaml_path)
-        self._data: Optional[Dict[str, Any]] = None
+        self._data: Optional[Dict[str, Any]] = resume_data
 
     def load(self) -> Dict[str, Any]:
         """

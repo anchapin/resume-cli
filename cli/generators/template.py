@@ -26,6 +26,7 @@ class TemplateGenerator:
         yaml_path: Optional[Path] = None,
         template_dir: Optional[Path] = None,
         config: Optional[Config] = None,
+        resume_data: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize template generator.
@@ -34,8 +35,9 @@ class TemplateGenerator:
             yaml_path: Path to resume.yaml
             template_dir: Path to templates directory
             config: Configuration object
+            resume_data: Optional dictionary containing resume data
         """
-        self.yaml_handler = ResumeYAML(yaml_path)
+        self.yaml_handler = ResumeYAML(yaml_path, resume_data=resume_data)
         self.config = config or Config()
 
         # Set up template directory

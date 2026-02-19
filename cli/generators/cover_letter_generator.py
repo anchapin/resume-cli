@@ -48,17 +48,23 @@ from .ai_judge import create_ai_judge
 class CoverLetterGenerator:
     """Generate personalized cover letters with AI."""
 
-    def __init__(self, yaml_path: Optional[Path] = None, config: Optional[Config] = None):
+    def __init__(
+        self,
+        yaml_path: Optional[Path] = None,
+        config: Optional[Config] = None,
+        resume_data: Optional[Dict[str, Any]] = None,
+    ):
         """
         Initialize cover letter generator.
 
         Args:
             yaml_path: Path to resume.yaml
             config: Configuration object
+            resume_data: Optional dictionary containing resume data
         """
         self.config = config or Config()
         self.yaml_path = yaml_path
-        self.yaml_handler = ResumeYAML(yaml_path)
+        self.yaml_handler = ResumeYAML(yaml_path, resume_data=resume_data)
 
         # Set up template directory
         template_dir = Path(__file__).parent.parent.parent / "templates"

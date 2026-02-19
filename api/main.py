@@ -159,17 +159,13 @@ async def get_variants():
     },
 )
 async def render_pdf(request: ResumeRequest):
-    # Create temp directory
+    # Create temp directory for output
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
-        resume_yaml_path = temp_path / "resume.yaml"
-
-        # Dump resume_data to resume.yaml
-        with open(resume_yaml_path, "w", encoding="utf-8") as f:
-            yaml.dump(request.resume_data, f, default_flow_style=False)
 
         try:
-            generator = TemplateGenerator(yaml_path=resume_yaml_path)
+            # Initialize generator directly with resume data
+            generator = TemplateGenerator(resume_data=request.resume_data)
 
             # Generate PDF
             # We output to a temp file
@@ -250,39 +246,31 @@ async def ats_check(request: ATSRequest):
     try:
         config = Config()
 
-        # Create temporary YAML file from resume_data
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir)
-            resume_yaml_path = temp_path / "resume.yaml"
+        # Generate ATS report directly from resume data
+        generator = ATSGenerator(config=config, resume_data=request.resume_data)
+        report = generator.generate_report(request.job_description, request.variant)
 
-            with open(resume_yaml_path, "w", encoding="utf-8") as f:
-                yaml.dump(request.resume_data, f, default_flow_style=False)
+        # Convert to JSON-serializable format
+        result = {
+            "total_score": report.total_score,
+            "total_possible": report.total_possible,
+            "overall_percentage": report.overall_percentage,
+            "summary": report.summary,
+            "categories": {
+                name: {
+                    "name": cat.name,
+                    "score": cat.points_earned,
+                    "max_score": cat.points_possible,
+                    "percentage": cat.percentage,
+                    "details": cat.details,
+                    "suggestions": cat.suggestions,
+                }
+                for name, cat in report.categories.items()
+            },
+            "recommendations": report.recommendations,
+        }
 
-            # Generate ATS report
-            generator = ATSGenerator(yaml_path=resume_yaml_path, config=config)
-            report = generator.generate_report(request.job_description, request.variant)
-
-            # Convert to JSON-serializable format
-            result = {
-                "total_score": report.total_score,
-                "total_possible": report.total_possible,
-                "overall_percentage": report.overall_percentage,
-                "summary": report.summary,
-                "categories": {
-                    name: {
-                        "name": cat.name,
-                        "score": cat.points_earned,
-                        "max_score": cat.points_possible,
-                        "percentage": cat.percentage,
-                        "details": cat.details,
-                        "suggestions": cat.suggestions,
-                    }
-                    for name, cat in report.categories.items()
-                },
-                "recommendations": report.recommendations,
-            }
-
-            return result
+        return result
 
     except Exception as e:
         logger.exception("Error during ATS check", exc_info=e)
@@ -307,36 +295,32 @@ async def generate_cover_letter(request: CoverLetterRequest):
     try:
         config = Config()
 
-        # Create temporary YAML file from resume_data
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir)
-            resume_yaml_path = temp_path / "resume.yaml"
+        # Initialize cover letter generator directly with resume data
+        generator = CoverLetterGenerator(config=config, resume_data=request.resume_data)
 
-            with open(resume_yaml_path, "w", encoding="utf-8") as f:
-                yaml.dump(request.resume_data, f, default_flow_style=False)
+        # Generate cover letter (always use non-interactive for API)
+        # The provided answers will be used as context by the AI
+        outputs, job_details = generator.generate_non_interactive(
+            job_description=request.job_description,
+            company_name=request.company_name,
+            variant=request.variant,
+            output_formats=[request.format],
+        )
 
-            # Initialize cover letter generator
-            generator = CoverLetterGenerator(yaml_path=resume_yaml_path, config=config)
+        # Return the generated content
+        # Note: outputs["md"] contains the rendered markdown, outputs["pdf"] contains LaTeX
+        if request.format == "md" and "md" in outputs:
+            return {
+                "content": outputs["md"],
+                "format": "md",
+                "company": job_details.get("company", request.company_name or "Company"),
+                "position": job_details.get("position", ""),
+            }
+        elif request.format == "pdf" and "pdf" in outputs:
+            # We need a temp directory for PDF compilation
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_path = Path(temp_dir)
 
-            # Generate cover letter (always use non-interactive for API)
-            # The provided answers will be used as context by the AI
-            outputs, job_details = generator.generate_non_interactive(
-                job_description=request.job_description,
-                company_name=request.company_name,
-                variant=request.variant,
-                output_formats=[request.format],
-            )
-
-            # Return the generated content
-            # Note: outputs["md"] contains the rendered markdown, outputs["pdf"] contains LaTeX
-            if request.format == "md" and "md" in outputs:
-                return {
-                    "content": outputs["md"],
-                    "format": "md",
-                    "company": job_details.get("company", request.company_name or "Company"),
-                    "position": job_details.get("position", ""),
-                }
-            elif request.format == "pdf" and "pdf" in outputs:
                 # Compile LaTeX to PDF
                 pdf_path = temp_path / "cover-letter.pdf"
                 if generator._compile_pdf(pdf_path, outputs["pdf"]):
@@ -359,8 +343,8 @@ async def generate_cover_letter(request: CoverLetterRequest):
                         "position": job_details.get("position", ""),
                         "note": "PDF compilation failed, returning LaTeX",
                     }
-            else:
-                raise HTTPException(status_code=500, detail="Cover letter generation failed")
+        else:
+            raise HTTPException(status_code=500, detail="Cover letter generation failed")
 
     except HTTPException:
         raise

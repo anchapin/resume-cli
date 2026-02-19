@@ -77,17 +77,23 @@ class ATSReport:
 class ATSGenerator:
     """Generate ATS scores and reports for resumes."""
 
-    def __init__(self, yaml_path: Optional[Path] = None, config: Optional[Config] = None):
+    def __init__(
+        self,
+        yaml_path: Optional[Path] = None,
+        config: Optional[Config] = None,
+        resume_data: Optional[Dict[str, Any]] = None,
+    ):
         """
         Initialize ATS generator.
 
         Args:
             yaml_path: Path to resume.yaml
             config: Configuration object
+            resume_data: Optional dictionary containing resume data
         """
         self.config = config or Config()
         self.yaml_path = yaml_path
-        self.yaml_handler = ResumeYAML(yaml_path)
+        self.yaml_handler = ResumeYAML(yaml_path, resume_data=resume_data)
 
         # Initialize AI client (optional - will use fallback methods if not available)
         self.client = None

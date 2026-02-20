@@ -1,9 +1,9 @@
-
 import subprocess
 import pytest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 from cli.generators.template import TemplateGenerator
+
 
 class TestTemplateGeneratorSecurity:
     """Security tests for TemplateGenerator."""

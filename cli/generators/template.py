@@ -233,10 +233,16 @@ class TemplateGenerator:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=tex_path.parent,
+                shell=False,  # Security: Explicitly disable shell
             )
-            stdout, stderr = process.communicate()
-            if process.returncode == 0 or output_path.exists():
-                pdf_created = True
+            try:
+                # Add timeout to prevent infinite hanging
+                stdout, stderr = process.communicate(timeout=30)
+                if process.returncode == 0 or output_path.exists():
+                    pdf_created = True
+            except subprocess.TimeoutExpired:
+                process.kill()
+                raise RuntimeError("PDF compilation timed out (pdflatex)")
         except (subprocess.CalledProcessError, FileNotFoundError):
             # Check if PDF was created anyway (pdflatex returns non-zero for warnings)
             if output_path.exists():
@@ -248,10 +254,16 @@ class TemplateGenerator:
                         ["pandoc", str(tex_path), "-o", str(output_path), "--pdf-engine=xelatex"],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
+                        shell=False,  # Security: Explicitly disable shell
                     )
-                    stdout, stderr = process.communicate()
-                    if process.returncode == 0 or output_path.exists():
-                        pdf_created = True
+                    try:
+                        # Add timeout to prevent infinite hanging
+                        stdout, stderr = process.communicate(timeout=30)
+                        if process.returncode == 0 or output_path.exists():
+                            pdf_created = True
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        raise RuntimeError("PDF compilation timed out (pandoc)")
                 except (subprocess.CalledProcessError, FileNotFoundError):
                     pass
 

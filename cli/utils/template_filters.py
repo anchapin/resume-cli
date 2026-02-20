@@ -55,6 +55,26 @@ TITLE_SMALL_WORDS = {
 }
 
 
+# Pre-compile regex and replacement map for latex_escape
+def _build_latex_escape_pattern():
+    """Build the regex pattern and replacement map for latex_escape."""
+    replacements = LATEX_REPLACEMENTS.copy()
+    replacements["\\"] = r"\textbackslash{}"
+    replacements["{"] = r"\{"
+    replacements["}"] = r"\}"
+    replacements["degrees"] = r"\textsuperscript{\textdegree}{}"
+
+    # Sort keys by length descending to match longest first
+    keys = sorted(replacements.keys(), key=len, reverse=True)
+    pattern_str = "|".join(map(re.escape, keys))
+
+    return re.compile(pattern_str), replacements
+
+
+LATEX_ESCAPE_PATTERN, FULL_LATEX_REPLACEMENTS = _build_latex_escape_pattern()
+BOLD_PATTERN = re.compile(r"\*\*([^*]+)\*\*")
+
+
 def latex_escape(text):
     """Escape special LaTeX characters and convert Markdown bold to LaTeX."""
     if text is None:
@@ -66,28 +86,14 @@ def latex_escape(text):
 
     text = str(text)
 
-    # 1. Convert "degrees" to degree symbol
-    text = text.replace("degrees", "°")
-
-    # 2. Build replacements dictionary including \ { }
-    replacements = LATEX_REPLACEMENTS.copy()
-    replacements["\\"] = r"\textbackslash{}"
-    replacements["{"] = r"\{"
-    replacements["}"] = r"\}"
-
-    # 3. Build regex pattern (keys sorted by length descending to match longest first)
-    # Escape keys to handle regex special characters in the keys themselves
-    keys = sorted(replacements.keys(), key=len, reverse=True)
-    pattern = "|".join(map(re.escape, keys))
-
-    # 4. Perform single-pass replacement
+    # Single-pass replacement using pre-compiled regex
     def replace(match):
-        return replacements[match.group(0)]
+        return FULL_LATEX_REPLACEMENTS[match.group(0)]
 
-    text = re.sub(pattern, replace, text)
+    text = LATEX_ESCAPE_PATTERN.sub(replace, text)
 
-    # 5. Convert Markdown bold (**text**) to LaTeX \textbf{text}
-    text = re.sub(r"\*\*([^*]+)\*\*", r"\\textbf{\1}", text)
+    # Convert Markdown bold (**text**) to LaTeX \textbf{text}
+    text = BOLD_PATTERN.sub(r"\\textbf{\1}", text)
 
     return Markup(text)  # nosec B704
 

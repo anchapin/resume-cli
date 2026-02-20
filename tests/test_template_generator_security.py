@@ -1,7 +1,8 @@
 import subprocess
-import pytest
 from unittest.mock import MagicMock, patch
-from pathlib import Path
+
+import pytest
+
 from cli.generators.template import TemplateGenerator
 
 
@@ -47,7 +48,7 @@ class TestTemplateGeneratorSecurity:
         mock_popen.return_value = mock_process
 
         # Run
-        with pytest.raises(RuntimeError) as excinfo:
+        with pytest.raises(RuntimeError):
             gen._compile_pdf(output_path, tex_content)
 
         # Verify process was killed

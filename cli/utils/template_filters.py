@@ -74,6 +74,8 @@ def latex_escape(text):
     replacements["\\"] = r"\textbackslash{}"
     replacements["{"] = r"\{"
     replacements["}"] = r"\}"
+    replacements["["] = r"{[}"
+    replacements["]"] = r"{]}"
 
     # 3. Build regex pattern (keys sorted by length descending to match longest first)
     # Escape keys to handle regex special characters in the keys themselves

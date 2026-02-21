@@ -490,7 +490,7 @@ def latex_escape(text: Any) -> Markup:
 
         if char == "\\":
             result.append(r"\textbackslash{}")
-        elif char in "&%$#_{}~^<>":
+        elif char in "&%$#_{}~^<>[]":
             escaped_map = {
                 "&": r"\&",
                 "%": r"\%",
@@ -499,6 +499,8 @@ def latex_escape(text: Any) -> Markup:
                 "_": r"\_",
                 "{": r"\{",
                 "}": r"\}",
+                "[": r"{[}",
+                "]": r"{]}",
                 "~": r"\textasciitilde{}",
                 "^": r"\^{}",
                 "<": r"\textless{}",

@@ -1,5 +1,3 @@
-from markupsafe import Markup
-
 from cli.utils.template_filters import latex_escape as cli_latex_escape
 from resume_pdf_lib.generator import latex_escape as lib_latex_escape
 

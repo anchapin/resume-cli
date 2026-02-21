@@ -66,9 +66,14 @@ class Config:
         """
         self.config_path = config_path
         self._config: Dict[str, Any] = deepcopy(self.DEFAULT_CONFIG)
+        self._loaded = False
 
-        if config_path and config_path.exists():
-            self.load(config_path)
+    def _ensure_loaded(self) -> None:
+        """Ensure configuration is loaded from file if available."""
+        if not self._loaded:
+            if self.config_path and self.config_path.exists():
+                self.load(self.config_path)
+            self._loaded = True
 
     def load(self, config_path: Path) -> None:
         """Load configuration from file."""
@@ -77,6 +82,7 @@ class Config:
         with open(config_path) as f:
             user_config = yaml.safe_load(f) or {}
             self._merge_config(user_config)
+        self._loaded = True
 
     def _merge_config(self, user_config: Dict[str, Any]) -> None:
         """Merge user config with defaults (deep merge)."""
@@ -103,6 +109,7 @@ class Config:
         Returns:
             Configuration value
         """
+        self._ensure_loaded()
         keys = key.split(".")
         value = self._config
 
@@ -122,6 +129,7 @@ class Config:
             key: Dot-notation key
             value: Value to set
         """
+        self._ensure_loaded()
         keys = key.split(".")
         config = self._config
 
@@ -134,6 +142,7 @@ class Config:
 
     def save(self, path: Optional[Path] = None) -> None:
         """Save configuration to file."""
+        self._ensure_loaded()
         import yaml
 
         save_path = path or self.config_path

@@ -1,4 +1,3 @@
-
 import subprocess
 import unittest
 from pathlib import Path
@@ -13,7 +12,10 @@ class TestPDFSecurity(unittest.TestCase):
         # Setup mock
         process_mock = MagicMock()
         # Raise TimeoutExpired on first call, return empty bytes on second call (cleanup)
-        process_mock.communicate.side_effect = [subprocess.TimeoutExpired(cmd="pdflatex", timeout=30), (b"", b"")]
+        process_mock.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="pdflatex", timeout=30),
+            (b"", b""),
+        ]
         mock_popen.return_value = process_mock
 
         generator = TemplateGenerator()
@@ -43,7 +45,7 @@ class TestPDFSecurity(unittest.TestCase):
         # Run compilation
         # We mock output_path.exists() to return True to avoid RuntimeError
         with patch.object(Path, "exists", return_value=True):
-             generator._compile_pdf(Path("output.pdf"), "content")
+            generator._compile_pdf(Path("output.pdf"), "content")
 
         # Verify arguments
         args, _ = mock_popen.call_args
@@ -52,6 +54,7 @@ class TestPDFSecurity(unittest.TestCase):
         self.assertIn("-no-shell-escape", command)
         self.assertIn("-interaction=nonstopmode", command)
         self.assertIn("pdflatex", command)
+
 
 if __name__ == "__main__":
     unittest.main()

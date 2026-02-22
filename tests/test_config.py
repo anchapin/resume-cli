@@ -15,6 +15,12 @@ class TestConfigInitialization:
         """Test Config initializes with default config."""
         config = Config()
 
+        # With lazy loading, _config should be None initially
+        assert config._config is None
+
+        # Trigger loading
+        config._ensure_loaded()
+
         assert config._config is not None
         assert "output" in config._config
         assert "ai" in config._config

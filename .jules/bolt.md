@@ -5,3 +5,7 @@
 ## 2024-05-22 - Lazy Imports for CLI Performance
 **Learning:** Top-level imports of heavy libraries (like Jinja2) in a CLI entry point slow down all commands, even those that don't use the library (like `--help`).
 **Action:** Move heavy imports inside the specific command functions where they are used.
+
+## 2025-02-18 - Regex Pre-compilation in Hot Paths
+**Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
+**Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.

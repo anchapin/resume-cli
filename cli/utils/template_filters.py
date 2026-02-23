@@ -33,11 +33,13 @@ LATEX_REPLACEMENTS = {
 
 # Pre-compile regex patterns for performance
 LATEX_ESCAPE_REPLACEMENTS = LATEX_REPLACEMENTS.copy()
-LATEX_ESCAPE_REPLACEMENTS.update({
-    "\\": r"\textbackslash{}",
-    "{": r"\{",
-    "}": r"\}",
-})
+LATEX_ESCAPE_REPLACEMENTS.update(
+    {
+        "\\": r"\textbackslash{}",
+        "{": r"\{",
+        "}": r"\}",
+    }
+)
 
 # Sort by length descending to match longest first
 _keys = sorted(LATEX_ESCAPE_REPLACEMENTS.keys(), key=len, reverse=True)

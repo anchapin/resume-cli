@@ -42,7 +42,6 @@ setup(
         "python-docx>=0.8.11",
         "beautifulsoup4>=4.12.0",
         "lxml>=4.9.0",
-        "python-docx>=0.8.11",
     ],
     extras_require={
         "ai": [

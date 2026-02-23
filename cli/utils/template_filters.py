@@ -69,11 +69,13 @@ def latex_escape(text):
     # 1. Convert "degrees" to degree symbol
     text = text.replace("degrees", "°")
 
-    # 2. Build replacements dictionary including \ { }
+    # 2. Build replacements dictionary including \ { } [ ]
     replacements = LATEX_REPLACEMENTS.copy()
     replacements["\\"] = r"\textbackslash{}"
     replacements["{"] = r"\{"
     replacements["}"] = r"\}"
+    replacements["["] = r"{[}"
+    replacements["]"] = r"{]}"
 
     # 3. Build regex pattern (keys sorted by length descending to match longest first)
     # Escape keys to handle regex special characters in the keys themselves

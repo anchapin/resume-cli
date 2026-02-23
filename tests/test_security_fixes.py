@@ -17,6 +17,9 @@ def test_latex_escape_security():
     # Braces escaping
     assert latex_escape("{}") == Markup(r"\{\}")
 
+    # Bracket escaping (optional argument injection prevention)
+    assert latex_escape("[]") == Markup(r"{[}{]}")
+
     # Markdown bold to LaTeX
     assert latex_escape("**bold**") == Markup(r"\textbf{bold}")
 

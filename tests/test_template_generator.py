@@ -56,7 +56,7 @@ class TestLatexEscapeFilter:
         assert filter_func("# section") == r"\# section"
         assert filter_func("text_var") == r"text\_var"
         assert filter_func("{item}") == r"\{item\}"
-        assert filter_func("[key]") == r"[key]"  # Brackets not escaped
+        assert filter_func("[key]") == r"{[}key{]}"  # Brackets escaped
 
     def test_latex_escape_copyright_symbols(self):
         """Test latex_escape escapes copyright symbols."""

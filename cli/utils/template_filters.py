@@ -29,6 +29,8 @@ LATEX_REPLACEMENTS = {
     ">=": r"$\ge$",
     "<=": r"$\le$",
     "->": r"$\rightarrow$",
+    "[": r"{[}",
+    "]": r"{]}",
 }
 
 # Words to keep lowercase in titles

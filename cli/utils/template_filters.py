@@ -33,6 +33,22 @@ LATEX_REPLACEMENTS = {
     "]": r"{]}",
 }
 
+# Pre-compile regex patterns for performance
+LATEX_ESCAPE_REPLACEMENTS = LATEX_REPLACEMENTS.copy()
+LATEX_ESCAPE_REPLACEMENTS.update(
+    {
+        "\\": r"\textbackslash{}",
+        "{": r"\{",
+        "}": r"\}",
+    }
+)
+
+# Sort by length descending to match longest first
+_keys = sorted(LATEX_ESCAPE_REPLACEMENTS.keys(), key=len, reverse=True)
+_pattern = "|".join(map(re.escape, _keys))
+LATEX_ESCAPE_PATTERN = re.compile(_pattern)
+MARKDOWN_BOLD_PATTERN = re.compile(r"\*\*([^*]+)\*\*")
+
 # Words to keep lowercase in titles
 TITLE_SMALL_WORDS = {
     "a",
@@ -71,25 +87,14 @@ def latex_escape(text):
     # 1. Convert "degrees" to degree symbol
     text = text.replace("degrees", "°")
 
-    # 2. Build replacements dictionary including \ { }
-    replacements = LATEX_REPLACEMENTS.copy()
-    replacements["\\"] = r"\textbackslash{}"
-    replacements["{"] = r"\{"
-    replacements["}"] = r"\}"
-
-    # 3. Build regex pattern (keys sorted by length descending to match longest first)
-    # Escape keys to handle regex special characters in the keys themselves
-    keys = sorted(replacements.keys(), key=len, reverse=True)
-    pattern = "|".join(map(re.escape, keys))
-
-    # 4. Perform single-pass replacement
+    # 2. Use pre-compiled patterns for replacement
     def replace(match):
-        return replacements[match.group(0)]
+        return LATEX_ESCAPE_REPLACEMENTS[match.group(0)]
 
-    text = re.sub(pattern, replace, text)
+    text = LATEX_ESCAPE_PATTERN.sub(replace, text)
 
-    # 5. Convert Markdown bold (**text**) to LaTeX \textbf{text}
-    text = re.sub(r"\*\*([^*]+)\*\*", r"\\textbf{\1}", text)
+    # 3. Convert Markdown bold (**text**) to LaTeX \textbf{text}
+    text = MARKDOWN_BOLD_PATTERN.sub(r"\\textbf{\1}", text)
 
     return Markup(text)  # nosec B704
 

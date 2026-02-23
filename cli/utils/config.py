@@ -65,14 +65,27 @@ class Config:
             config_path: Path to config.yaml. If None, uses default config.
         """
         self.config_path = config_path
-        self._config: Dict[str, Any] = deepcopy(self.DEFAULT_CONFIG)
+        self._config: Optional[Dict[str, Any]] = None
 
-        if config_path and config_path.exists():
-            self.load(config_path)
+    def _ensure_loaded(self) -> None:
+        """Ensure configuration is loaded from defaults and file."""
+        if self._config is not None:
+            return
+
+        # Initialize with defaults if not loaded
+        if self.config_path and self.config_path.exists():
+            # self.load() will handle default initialization
+            self.load(self.config_path)
+        else:
+            self._config = deepcopy(self.DEFAULT_CONFIG)
 
     def load(self, config_path: Path) -> None:
         """Load configuration from file."""
         import yaml
+
+        # Ensure base config is initialized
+        if self._config is None:
+            self._config = deepcopy(self.DEFAULT_CONFIG)
 
         with open(config_path) as f:
             user_config = yaml.safe_load(f) or {}
@@ -80,6 +93,9 @@ class Config:
 
     def _merge_config(self, user_config: Dict[str, Any]) -> None:
         """Merge user config with defaults (deep merge)."""
+        # Ensure config is initialized before merging
+        if self._config is None:
+            self._config = deepcopy(self.DEFAULT_CONFIG)
 
         def deep_merge(base: Dict, update: Dict) -> Dict:
             result = base.copy()
@@ -103,6 +119,7 @@ class Config:
         Returns:
             Configuration value
         """
+        self._ensure_loaded()
         keys = key.split(".")
         value = self._config
 
@@ -122,8 +139,12 @@ class Config:
             key: Dot-notation key
             value: Value to set
         """
+        self._ensure_loaded()
         keys = key.split(".")
         config = self._config
+
+        # Type check to satisfy mypy
+        assert isinstance(config, dict)
 
         for k in keys[:-1]:
             if k not in config:
@@ -135,6 +156,8 @@ class Config:
     def save(self, path: Optional[Path] = None) -> None:
         """Save configuration to file."""
         import yaml
+
+        self._ensure_loaded()
 
         save_path = path or self.config_path
         if not save_path:

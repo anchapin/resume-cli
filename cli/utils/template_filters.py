@@ -25,6 +25,8 @@ LATEX_REPLACEMENTS = {
     "→": r"$\rightarrow$",
     "—": r"---",  # em dash
     "–": r"--",  # en dash
+    "<": r"\textless{}",
+    ">": r"\textgreater{}",
     # ASCII equivalents for math symbols and arrows
     ">=": r"$\ge$",
     "<=": r"$\le$",

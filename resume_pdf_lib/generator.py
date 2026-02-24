@@ -27,6 +27,53 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+# LaTeX special character replacements
+LATEX_REPLACEMENTS = {
+    # Escape characters that have special meaning in LaTeX
+    "&": r"\&",
+    "%": r"\%",
+    "$": r"\$",
+    "#": r"\#",
+    "_": r"\_",
+    # { and } are handled separately in the regex construction
+    "~": r"\textasciitilde{}",
+    "^": r"\^{}",
+    "™": r"\textsuperscript{TM}",
+    "®": r"\textsuperscript{R}",
+    "©": r"\textcopyright{}",
+    "°": r"\textsuperscript{\textdegree}{}",
+    "±": r"$\pm$",
+    "≥": r"$\ge$",
+    "≤": r"$\le$",
+    "→": r"$\rightarrow$",
+    "—": r"---",  # em dash
+    "–": r"--",  # en dash
+    "<": r"\textless{}",
+    ">": r"\textgreater{}",
+    # ASCII equivalents for math symbols and arrows
+    ">=": r"$\ge$",
+    "<=": r"$\le$",
+    "->": r"$\rightarrow$",
+    "[": r"{[}",
+    "]": r"{]}",
+}
+
+# Pre-compile regex patterns for performance
+LATEX_ESCAPE_REPLACEMENTS = LATEX_REPLACEMENTS.copy()
+LATEX_ESCAPE_REPLACEMENTS.update(
+    {
+        "\\": r"\textbackslash{}",
+        "{": r"\{",
+        "}": r"\}",
+    }
+)
+
+# Sort by length descending to match longest first
+_keys = sorted(LATEX_ESCAPE_REPLACEMENTS.keys(), key=len, reverse=True)
+_pattern = "|".join(map(re.escape, _keys))
+LATEX_ESCAPE_PATTERN = re.compile(_pattern)
+
+
 class PDFGenerator:
     """
     Generate PDF resumes from structured data using LaTeX templates.
@@ -477,43 +524,19 @@ def latex_escape(text: Any) -> Markup:
     if text is None:
         return Markup("")
 
-    # Handle already-marked-up content
+    # If already Markup, return as is to prevent double escaping
     if isinstance(text, Markup):
         return text
 
-    text_str = str(text)
+    text = str(text)
 
-    # Process the string character by character
-    result = []
-    i = 0
-    while i < len(text_str):
-        char = text_str[i]
+    # Use pre-compiled patterns for replacement
+    def replace(match):
+        return LATEX_ESCAPE_REPLACEMENTS[match.group(0)]
 
-        if char == "\\":
-            result.append(r"\textbackslash{}")
-        elif char in "&%$#_{}~^<>[]":
-            escaped_map = {
-                "&": r"\&",
-                "%": r"\%",
-                "$": r"\$",
-                "#": r"\#",
-                "_": r"\_",
-                "{": r"\{",
-                "}": r"\}",
-                "~": r"\textasciitilde{}",
-                "^": r"\^{}",
-                "<": r"\textless{}",
-                ">": r"\textgreater{}",
-                "[": r"{[}",
-                "]": r"{]}",
-            }
-            result.append(escaped_map[char])
-        else:
-            result.append(char)
+    text = LATEX_ESCAPE_PATTERN.sub(replace, text)
 
-        i += 1
-
-    return Markup("".join(result))
+    return Markup(text)
 
 
 def proper_title(text: str) -> str:

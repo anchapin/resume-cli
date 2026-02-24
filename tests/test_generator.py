@@ -79,7 +79,7 @@ class TestLatexEscape:
     def test_escape_extended_characters(self):
         """Test extended characters escaping."""
         assert latex_escape("—") == Markup("---")  # em-dash
-        assert latex_escape("–") == Markup("--")   # en-dash
+        assert latex_escape("–") == Markup("--")  # en-dash
         assert latex_escape("©") == Markup(r"\textcopyright{}")
 
 

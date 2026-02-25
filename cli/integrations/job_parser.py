@@ -15,8 +15,11 @@ Outputs structured JSON for use with AI resume tailoring.
 """
 
 import hashlib
+import ipaddress
 import json
 import re
+import socket
+import urllib.parse
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -206,6 +209,7 @@ class JobParser:
 
         First checks cache for previously parsed data.
         If not cached, fetches the URL and parses the HTML.
+        Includes SSRF protection to prevent access to private/local networks.
 
         Args:
             url: URL to job posting
@@ -221,18 +225,46 @@ class JobParser:
 
         # Fetch and parse
         try:
+            # Validate initial URL
+            self._validate_url(url)
 
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-            response = requests.get(url, headers=headers, timeout=30)
-            response.raise_for_status()
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
 
-            job_details = self._parse_html(response.text)
-            job_details.url = url
+            # Use Session to handle redirects manually
+            with requests.Session() as session:
+                response = session.get(
+                    url, headers=headers, timeout=30, allow_redirects=False
+                )
 
-            # Save to cache
-            self._save_to_cache(cache_key, job_details)
+                # Manual redirect handling to validate each hop
+                redirects = 0
+                max_redirects = 5
+                while response.is_redirect and redirects < max_redirects:
+                    next_url = response.headers["Location"]
+                    # Handle relative URLs
+                    next_url = urllib.parse.urljoin(response.url, next_url)
 
-            return job_details
+                    self._validate_url(next_url)
+
+                    response = session.get(
+                        next_url, headers=headers, timeout=30, allow_redirects=False
+                    )
+                    redirects += 1
+
+                if response.is_redirect:
+                    raise RuntimeError("Too many redirects")
+
+                response.raise_for_status()
+
+                job_details = self._parse_html(response.text)
+                job_details.url = url  # Use original URL
+
+                # Save to cache
+                self._save_to_cache(cache_key, job_details)
+
+                return job_details
 
         except ImportError:
             raise NotImplementedError(
@@ -240,6 +272,50 @@ class JobParser:
             )
         except requests.RequestException as e:
             raise RuntimeError(f"Failed to fetch URL: {e}")
+        except ValueError as e:
+            raise RuntimeError(f"Security validation failed: {e}")
+
+    def _validate_url(self, url: str) -> None:
+        """
+        Validate URL to prevent SSRF attacks.
+
+        Args:
+            url: URL to validate
+
+        Raises:
+            ValueError: If URL is invalid or restricted
+        """
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError(
+                f"Invalid URL scheme: {parsed.scheme}. Only http and https are allowed."
+            )
+
+        hostname = parsed.hostname
+        if not hostname:
+            raise ValueError("Invalid URL: missing hostname")
+
+        try:
+            # Resolve hostname to check for private IPs
+            addr_info_list = socket.getaddrinfo(hostname, None)
+
+            for addr_info in addr_info_list:
+                ip_str = addr_info[4][0]
+                ip = ipaddress.ip_address(ip_str)
+
+                if (
+                    ip.is_loopback
+                    or ip.is_private
+                    or ip.is_link_local
+                    or ip.is_multicast
+                    or ip.is_reserved
+                    or ip.is_unspecified
+                ):
+                    raise ValueError(f"URL resolves to restricted IP address: {ip_str}")
+
+        except socket.gaierror:
+            # DNS resolution failure
+            raise ValueError(f"Could not resolve hostname: {hostname}")
 
     def _parse_html(self, html: str) -> JobDetails:
         """
@@ -312,9 +388,13 @@ class JobParser:
         location = self._extract_by_selectors(soup, self.LINKEDIN_SELECTORS["location"])
 
         # Extract description
-        description_elem = self._find_by_selectors(soup, self.LINKEDIN_SELECTORS["description"])
+        description_elem = self._find_by_selectors(
+            soup, self.LINKEDIN_SELECTORS["description"]
+        )
         description = (
-            description_elem.get_text(separator="\n", strip=True) if description_elem else ""
+            description_elem.get_text(separator="\n", strip=True)
+            if description_elem
+            else ""
         )
 
         # Extract salary
@@ -323,7 +403,9 @@ class JobParser:
             salary = self._extract_salary_from_text(html)
 
         # Extract requirements and responsibilities from description
-        requirements, responsibilities = self._extract_sections_from_description(description)
+        requirements, responsibilities = self._extract_sections_from_description(
+            description
+        )
 
         # Detect remote status
         remote = self._detect_remote_status(html + " " + (description or ""))
@@ -361,7 +443,9 @@ class JobParser:
         company = self._extract_by_selectors(soup, self.INDEED_SELECTORS["company"])
         if not company:
             # Fallback patterns
-            company = self._extract_text_by_pattern(html, r'company["\s:]+([^"<>\n]+)')
+            company = self._extract_text_by_pattern(
+                html, r'company["\s:]+([^"<>\n]+)'
+            )
 
         # Extract position
         position = self._extract_by_selectors(soup, self.INDEED_SELECTORS["position"])
@@ -373,9 +457,13 @@ class JobParser:
         location = self._extract_by_selectors(soup, self.INDEED_SELECTORS["location"])
 
         # Extract description
-        description_elem = self._find_by_selectors(soup, self.INDEED_SELECTORS["description"])
+        description_elem = self._find_by_selectors(
+            soup, self.INDEED_SELECTORS["description"]
+        )
         description = (
-            description_elem.get_text(separator="\n", strip=True) if description_elem else ""
+            description_elem.get_text(separator="\n", strip=True)
+            if description_elem
+            else ""
         )
 
         # Extract salary
@@ -384,7 +472,9 @@ class JobParser:
             salary = self._extract_salary_from_text(html)
 
         # Extract requirements and responsibilities
-        requirements, responsibilities = self._extract_sections_from_description(description)
+        requirements, responsibilities = self._extract_sections_from_description(
+            description
+        )
 
         # Detect remote status
         remote = self._detect_remote_status(html + " " + (description or ""))
@@ -441,7 +531,9 @@ class JobParser:
                 position = re.sub(r"\s*[-|]\s*.*$", "", title)
 
         # Extract location
-        location = self._extract_text_by_pattern(html, r"(?:location|based|office)[:\s]+([^<>\n]+)")
+        location = self._extract_text_by_pattern(
+            html, r"(?:location|based|office)[:\s]+([^<>\n]+)"
+        )
 
         # Extract salary
         salary = self._extract_salary_from_text(html)
@@ -493,7 +585,9 @@ class JobParser:
             experience_level=experience_level,
         )
 
-    def _extract_by_selectors(self, soup: BeautifulSoup, selectors: List[str]) -> Optional[str]:
+    def _extract_by_selectors(
+        self, soup: BeautifulSoup, selectors: List[str]
+    ) -> Optional[str]:
         """
         Extract text using multiple CSS selectors.
 
@@ -512,7 +606,9 @@ class JobParser:
                     return text
         return None
 
-    def _find_by_selectors(self, soup: BeautifulSoup, selectors: List[str]) -> Optional[Tag]:
+    def _find_by_selectors(
+        self, soup: BeautifulSoup, selectors: List[str]
+    ) -> Optional[Tag]:
         """
         Find element using multiple CSS selectors.
 
@@ -576,7 +672,9 @@ class JobParser:
 
         return None
 
-    def _extract_sections_from_description(self, description: str) -> Tuple[List[str], List[str]]:
+    def _extract_sections_from_description(
+        self, description: str
+    ) -> Tuple[List[str], List[str]]:
         """
         Extract requirements and responsibilities from job description.
 
@@ -726,7 +824,9 @@ class JobParser:
         # Find all li elements
         li_elements = element.find_all("li")
         if li_elements:
-            items = [li.get_text(strip=True) for li in li_elements if li.get_text(strip=True)]
+            items = [
+                li.get_text(strip=True) for li in li_elements if li.get_text(strip=True)
+            ]
         else:
             # Try to find bullet points in text
             text = element.get_text(separator="\n")
@@ -788,7 +888,13 @@ class JobParser:
                 return True  # Consider hybrid as remote-friendly
 
         # Check for on-site only indicators
-        onsite_keywords = ["on-site", "onsite", "in-office", "in person", "at our office"]
+        onsite_keywords = [
+            "on-site",
+            "onsite",
+            "in-office",
+            "in person",
+            "at our office",
+        ]
         for keyword in onsite_keywords:
             if keyword in text_lower and "remote" not in text_lower:
                 return False

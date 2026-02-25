@@ -3,6 +3,7 @@ import socket
 from unittest.mock import patch, Mock
 from cli.integrations.job_parser import JobParser
 
+
 class TestSSRFProtection:
     """Test SSRF protection in JobParser."""
 
@@ -12,16 +13,19 @@ class TestSSRFProtection:
         self.parser._get_from_cache = Mock(return_value=None)
         self.parser._save_to_cache = Mock()
 
-    @pytest.mark.parametrize("url", [
-        "http://127.0.0.1",
-        "http://localhost",
-        "http://10.0.0.1",
-        "http://192.168.1.1",
-        "http://172.16.0.1",
-        "http://[::1]",
-        "ftp://example.com",  # Invalid scheme
-        "file:///etc/passwd", # Invalid scheme
-    ])
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://127.0.0.1",
+            "http://localhost",
+            "http://10.0.0.1",
+            "http://192.168.1.1",
+            "http://172.16.0.1",
+            "http://[::1]",
+            "ftp://example.com",  # Invalid scheme
+            "file:///etc/passwd",  # Invalid scheme
+        ],
+    )
     def test_parse_from_url_blocks_restricted_access(self, url):
         """Verify that parse_from_url raises RuntimeError (wrapping ValueError) for restricted URLs."""
         # Mock requests.Session to ensure we don't actually make requests
@@ -55,7 +59,7 @@ class TestSSRFProtection:
 
             # Mock socket.getaddrinfo to resolve to a public IP
             public_ip = "93.184.216.34"
-            mock_addr_info = [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (public_ip, 80))]
+            mock_addr_info = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (public_ip, 80))]
 
             with patch("socket.getaddrinfo", return_value=mock_addr_info):
                 self.parser.parse_from_url(url)
@@ -76,9 +80,9 @@ class TestSSRFProtection:
             # First response: 302 Redirect
             resp1 = Mock()
             resp1.is_redirect = True
-            resp1.headers = {'Location': target_url}
+            resp1.headers = {"Location": target_url}
             resp1.status_code = 302
-            resp1.url = url # important for urljoin
+            resp1.url = url  # important for urljoin
 
             # Second response (should not be reached if validation works)
             resp2 = Mock()
@@ -91,11 +95,11 @@ class TestSSRFProtection:
             def getaddrinfo_side_effect(host, port, family=0, type=0, proto=0, flags=0):
                 # Check if host is 127.0.0.1 (from target_url)
                 if host == "127.0.0.1":
-                    return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', ('127.0.0.1', 80))]
+                    return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", 80))]
                 # Default to public IP
-                return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', ('93.184.216.34', 80))]
+                return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 80))]
 
             with patch("socket.getaddrinfo", side_effect=getaddrinfo_side_effect):
-                 # We expect RuntimeError when following redirect to private IP
-                 with pytest.raises(RuntimeError, match="Security validation failed|restricted"):
-                     self.parser.parse_from_url(url)
+                # We expect RuntimeError when following redirect to private IP
+                with pytest.raises(RuntimeError, match="Security validation failed|restricted"):
+                    self.parser.parse_from_url(url)

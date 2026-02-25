@@ -228,15 +228,11 @@ class JobParser:
             # Validate initial URL
             self._validate_url(url)
 
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            }
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
             # Use Session to handle redirects manually
             with requests.Session() as session:
-                response = session.get(
-                    url, headers=headers, timeout=30, allow_redirects=False
-                )
+                response = session.get(url, headers=headers, timeout=30, allow_redirects=False)
 
                 # Manual redirect handling to validate each hop
                 redirects = 0
@@ -388,13 +384,9 @@ class JobParser:
         location = self._extract_by_selectors(soup, self.LINKEDIN_SELECTORS["location"])
 
         # Extract description
-        description_elem = self._find_by_selectors(
-            soup, self.LINKEDIN_SELECTORS["description"]
-        )
+        description_elem = self._find_by_selectors(soup, self.LINKEDIN_SELECTORS["description"])
         description = (
-            description_elem.get_text(separator="\n", strip=True)
-            if description_elem
-            else ""
+            description_elem.get_text(separator="\n", strip=True) if description_elem else ""
         )
 
         # Extract salary
@@ -403,9 +395,7 @@ class JobParser:
             salary = self._extract_salary_from_text(html)
 
         # Extract requirements and responsibilities from description
-        requirements, responsibilities = self._extract_sections_from_description(
-            description
-        )
+        requirements, responsibilities = self._extract_sections_from_description(description)
 
         # Detect remote status
         remote = self._detect_remote_status(html + " " + (description or ""))
@@ -443,9 +433,7 @@ class JobParser:
         company = self._extract_by_selectors(soup, self.INDEED_SELECTORS["company"])
         if not company:
             # Fallback patterns
-            company = self._extract_text_by_pattern(
-                html, r'company["\s:]+([^"<>\n]+)'
-            )
+            company = self._extract_text_by_pattern(html, r'company["\s:]+([^"<>\n]+)')
 
         # Extract position
         position = self._extract_by_selectors(soup, self.INDEED_SELECTORS["position"])
@@ -457,13 +445,9 @@ class JobParser:
         location = self._extract_by_selectors(soup, self.INDEED_SELECTORS["location"])
 
         # Extract description
-        description_elem = self._find_by_selectors(
-            soup, self.INDEED_SELECTORS["description"]
-        )
+        description_elem = self._find_by_selectors(soup, self.INDEED_SELECTORS["description"])
         description = (
-            description_elem.get_text(separator="\n", strip=True)
-            if description_elem
-            else ""
+            description_elem.get_text(separator="\n", strip=True) if description_elem else ""
         )
 
         # Extract salary
@@ -472,9 +456,7 @@ class JobParser:
             salary = self._extract_salary_from_text(html)
 
         # Extract requirements and responsibilities
-        requirements, responsibilities = self._extract_sections_from_description(
-            description
-        )
+        requirements, responsibilities = self._extract_sections_from_description(description)
 
         # Detect remote status
         remote = self._detect_remote_status(html + " " + (description or ""))
@@ -531,9 +513,7 @@ class JobParser:
                 position = re.sub(r"\s*[-|]\s*.*$", "", title)
 
         # Extract location
-        location = self._extract_text_by_pattern(
-            html, r"(?:location|based|office)[:\s]+([^<>\n]+)"
-        )
+        location = self._extract_text_by_pattern(html, r"(?:location|based|office)[:\s]+([^<>\n]+)")
 
         # Extract salary
         salary = self._extract_salary_from_text(html)
@@ -585,9 +565,7 @@ class JobParser:
             experience_level=experience_level,
         )
 
-    def _extract_by_selectors(
-        self, soup: BeautifulSoup, selectors: List[str]
-    ) -> Optional[str]:
+    def _extract_by_selectors(self, soup: BeautifulSoup, selectors: List[str]) -> Optional[str]:
         """
         Extract text using multiple CSS selectors.
 
@@ -606,9 +584,7 @@ class JobParser:
                     return text
         return None
 
-    def _find_by_selectors(
-        self, soup: BeautifulSoup, selectors: List[str]
-    ) -> Optional[Tag]:
+    def _find_by_selectors(self, soup: BeautifulSoup, selectors: List[str]) -> Optional[Tag]:
         """
         Find element using multiple CSS selectors.
 
@@ -672,9 +648,7 @@ class JobParser:
 
         return None
 
-    def _extract_sections_from_description(
-        self, description: str
-    ) -> Tuple[List[str], List[str]]:
+    def _extract_sections_from_description(self, description: str) -> Tuple[List[str], List[str]]:
         """
         Extract requirements and responsibilities from job description.
 
@@ -824,9 +798,7 @@ class JobParser:
         # Find all li elements
         li_elements = element.find_all("li")
         if li_elements:
-            items = [
-                li.get_text(strip=True) for li in li_elements if li.get_text(strip=True)
-            ]
+            items = [li.get_text(strip=True) for li in li_elements if li.get_text(strip=True)]
         else:
             # Try to find bullet points in text
             text = element.get_text(separator="\n")

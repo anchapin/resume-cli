@@ -13,6 +13,17 @@ from rich.text import Text
 from ..utils.config import Config
 from ..utils.yaml_parser import ResumeYAML
 
+# Pre-compiled regex patterns for performance
+TABLE_PATTERN = re.compile(r"\|[^\n]+\|")
+SPECIAL_CHARS_PATTERN = re.compile(r"[^a-zA-Z0-9\s\-\.\,\@\(\)\#\/]")
+EMAIL_PATTERN = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
+PHONE_PATTERN = re.compile(r"\d")
+QUANTIFIABLE_PATTERN = re.compile(r"\d+%|\$\d+|\d+\s*(users|customers|projects)", re.IGNORECASE)
+ACRONYM_PATTERN = re.compile(r"\b[A-Z]{2,4}\b")
+JSON_PATTERN = re.compile(r"\[.*\]", re.DOTALL)
+TECH_TERMS_PATTERN = re.compile(r"\b[a-z]+(?:\s+[a-z]+)?\b", re.IGNORECASE)
+SUMMARY_KEYWORDS_PATTERN = re.compile(r"\b[a-z]{2,}\b", re.IGNORECASE)
+
 # Load environment variables from .env file if present
 try:
     from dotenv import load_dotenv
@@ -214,8 +225,8 @@ class ATSGenerator:
 
         # Check for complex formatting indicators
         all_text = self._get_all_text(resume_data)
-        has_tables = bool(re.search(r"\|[^\n]+\|", all_text))
-        has_special_chars = len(re.findall(r"[^a-zA-Z0-9\s\-\.\,\@\(\)\#\/]", all_text))
+        has_tables = bool(TABLE_PATTERN.search(all_text))
+        has_special_chars = len(SPECIAL_CHARS_PATTERN.findall(all_text))
 
         if not has_tables:
             details.append("No tables detected (ATS-friendly)")
@@ -349,15 +360,15 @@ class ATSGenerator:
 
         # Check required contact fields
         contact_fields = {
-            "email": (contact.get("email"), 5, r"^[^@]+@[^@]+\.[^@]+$"),
-            "phone": (contact.get("phone"), 5, r"\d"),
+            "email": (contact.get("email"), 5, EMAIL_PATTERN),
+            "phone": (contact.get("phone"), 5, PHONE_PATTERN),
             "location": (contact.get("location"), 5, None),  # Just presence check
         }
 
         for field_name, (field_value, field_points, pattern) in contact_fields.items():
             if field_value:
                 if pattern:
-                    if re.search(pattern, field_value):
+                    if pattern.search(field_value):
                         points += field_points
                         details.append(f"✓ {field_name.capitalize()} present and valid")
                     else:
@@ -392,6 +403,7 @@ class ATSGenerator:
         suggestions = []
 
         all_text = self._get_all_text(resume_data)
+        all_text_lower = all_text.lower()
 
         # Check for action verbs in experience bullets
         action_verbs = [
@@ -407,7 +419,8 @@ class ATSGenerator:
             "improved",
             "achieved",
         ]
-        action_verb_count = sum(1 for verb in action_verbs if verb in all_text.lower())
+        # Performance optimization: Use pre-calculated lowercase text
+        action_verb_count = sum(1 for verb in action_verbs if verb in all_text_lower)
 
         if action_verb_count >= 3:
             details.append(f"✓ Uses action verbs ({action_verb_count} found)")
@@ -416,7 +429,7 @@ class ATSGenerator:
             suggestions.append("Use more action verbs (e.g., developed, implemented)")
 
         # Check for quantifiable achievements
-        has_numbers = bool(re.search(r"\d+%|\$\d+|\d+\s*(users|customers|projects)", all_text))
+        has_numbers = bool(QUANTIFIABLE_PATTERN.search(all_text_lower))
         if has_numbers:
             details.append("✓ Includes quantifiable achievements")
         else:
@@ -424,9 +437,8 @@ class ATSGenerator:
             suggestions.append("Add quantifiable metrics (e.g., 'increased by 30%')")
 
         # Check for acronyms (should be minimal or defined)
-        # This is a simple heuristic
-        acronym_pattern = r"\b[A-Z]{2,4}\b"
-        acronyms = re.findall(acronym_pattern, all_text)
+        # This uses raw text to correctly identify uppercase acronyms
+        acronyms = ACRONYM_PATTERN.findall(all_text)
         if len(acronyms) < 10:
             details.append(f"✓ Minimal acronyms ({len(acronyms)} found)")
         else:
@@ -466,7 +478,7 @@ class ATSGenerator:
                     extract_value(v)
 
         extract_value(resume_data)
-        return " ".join(text_parts).lower()
+        return " ".join(text_parts)
 
     def _extract_job_keywords(self, job_description: str) -> List[str]:
         """
@@ -505,7 +517,7 @@ Please extract the keywords:"""
                     response = self._call_openai(prompt)
 
                 # Parse JSON from response
-                json_match = re.search(r"\[.*\]", response, re.DOTALL)
+                json_match = JSON_PATTERN.search(response)
                 if json_match:
                     keywords = json.loads(json_match.group(0))
                     if isinstance(keywords, list):
@@ -547,12 +559,12 @@ Please extract the keywords:"""
                     text = bullet.get("text", "").lower()
                     # Extract common tech terms from text
                     # This is a simple heuristic - AI could do better
-                    keywords.extend(re.findall(r"\b[a-z]+(?:\s+[a-z]+)?\b", text))
+                    keywords.extend(TECH_TERMS_PATTERN.findall(text))
 
         # Extract from summary
         summary = resume_data.get("summary", "")
         if summary:
-            keywords.extend(re.findall(r"\b[a-z]{2,}\b", summary.lower()))
+            keywords.extend(SUMMARY_KEYWORDS_PATTERN.findall(summary.lower()))
 
         return list(set(k.strip() for k in keywords if len(k) > 2))
 

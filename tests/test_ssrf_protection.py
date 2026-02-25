@@ -1,6 +1,8 @@
-import pytest
 import socket
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
+import pytest
+
 from cli.integrations.job_parser import JobParser
 
 

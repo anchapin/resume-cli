@@ -40,6 +40,8 @@ LATEX_ESCAPE_REPLACEMENTS.update(
         "\\": r"\textbackslash{}",
         "{": r"\{",
         "}": r"\}",
+        "<": r"\textless{}",
+        ">": r"\textgreater{}",
     }
 )
 

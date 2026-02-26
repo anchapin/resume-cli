@@ -28,6 +28,10 @@ def test_latex_escape_security():
     assert latex_escape(escaped) == escaped
     assert isinstance(escaped, Markup)
 
+    # Extended characters (<, >, [, ])
+    assert latex_escape("test < tag >") == Markup(r"test \textless{} tag \textgreater{}")
+    assert latex_escape("[test]") == Markup(r"{[}test{]}")
+
 
 def test_template_generator_autoescape():
     """Test that TemplateGenerator automatically escapes variables in LaTeX templates."""

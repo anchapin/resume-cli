@@ -464,6 +464,31 @@ class PDFGenerator:
         return template.render(**context)
 
 
+# LaTeX special character replacements
+_LATEX_ESCAPES = {
+    "\\": r"\textbackslash{}",
+    "&": r"\&",
+    "%": r"\%",
+    "$": r"\$",
+    "#": r"\#",
+    "_": r"\_",
+    "{": r"\{",
+    "}": r"\}",
+    "~": r"\textasciitilde{}",
+    "^": r"\^{}",
+    "<": r"\textless{}",
+    ">": r"\textgreater{}",
+    "[": r"{[}",
+    "]": r"{]}",
+}
+
+# Pre-compile regex pattern for performance
+# Sort by length descending to match longest first (though here all are length 1)
+_LATEX_ESCAPE_PATTERN = re.compile(
+    "|".join(map(re.escape, sorted(_LATEX_ESCAPES.keys(), key=len, reverse=True)))
+)
+
+
 def latex_escape(text: Any) -> Markup:
     """
     Escape special LaTeX characters in text.
@@ -483,37 +508,10 @@ def latex_escape(text: Any) -> Markup:
 
     text_str = str(text)
 
-    # Process the string character by character
-    result = []
-    i = 0
-    while i < len(text_str):
-        char = text_str[i]
+    def replace(match):
+        return _LATEX_ESCAPES[match.group(0)]
 
-        if char == "\\":
-            result.append(r"\textbackslash{}")
-        elif char in "&%$#_{}~^<>[]":
-            escaped_map = {
-                "&": r"\&",
-                "%": r"\%",
-                "$": r"\$",
-                "#": r"\#",
-                "_": r"\_",
-                "{": r"\{",
-                "}": r"\}",
-                "~": r"\textasciitilde{}",
-                "^": r"\^{}",
-                "<": r"\textless{}",
-                ">": r"\textgreater{}",
-                "[": r"{[}",
-                "]": r"{]}",
-            }
-            result.append(escaped_map[char])
-        else:
-            result.append(char)
-
-        i += 1
-
-    return Markup("".join(result))
+    return Markup(_LATEX_ESCAPE_PATTERN.sub(replace, text_str))
 
 
 def proper_title(text: str) -> str:

@@ -15,11 +15,14 @@ Outputs structured JSON for use with AI resume tailoring.
 """
 
 import hashlib
+import ipaddress
 import json
 import re
+import socket
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup, Tag
 
@@ -221,12 +224,8 @@ class JobParser:
 
         # Fetch and parse
         try:
-
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-            response = requests.get(url, headers=headers, timeout=30)
-            response.raise_for_status()
-
-            job_details = self._parse_html(response.text)
+            html_content = self._fetch_url_safe(url)
+            job_details = self._parse_html(html_content)
             job_details.url = url
 
             # Save to cache
@@ -240,6 +239,100 @@ class JobParser:
             )
         except requests.RequestException as e:
             raise RuntimeError(f"Failed to fetch URL: {e}")
+
+    def _validate_url(self, url: str) -> None:
+        """
+        Validate URL to prevent SSRF attacks.
+
+        Checks if the URL resolves to a private, loopback, or reserved IP address.
+
+        Args:
+            url: URL to validate
+
+        Raises:
+            ValueError: If URL is invalid or resolves to a blocked IP
+        """
+        parsed = urlparse(url)
+        if not parsed.hostname:
+            raise ValueError("Invalid URL: missing hostname")
+
+        hostname = parsed.hostname
+        try:
+            # Resolve hostname to IP addresses
+            # Use getaddrinfo to handle both IPv4 and IPv6
+            addr_info = socket.getaddrinfo(hostname, None)
+            ips = set(info[4][0] for info in addr_info)
+        except socket.gaierror:
+            raise ValueError(f"Could not resolve hostname: {hostname}")
+
+        for ip in ips:
+            try:
+                ip_obj = ipaddress.ip_address(ip)
+            except ValueError:
+                continue  # Skip invalid IPs
+
+            # Check for blocked ranges
+            if (
+                ip_obj.is_private
+                or ip_obj.is_loopback
+                or ip_obj.is_link_local
+                or ip_obj.is_multicast
+                or ip_obj.is_reserved
+            ):
+                raise ValueError(f"URL resolves to blocked IP address: {ip}")
+
+    def _fetch_url_safe(self, url: str) -> str:
+        """
+        Fetch URL content safely, preventing SSRF redirects.
+
+        Manually handles redirects to validate each intermediate URL.
+
+        Args:
+            url: URL to fetch
+
+        Returns:
+            Response content as text
+        """
+        if not requests:
+            raise ImportError(
+                "URL fetching requires 'requests' library. Install with: pip install requests"
+            )
+
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        current_url = url
+        history = []
+        max_redirects = 5
+
+        with requests.Session() as session:
+            for _ in range(max_redirects + 1):
+                # Validate URL before request
+                self._validate_url(current_url)
+
+                # Make request without automatically following redirects
+                response = session.get(
+                    current_url, headers=headers, timeout=30, allow_redirects=False
+                )
+
+                if response.is_redirect:
+                    # Handle redirect manually
+                    location = response.headers.get("Location")
+                    if not location:
+                        break
+
+                    # Handle relative redirects
+                    if not urlparse(location).netloc:
+                        from urllib.parse import urljoin
+
+                        location = urljoin(current_url, location)
+
+                    history.append(current_url)
+                    current_url = location
+                else:
+                    # Final response
+                    response.raise_for_status()
+                    return response.text
+
+        raise requests.TooManyRedirects(f"Exceeded maximum of {max_redirects} redirects")
 
     def _parse_html(self, html: str) -> JobDetails:
         """

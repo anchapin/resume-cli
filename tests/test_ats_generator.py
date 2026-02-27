@@ -211,6 +211,29 @@ class TestReadability:
 
         assert result.points_earned < result.points_possible
 
+    def test_readability_acronyms_detection(self, ats_generator):
+        """Test detection of acronyms."""
+        # Case 1: Few acronyms (good)
+        resume_data_good = {
+            "summary": "Expert in cloud computing.",
+            "skills": {"tech": ["AWS", "GCP"]},
+        }
+        result_good = ats_generator._check_readability(resume_data_good)
+        assert "✓ Minimal acronyms" in result_good.details[0]
+
+        # Case 2: Many acronyms (bad)
+        resume_data_bad = {
+            "summary": "Expert in AWS, GCP, AZURE, CI/CD, K8S, REST, API, HTML, CSS, JSON, XML, YAML.",
+            "experience": [
+                {"company": "TECH", "bullets": [{"text": "Used SAAS, PAAS, IAAS, SQL, NOSQL."}]}
+            ],
+        }
+        result_bad = ats_generator._check_readability(resume_data_bad)
+
+        # Should detect acronyms and possibly penalize or warn
+        acronym_warning = any("acronyms detected" in d for d in result_bad.details)
+        assert acronym_warning
+
 
 class TestKeywordExtraction:
     """Test keyword extraction methods."""
@@ -356,8 +379,8 @@ class TestGetAllText:
 
         text = ats_generator._get_all_text(resume_data)
 
-        # Text is lowercased
-        assert "john" in text
-        assert "tech corp" in text
-        assert "built apis" in text
-        assert "python" in text
+        # Text should preserve case (fix for acronym detection)
+        assert "John" in text
+        assert "Tech Corp" in text
+        assert "Built APIs" in text
+        assert "Python" in text

@@ -392,6 +392,7 @@ class ATSGenerator:
         suggestions = []
 
         all_text = self._get_all_text(resume_data)
+        all_text_lower = all_text.lower()
 
         # Check for action verbs in experience bullets
         action_verbs = [
@@ -407,7 +408,7 @@ class ATSGenerator:
             "improved",
             "achieved",
         ]
-        action_verb_count = sum(1 for verb in action_verbs if verb in all_text.lower())
+        action_verb_count = sum(1 for verb in action_verbs if verb in all_text_lower)
 
         if action_verb_count >= 3:
             details.append(f"✓ Uses action verbs ({action_verb_count} found)")
@@ -416,7 +417,9 @@ class ATSGenerator:
             suggestions.append("Use more action verbs (e.g., developed, implemented)")
 
         # Check for quantifiable achievements
-        has_numbers = bool(re.search(r"\d+%|\$\d+|\d+\s*(users|customers|projects)", all_text))
+        has_numbers = bool(
+            re.search(r"\d+%|\$\d+|\d+\s*(users|customers|projects)", all_text_lower)
+        )
         if has_numbers:
             details.append("✓ Includes quantifiable achievements")
         else:
@@ -466,7 +469,7 @@ class ATSGenerator:
                     extract_value(v)
 
         extract_value(resume_data)
-        return " ".join(text_parts).lower()
+        return " ".join(text_parts)
 
     def _extract_job_keywords(self, job_description: str) -> List[str]:
         """

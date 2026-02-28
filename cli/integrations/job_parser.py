@@ -19,7 +19,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from bs4 import BeautifulSoup, Tag
 
@@ -28,6 +28,35 @@ try:
     import requests
 except ImportError:
     requests = None
+
+
+# Pre-compiled regular expressions for performance optimization
+SALARY_PATTERNS = [
+    re.compile(r"\$[\d,]+(?:\s*[-–to]+\s*\$[\d,]+)?", re.IGNORECASE),
+    re.compile(r"\$[\d,]+k(?:\s*[-–to]+\s*\$[\d,]+k)?", re.IGNORECASE),
+    re.compile(r"[\d,]+k(?:\s*[-–to]+\s*[\d,]+k)", re.IGNORECASE),
+    re.compile(r"(?:salary|pay|compensation)[:\s]*(\$[^<>\n]+)", re.IGNORECASE),
+    re.compile(r"(?:per|/)\s*(?:year|annum)[:\s]*(\$[^<>\n]+)", re.IGNORECASE),
+]
+
+JOB_TYPE_PATTERNS = [
+    re.compile(
+        r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b", re.IGNORECASE
+    ),
+    re.compile(r"\b(permanent|fixed[- ]?term)\b", re.IGNORECASE),
+]
+
+EXPERIENCE_LEVEL_PATTERNS = [
+    re.compile(
+        r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b", re.IGNORECASE
+    ),
+    re.compile(r"\b(associate|vice[- ]?president|director|executive)\b", re.IGNORECASE),
+]
+
+BULLET_PATTERNS = [
+    re.compile(r"[•\-\*]\s*([^\n]+)", re.MULTILINE),
+    re.compile(r"^\s*\d+[\.\)]\s*([^\n]+)", re.MULTILINE),
+]
 
 
 @dataclass
@@ -529,20 +558,28 @@ class JobParser:
                 return elem
         return None
 
-    def _extract_text_by_pattern(self, text: str, pattern: str) -> Optional[str]:
+    def _extract_text_by_pattern(self, text: str, pattern: Union[str, re.Pattern]) -> Optional[str]:
         """
         Extract text using regex pattern.
 
         Args:
             text: Text to search
-            pattern: Regex pattern
+            pattern: Regex pattern string or pre-compiled Pattern object
 
         Returns:
             Extracted text or None
         """
-        match = re.search(pattern, text, re.IGNORECASE)
+        if isinstance(pattern, re.Pattern):
+            match = pattern.search(text)
+        else:
+            match = re.search(pattern, text, re.IGNORECASE)
+
         if match:
-            return match.group(1).strip()
+            # If the pattern has a group 1, return it, otherwise group 0
+            try:
+                return match.group(1).strip()
+            except IndexError:
+                return match.group(0).strip()
         return None
 
     def _extract_salary_from_text(self, text: str) -> Optional[str]:
@@ -555,17 +592,8 @@ class JobParser:
         Returns:
             Salary string or None
         """
-        # Common salary patterns
-        patterns = [
-            r"\$[\d,]+(?:\s*[-–to]+\s*\$[\d,]+)?",  # $100k - $150k
-            r"\$[\d,]+k(?:\s*[-–to]+\s*\$[\d,]+k)?",  # $100k - $150k
-            r"[\d,]+k(?:\s*[-–to]+\s*[\d,]+k)",  # 100k - 150k
-            r"(?:salary|pay|compensation)[:\s]*(\$[^<>\n]+)",  # Salary: $X
-            r"(?:per|/)\s*(?:year|annum)[:\s]*(\$[^<>\n]+)",  # per year: $X
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
+        for pattern in SALARY_PATTERNS:
+            match = pattern.search(text)
             if match:
                 salary = match.group(0) if match.lastindex is None else match.group(1)
                 # Clean up the salary string
@@ -672,14 +700,8 @@ class JobParser:
             "the company",
         ]
 
-        # Match bullet points
-        bullet_patterns = [
-            r"[•\-\*]\s*([^\n]+)",  # Standard bullets
-            r"^\s*\d+[\.\)]\s*([^\n]+)",  # Numbered lists
-        ]
-
-        for pattern in bullet_patterns:
-            matches = re.findall(pattern, text, re.MULTILINE)
+        for pattern in BULLET_PATTERNS:
+            matches = pattern.findall(text)
             if matches:
                 items = [m.strip() for m in matches if m.strip() and len(m.strip()) > 5]
                 break
@@ -805,13 +827,8 @@ class JobParser:
         Returns:
             Job type string or None
         """
-        patterns = [
-            r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b",
-            r"\b(permanent|fixed[- ]?term)\b",
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, html, re.IGNORECASE)
+        for pattern in JOB_TYPE_PATTERNS:
+            match = pattern.search(html)
             if match:
                 return match.group(1).lower().replace("-", "-")
 
@@ -827,13 +844,8 @@ class JobParser:
         Returns:
             Experience level string or None
         """
-        patterns = [
-            r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b",
-            r"\b(associate|vice[- ]?president|director|executive)\b",
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, html, re.IGNORECASE)
+        for pattern in EXPERIENCE_LEVEL_PATTERNS:
+            match = pattern.search(html)
             if match:
                 return match.group(1).lower().replace("-", "-")
 

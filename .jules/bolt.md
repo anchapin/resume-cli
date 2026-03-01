@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - String.startswith Tuple Matching
+**Learning:** Checking if a string starts with any of a set of prefixes is significantly faster (up to ~10x) using `str.startswith(tuple_of_strings)` compared to Python iteration `any(s.startswith(p) for p in list_of_strings)`. This is because the tuple version is implemented efficiently in C within the Python runtime.
+**Action:** When matching multiple potential prefixes, always combine them into a single tuple and pass that to `.startswith()` instead of looping or using `any()`.

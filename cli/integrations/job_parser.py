@@ -172,6 +172,32 @@ class JobParser:
         "remote available",
     ]
 
+    # Section header keywords to exclude (pre-computed as tuple for performance)
+    _SECTION_HEADER_STARTS = (
+        "requirements",
+        "qualifications",
+        "responsibilities",
+        "duties",
+        "what you",
+        "what we",
+        "your impact",
+        "key responsibilities",
+        "benefits",
+        "compensation",
+        "perks",
+        "about the",
+        "about us",
+        "company",
+        "team",
+        "our team",
+        "the company",
+    )
+    # Combine normal headers with colon-appended versions into a single tuple
+    # for fast O(C) matching via str.startswith()
+    SECTION_HEADER_STARTS_TUPLE = _SECTION_HEADER_STARTS + tuple(
+        h + ":" for h in _SECTION_HEADER_STARTS
+    )
+
     def __init__(self, cache_dir: Optional[Path] = None):
         """
         Initialize job parser.
@@ -650,28 +676,6 @@ class JobParser:
         """
         items = []
 
-        # Section header keywords to exclude - only match when line STARTS with these
-        # (not when they appear in the middle of a sentence)
-        section_header_starts = [
-            "requirements",
-            "qualifications",
-            "responsibilities",
-            "duties",
-            "what you",
-            "what we",
-            "your impact",
-            "key responsibilities",
-            "benefits",
-            "compensation",
-            "perks",
-            "about the",
-            "about us",
-            "company",
-            "team",
-            "our team",
-            "the company",
-        ]
-
         # Match bullet points
         bullet_patterns = [
             r"[•\-\*]\s*([^\n]+)",  # Standard bullets
@@ -694,10 +698,8 @@ class JobParser:
                     continue
                 line_lower = line.lower()
                 # Skip lines that start with section header keywords
-                if any(
-                    line_lower.startswith(header) or line_lower.startswith(header + ":")
-                    for header in section_header_starts
-                ):
+                # Uses a pre-computed tuple of prefixes for fast C-level matching
+                if line_lower.startswith(self.SECTION_HEADER_STARTS_TUPLE):
                     continue
                 # Skip lines that look like headers (all caps or very short)
                 if line.isupper() and len(line) < 50:

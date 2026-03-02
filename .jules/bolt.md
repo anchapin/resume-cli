@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Avoid Over-precompilation
+**Learning:** Pre-compiling unused regex constants (like `EXPERIENCE_LEVEL_PATTERNS` and `BULLET_PATTERNS` when they aren't fully utilized in optimized methods) leaves unused dead code in the file, which reduces readability.
+**Action:** Only pre-compile regexes that are directly optimized in hot path methods, and ensure unused ones are safely removed to keep the code clean.

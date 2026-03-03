@@ -7,6 +7,7 @@ from cli.generators.template import TemplateGenerator
 from cli.generators.cover_letter_generator import CoverLetterGenerator
 from cli.pdf.converter import PDFConverter
 
+
 class TestPDFSecurity(unittest.TestCase):
     @patch("cli.generators.template.subprocess.Popen")
     def test_pdflatex_timeout(self, mock_popen):
@@ -84,6 +85,7 @@ class TestPDFSecurity(unittest.TestCase):
 
         def popen_side_effect(*args, **kwargs):
             import subprocess
+
             if "pdflatex" in args[0]:
                 raise subprocess.CalledProcessError(1, "pdflatex")
             return process_mock

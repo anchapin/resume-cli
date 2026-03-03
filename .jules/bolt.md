@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-03-05 - Optimize latex_escape with pre-compiled regex in PDFGenerator
+**Learning:** The `latex_escape` function in `resume_pdf_lib/generator.py` used a slow character-by-character while loop for replacing special LaTeX characters, which became a bottleneck during PDF compilation. Using a pre-compiled regex with a dictionary lookup (similar to the one in `cli/utils/template_filters.py`) is significantly faster.
+**Action:** Replace manual character replacement loops with pre-compiled regexes (`re.compile`) and dictionary lookups when performing multiple character substitutions in large text fields.

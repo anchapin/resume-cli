@@ -13,3 +13,6 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+## 2025-02-18 - Overlapping Regex Matches in Keyword Counting
+**Learning:** Combining multiple regexes into an alternation like `\b(word1|word2)\b` breaks overlapping keyword counts (e.g., "software engineer" vs "engineer") because the regex engine stops at the first successful match. To preserve exact counts of overlapping phrases while still gaining the performance benefits of a single pass, we must use a positive lookahead with capturing groups `(?=(\b(word1|word2)\b))`.
+**Action:** When replacing independent `re.findall` loops with a single regex, ensure overlapping captures are handled via positive lookaheads if exact individual string counts are required.

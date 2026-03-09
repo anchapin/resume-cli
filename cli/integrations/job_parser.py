@@ -40,7 +40,9 @@ SALARY_PATTERNS = [
 ]
 
 JOB_TYPE_PATTERNS = [
-    re.compile(r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b", re.IGNORECASE),
+    re.compile(
+        r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b", re.IGNORECASE
+    ),
     re.compile(r"\b(permanent|fixed[- ]?term)\b", re.IGNORECASE),
 ]
 

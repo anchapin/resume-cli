@@ -359,15 +359,19 @@ Please extract the keywords:"""
         self, keywords: List[Tuple[str, str]], resume_data: Dict[str, Any]
     ) -> Dict[str, int]:
         """Count occurrences of keywords in resume."""
-        counts = {}
+        counts = {keyword: 0 for keyword, _ in keywords}
+        if not keywords:
+            return counts
 
         # Get all resume text
         all_text = self._get_all_text(resume_data)
+        lower_text = all_text.lower()
 
         for keyword, _ in keywords:
-            # Count occurrences (case-insensitive)
-            count = len(re.findall(rf"\b{re.escape(keyword)}\b", all_text, re.IGNORECASE))
-            counts[keyword] = count
+            # We lowercase the keyword since we are matching against lower_text
+            # Use findall on the pre-lowercased text instead of using IGNORECASE
+            pattern = re.compile(rf"\b{re.escape(keyword.lower())}\b")
+            counts[keyword] = len(pattern.findall(lower_text))
 
         return counts
 

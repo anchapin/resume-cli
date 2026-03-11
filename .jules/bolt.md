@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-19 - Pre-compiled Regex in ATS Generator
+**Learning:** `cli/generators/ats_generator.py` compiles regex patterns (like `r"[^a-zA-Z0-9\s\-\.\,\@\(\)\#\/]"`) inline in functions that perform many operations on large text strings (`_check_format_parsing`, `_check_contact_info`, etc.). This causes redundant and expensive repeated regex compilations.
+**Action:** Move inline regex compilations out of the methods and define them as module-level constants (e.g., `SPECIAL_CHARS_PATTERN = re.compile(...)`) to compile them only once at import time.

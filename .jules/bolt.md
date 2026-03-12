@@ -13,3 +13,11 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Pre-compiled Regex Arrays in Hot Paths
+**Learning:** When using arrays of regex patterns in loops (like for extracting job titles or companies), compiling the array at the module level prevents redundant regex compilation overhead inside functions.
+**Action:** Use  on regex lists defined as module constants (e.g., ) instead of string regex arrays within function scope.
+
+## 2025-02-18 - Pre-compiled Regex Arrays in Hot Paths
+**Learning:** When using arrays of regex patterns in loops (like for extracting job titles or companies), compiling the array at the module level prevents redundant regex compilation overhead inside functions.
+**Action:** Use `re.compile()` on regex lists defined as module constants (e.g., `_TITLE_PATTERNS`) instead of string regex arrays within function scope.

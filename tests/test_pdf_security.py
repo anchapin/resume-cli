@@ -3,12 +3,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from cli.generators.cover_letter_generator import CoverLetterGenerator
 from cli.generators.template import TemplateGenerator
+from cli.pdf.converter import PDFConverter
 
 
 class TestPDFSecurity(unittest.TestCase):
     @patch("cli.generators.template.subprocess.Popen")
-    def test_pdflatex_timeout(self, mock_popen):
+    def test_template_generator_pdflatex_timeout(self, mock_popen):
         # Setup mock
         process_mock = MagicMock()
         # Raise TimeoutExpired on first call, return empty bytes on second call (cleanup)
@@ -33,7 +35,7 @@ class TestPDFSecurity(unittest.TestCase):
         process_mock.communicate.assert_any_call(timeout=30)
 
     @patch("cli.generators.template.subprocess.Popen")
-    def test_pdflatex_arguments(self, mock_popen):
+    def test_template_generator_pdflatex_arguments(self, mock_popen):
         # Setup mock
         process_mock = MagicMock()
         process_mock.communicate.return_value = (b"", b"")
@@ -54,6 +56,77 @@ class TestPDFSecurity(unittest.TestCase):
         self.assertIn("-no-shell-escape", command)
         self.assertIn("-interaction=nonstopmode", command)
         self.assertIn("pdflatex", command)
+
+    @patch("cli.pdf.converter.subprocess.Popen")
+    def test_pdfconverter_pdflatex_arguments(self, mock_popen):
+        # Setup mock
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"")
+        process_mock.returncode = 0
+        mock_popen.return_value = process_mock
+
+        converter = PDFConverter()
+
+        with patch.object(Path, "exists", return_value=True):
+            converter._compile_pdflatex(Path("output.tex"), Path("output.pdf"), Path("."))
+
+        args, _ = mock_popen.call_args
+        command = args[0]
+
+        self.assertIn("-no-shell-escape", command)
+        self.assertIn("-interaction=nonstopmode", command)
+        self.assertIn("pdflatex", command)
+
+    @patch("cli.pdf.converter.subprocess.Popen")
+    def test_pdfconverter_pandoc_arguments(self, mock_popen):
+        # Setup mock
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"")
+        process_mock.returncode = 0
+        mock_popen.return_value = process_mock
+
+        converter = PDFConverter()
+
+        with patch.object(Path, "exists", return_value=True):
+            converter._compile_pandoc(Path("output.tex"), Path("output.pdf"), Path("."))
+
+        args, _ = mock_popen.call_args
+        command = args[0]
+
+        self.assertIn("--pdf-engine-opt=-no-shell-escape", command)
+        self.assertIn("pandoc", command)
+
+    @patch("cli.generators.cover_letter_generator.subprocess.Popen")
+    def test_cover_letter_generator_pdflatex_arguments(self, mock_popen):
+        # Setup mock
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"")
+        process_mock.returncode = 0
+        mock_popen.return_value = process_mock
+
+        # Setup mock for CoverLetterGenerator
+        with patch("cli.generators.cover_letter_generator.Config") as MockConfig:
+            mock_config = MagicMock()
+            mock_config.output_dir = "test_output"
+            mock_config.ai_provider = "anthropic"
+            mock_config.get.return_value = "anthropic"
+            MockConfig.return_value = mock_config
+            with patch("cli.generators.cover_letter_generator.anthropic"):
+                generator = CoverLetterGenerator(
+                    resume_data={"contact": {"name": "Test"}}, config=mock_config
+                )
+
+                # Run compilation
+                with patch.object(Path, "exists", return_value=True):
+                    generator._compile_pdf(Path("output.pdf"), "content")
+
+            # Verify arguments
+            args, _ = mock_popen.call_args
+            command = args[0]
+
+            self.assertIn("-no-shell-escape", command)
+            self.assertIn("-interaction=nonstopmode", command)
+            self.assertIn("pdflatex", command)
 
 
 if __name__ == "__main__":

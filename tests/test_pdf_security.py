@@ -3,8 +3,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from cli.generators.template import TemplateGenerator
 from cli.generators.cover_letter_generator import CoverLetterGenerator
+from cli.generators.template import TemplateGenerator
 from cli.pdf.converter import PDFConverter
 
 
@@ -111,7 +111,7 @@ class TestPDFSecurity(unittest.TestCase):
             mock_config.ai_provider = "anthropic"
             mock_config.get.return_value = "anthropic"
             MockConfig.return_value = mock_config
-            with patch("cli.generators.cover_letter_generator.anthropic") as mock_anthropic:
+            with patch("cli.generators.cover_letter_generator.anthropic"):
                 generator = CoverLetterGenerator(
                     resume_data={"contact": {"name": "Test"}}, config=mock_config
                 )

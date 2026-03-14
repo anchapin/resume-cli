@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Case-Sensitivity Bugs in Hot Paths
+**Learning:** In `ATSGenerator`, an attempt to optimize repeated keyword matching by prematurely converting the target text to lowercase (`_get_all_text().lower()`) created a silent bug. Acronyms (e.g., `[A-Z]{2,4}`) were being matched against the lowercased string and subsequently failed to match, artificially lowering ATS scores.
+**Action:** When extracting multiple variables from a large text blob, retain the original case-preserved string for case-sensitive evaluations. Create a secondary, lowercased variable (`text_lower = text.lower()`) strictly for case-insensitive checks instead of forcefully mutating the upstream output.

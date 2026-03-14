@@ -9,11 +9,11 @@ LinkedIn, Indeed, and generic job boards.
 import json
 import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from cli.integrations.job_parser import JobDetails, JobParser, parse_job_posting
-from unittest.mock import patch, MagicMock
 
 # Sample LinkedIn job posting HTML
 LINKEDIN_SAMPLE_HTML = """

@@ -9,6 +9,7 @@ LinkedIn, Indeed, and generic job boards.
 import json
 import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -748,6 +749,66 @@ class TestIntegrationWithSampleFiles:
                 assert job.company is not None or job.position is not None
             finally:
                 temp_path.unlink()
+
+
+class TestJobParserSSRF:
+    """Test SSRF protection in JobParser."""
+
+    def test_blocks_localhost(self):
+        """Test that localhost is blocked."""
+        parser = JobParser()
+        with pytest.raises(ValueError, match="Access to private/internal IP.*is prohibited"):
+            parser.parse_from_url("http://localhost:8080/job")
+
+    def test_blocks_loopback_ip(self):
+        """Test that loopback IPs are blocked."""
+        parser = JobParser()
+        with pytest.raises(ValueError, match="Access to private/internal IP.*is prohibited"):
+            parser.parse_from_url("http://127.0.0.1/job")
+
+    def test_blocks_private_ip(self):
+        """Test that private IPs are blocked."""
+        parser = JobParser()
+        with pytest.raises(ValueError, match="Access to private/internal IP.*is prohibited"):
+            parser.parse_from_url("http://192.168.1.100/admin")
+
+    def test_blocks_aws_metadata(self):
+        """Test that AWS metadata IP is blocked."""
+        parser = JobParser()
+        with pytest.raises(
+            ValueError,
+            match="Access to AWS metadata service is prohibited|Access to private/internal IP.*is prohibited",
+        ):
+            parser.parse_from_url("http://169.254.169.254/latest/meta-data/")
+
+    @patch("cli.integrations.job_parser.requests.get")
+    def test_allows_external_ip(self, mock_get):
+        """Test that external IPs are allowed."""
+        parser = JobParser()
+        mock_response = MagicMock()
+        mock_response.is_redirect = False
+        mock_response.text = "<html><body><h1>Software Engineer</h1></body></html>"
+        mock_get.return_value = mock_response
+
+        # Use an external site that resolves to public IP
+        result = parser.parse_from_url("https://example.com/job")
+        assert result is not None
+        assert result.url == "https://example.com/job"
+
+    @patch("cli.integrations.job_parser.requests.get")
+    def test_blocks_ssrf_via_redirect(self, mock_get):
+        """Test that SSRF via redirect is blocked."""
+        parser = JobParser()
+
+        # Setup mock to simulate a redirect from a public IP to a private IP
+        mock_response_1 = MagicMock()
+        mock_response_1.is_redirect = True
+        mock_response_1.headers = {"Location": "http://127.0.0.1/admin"}
+
+        mock_get.side_effect = [mock_response_1]
+
+        with pytest.raises(ValueError, match="Access to private/internal IP.*is prohibited"):
+            parser.parse_from_url("http://example.com/redirect")
 
 
 if __name__ == "__main__":

@@ -15,8 +15,11 @@ Outputs structured JSON for use with AI resume tailoring.
 """
 
 import hashlib
+import ipaddress
 import json
 import re
+import socket
+import urllib.parse
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -200,6 +203,82 @@ class JobParser:
             job_details.url = url
         return job_details
 
+    def _validate_url_ssrf(self, url: str) -> None:
+        """
+        Validate URL to prevent Server-Side Request Forgery (SSRF).
+
+        Checks that the URL scheme is http/https and that the resolved IP address
+        is not a private, loopback, link-local, or multicast address.
+        """
+        try:
+            parsed = urllib.parse.urlparse(url)
+            if parsed.scheme not in ("http", "https"):
+                raise ValueError(f"Invalid scheme: {parsed.scheme}")
+
+            hostname = parsed.hostname
+            if not hostname:
+                raise ValueError("No hostname in URL")
+
+            # Resolve hostname to all possible IPs (IPv4 and IPv6)
+            addr_info = socket.getaddrinfo(hostname, None)
+            ips = [info[4][0] for info in addr_info]
+
+            if not ips:
+                raise ValueError("Could not resolve hostname to any IP address")
+
+            for ip in ips:
+                ip_obj = ipaddress.ip_address(ip)
+
+                # Check for prohibited IP ranges
+                if (
+                    ip_obj.is_private
+                    or ip_obj.is_loopback
+                    or ip_obj.is_link_local
+                    or ip_obj.is_multicast
+                    or ip_obj.is_reserved
+                ):
+                    raise ValueError(f"Access to private/internal IP {ip} is prohibited")
+
+                # Specifically check for AWS metadata IP if it wasn't caught above
+                if ip == "169.254.169.254":
+                    raise ValueError("Access to AWS metadata service is prohibited")
+
+        except (socket.gaierror, ValueError) as e:
+            raise ValueError(f"URL validation failed: {e}")
+
+    def _fetch_url_securely(self, url: str) -> str:
+        """
+        Fetch URL securely, manually following redirects and validating each new URL.
+        """
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        current_url = url
+        max_redirects = 5
+        redirect_count = 0
+
+        while redirect_count < max_redirects:
+            self._validate_url_ssrf(current_url)
+
+            response = requests.get(
+                current_url,
+                headers=headers,
+                timeout=30,
+                allow_redirects=False,  # Crucial for SSRF prevention
+            )
+
+            if response.is_redirect:
+                location = response.headers.get("Location")
+                if not location:
+                    raise RuntimeError("Redirect missing Location header")
+
+                # Handle relative redirects
+                current_url = urllib.parse.urljoin(current_url, location)
+                redirect_count += 1
+            else:
+                response.raise_for_status()
+                return response.text
+
+        raise RuntimeError(f"Too many redirects ({max_redirects})")
+
     def parse_from_url(self, url: str) -> JobDetails:
         """
         Parse job posting from URL.
@@ -221,12 +300,9 @@ class JobParser:
 
         # Fetch and parse
         try:
+            html_content = self._fetch_url_securely(url)
 
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-            response = requests.get(url, headers=headers, timeout=30)
-            response.raise_for_status()
-
-            job_details = self._parse_html(response.text)
+            job_details = self._parse_html(html_content)
             job_details.url = url
 
             # Save to cache
@@ -240,6 +316,8 @@ class JobParser:
             )
         except requests.RequestException as e:
             raise RuntimeError(f"Failed to fetch URL: {e}")
+        except ValueError as e:
+            raise ValueError(f"Security error: {e}")
 
     def _parse_html(self, html: str) -> JobDetails:
         """

@@ -7,6 +7,7 @@ from cli.generators.template import TemplateGenerator
 from cli.generators.cover_letter_generator import CoverLetterGenerator
 from cli.pdf.converter import PDFConverter
 
+
 class TestPDFSecurity(unittest.TestCase):
     @patch("cli.generators.template.subprocess.Popen")
     def test_pdflatex_timeout(self, mock_popen):
@@ -63,7 +64,9 @@ class TestPDFSecurity(unittest.TestCase):
         process_mock.returncode = 0
         mock_popen.return_value = process_mock
 
-        generator = CoverLetterGenerator(resume_data={"contact": {"name": "test"}, "experience": []})
+        generator = CoverLetterGenerator(
+            resume_data={"contact": {"name": "test"}, "experience": []}
+        )
 
         with patch.object(Path, "exists", return_value=True):
             generator._compile_pdf(Path("output.pdf"), "content")
@@ -121,7 +124,9 @@ class TestPDFSecurity(unittest.TestCase):
         ]
         mock_popen.return_value = process_mock
 
-        generator = CoverLetterGenerator(resume_data={"contact": {"name": "test"}, "experience": []})
+        generator = CoverLetterGenerator(
+            resume_data={"contact": {"name": "test"}, "experience": []}
+        )
 
         with self.assertRaises(RuntimeError) as cm:
             generator._compile_pdf(Path("output.pdf"), "content")
@@ -165,6 +170,7 @@ class TestPDFSecurity(unittest.TestCase):
         self.assertEqual(str(cm.exception), "PDF compilation timed out")
         process_mock.kill.assert_called_once()
         process_mock.communicate.assert_any_call(timeout=30)
+
 
 if __name__ == "__main__":
     unittest.main()

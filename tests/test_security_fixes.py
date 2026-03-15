@@ -32,8 +32,9 @@ def test_latex_escape_security():
 def test_template_generator_autoescape():
     """Test that TemplateGenerator automatically escapes variables in LaTeX templates."""
     # Mock ResumeYAML and Config
-    with patch("cli.generators.template.ResumeYAML") as MockResumeYAML, patch(
-        "cli.generators.template.Config"
+    with (
+        patch("cli.generators.template.ResumeYAML") as MockResumeYAML,
+        patch("cli.generators.template.Config"),
     ):
 
         mock_yaml = MockResumeYAML.return_value
@@ -64,10 +65,11 @@ def test_template_generator_autoescape():
 
 def test_custom_template_loading():
     """Test that custom templates are loaded with the correct environment."""
-    with patch("cli.generators.template.ResumeYAML"), patch(
-        "cli.generators.template.Config"
-    ), patch("pathlib.Path.exists", return_value=True), patch(
-        "pathlib.Path.read_text", return_value="{{ '&'|latex_escape }}"
+    with (
+        patch("cli.generators.template.ResumeYAML"),
+        patch("cli.generators.template.Config"),
+        patch("pathlib.Path.exists", return_value=True),
+        patch("pathlib.Path.read_text", return_value="{{ '&'|latex_escape }}"),
     ):
 
         generator = TemplateGenerator()

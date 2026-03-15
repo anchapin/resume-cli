@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Case-insensitive Regex Matching Overhead
+**Learning:** Using `re.IGNORECASE` (or `re.I`) in a loop over many keywords against a large body of text (like a resume) adds significant overhead. Pre-lowercasing the target text and matching against lowercased keywords is much faster. Also, combining all keywords into a single alternated regex (e.g. `(word1|word2)`) can fail to count overlapping keywords properly, so iterating with individual lowercased patterns is the optimal balance of speed and correctness.
+**Action:** When counting keyword frequencies, convert the corpus to lowercase once and use case-sensitive exact matching instead of case-insensitive matching.

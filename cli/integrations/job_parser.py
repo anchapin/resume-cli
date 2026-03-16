@@ -262,7 +262,7 @@ class JobParser:
         with requests.Session() as session:
             for _ in range(5):  # Max 5 redirects
                 parsed = urlparse(current_url)
-                if parsed.scheme not in ('http', 'https'):
+                if parsed.scheme not in ("http", "https"):
                     raise ValueError(f"Invalid scheme: {parsed.scheme}")
 
                 if not parsed.hostname:

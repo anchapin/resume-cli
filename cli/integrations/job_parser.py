@@ -17,6 +17,10 @@ Outputs structured JSON for use with AI resume tailoring.
 import hashlib
 import json
 import re
+
+import socket
+import ipaddress
+from urllib.parse import urlparse, urljoin
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -221,25 +225,81 @@ class JobParser:
 
         # Fetch and parse
         try:
-
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-            response = requests.get(url, headers=headers, timeout=30)
-            response.raise_for_status()
-
-            job_details = self._parse_html(response.text)
-            job_details.url = url
-
-            # Save to cache
-            self._save_to_cache(cache_key, job_details)
-
-            return job_details
-
+            html_content = self._fetch_url_safe(url)
         except ImportError:
             raise NotImplementedError(
                 "URL fetching requires 'requests' library. Install with: pip install requests"
             )
+        except ValueError as e:
+            raise RuntimeError(f"Failed to fetch URL (Security/Validation): {e}")
         except requests.RequestException as e:
             raise RuntimeError(f"Failed to fetch URL: {e}")
+
+        job_details = self._parse_html(html_content)
+        job_details.url = url
+
+        # Save to cache
+        self._save_to_cache(cache_key, job_details)
+
+        return job_details
+
+    def _fetch_url_safe(self, url: str) -> str:
+        """
+        Fetch URL safely with SSRF protection.
+
+        Args:
+            url: URL to fetch
+
+        Returns:
+            HTML content
+
+        Raises:
+            ValueError: If URL is invalid or points to restricted IP
+            RuntimeError: If request fails
+        """
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        current_url = url
+        with requests.Session() as session:
+            for _ in range(5):  # Max 5 redirects
+                parsed = urlparse(current_url)
+                if parsed.scheme not in ('http', 'https'):
+                    raise ValueError(f"Invalid scheme: {parsed.scheme}")
+
+                if not parsed.hostname:
+                    raise ValueError("Invalid URL: missing hostname")
+
+                try:
+                    ip_addr = socket.gethostbyname(parsed.hostname)
+                    ip = ipaddress.ip_address(ip_addr)
+                    if (
+                        ip.is_private
+                        or ip.is_loopback
+                        or ip.is_link_local
+                        or ip.is_multicast
+                        or ip.is_reserved
+                        or ip.is_unspecified
+                    ):
+                        raise ValueError(f"URL resolves to restricted IP: {ip_addr}")
+                except socket.gaierror:
+                    raise ValueError(f"Could not resolve hostname: {parsed.hostname}")
+
+                response = session.get(
+                    current_url, headers=headers, timeout=30, allow_redirects=False
+                )
+
+                if response.is_redirect:
+                    next_url = response.headers.get("Location")
+                    if not next_url:
+                        break
+                    # Handle relative redirects
+                    current_url = urljoin(response.url, next_url)
+                else:
+                    break
+            else:
+                raise ValueError("Too many redirects")
+
+            response.raise_for_status()
+            return response.text
 
     def _parse_html(self, html: str) -> JobDetails:
         """

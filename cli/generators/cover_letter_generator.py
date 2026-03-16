@@ -5,6 +5,7 @@
 import hashlib
 import os
 import re
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -765,8 +766,6 @@ Return ONLY valid JSON, nothing else."""
             f.write(tex_content)
 
         # Try pdflatex first
-        import subprocess
-
         pdf_created = False
         try:
             # Use Popen with explicit cleanup to avoid double-free issues

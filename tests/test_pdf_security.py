@@ -3,8 +3,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from cli.generators.template import TemplateGenerator
 from cli.generators.cover_letter_generator import CoverLetterGenerator
+from cli.generators.template import TemplateGenerator
 from cli.pdf.converter import PDFConverter
 
 
@@ -57,7 +57,7 @@ class TestPDFSecurity(unittest.TestCase):
         self.assertIn("-interaction=nonstopmode", command)
         self.assertIn("pdflatex", command)
 
-    @patch("subprocess.Popen")
+    @patch("cli.generators.cover_letter_generator.subprocess.Popen")
     def test_cover_letter_pdflatex_arguments(self, mock_popen):
         process_mock = MagicMock()
         process_mock.communicate.return_value = (b"", b"")
@@ -115,7 +115,7 @@ class TestPDFSecurity(unittest.TestCase):
         self.assertIn("--pdf-engine-opt=-no-shell-escape", command)
         self.assertIn("pandoc", command)
 
-    @patch("subprocess.Popen")
+    @patch("cli.generators.cover_letter_generator.subprocess.Popen")
     def test_cover_letter_pdflatex_timeout(self, mock_popen):
         process_mock = MagicMock()
         process_mock.communicate.side_effect = [

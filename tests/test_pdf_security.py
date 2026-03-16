@@ -57,7 +57,7 @@ class TestPDFSecurity(unittest.TestCase):
         self.assertIn("-interaction=nonstopmode", command)
         self.assertIn("pdflatex", command)
 
-    @patch("cli.generators.cover_letter_generator.subprocess.Popen")
+    @patch("subprocess.Popen")
     def test_cover_letter_pdflatex_arguments(self, mock_popen):
         process_mock = MagicMock()
         process_mock.communicate.return_value = (b"", b"")
@@ -115,7 +115,7 @@ class TestPDFSecurity(unittest.TestCase):
         self.assertIn("--pdf-engine-opt=-no-shell-escape", command)
         self.assertIn("pandoc", command)
 
-    @patch("cli.generators.cover_letter_generator.subprocess.Popen")
+    @patch("subprocess.Popen")
     def test_cover_letter_pdflatex_timeout(self, mock_popen):
         process_mock = MagicMock()
         process_mock.communicate.side_effect = [

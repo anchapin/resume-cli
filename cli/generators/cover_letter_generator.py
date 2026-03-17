@@ -781,7 +781,7 @@ Return ONLY valid JSON, nothing else."""
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.communicate()
-                return False
+                pass
             if process.returncode == 0 or output_path.exists():
                 pdf_created = True
         except (subprocess.CalledProcessError, FileNotFoundError):
@@ -808,7 +808,7 @@ Return ONLY valid JSON, nothing else."""
                     except subprocess.TimeoutExpired:
                         process.kill()
                         process.communicate()
-                        return False
+                        pass
                     if process.returncode == 0 or output_path.exists():
                         pdf_created = True
                 except (subprocess.CalledProcessError, FileNotFoundError):

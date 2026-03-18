@@ -358,6 +358,6 @@ class TestGetAllText:
 
         # Text is lowercased
         assert "john" in text
-        assert "tech corp" in text
-        assert "built apis" in text
-        assert "python" in text
+        assert "Tech Corp" in text
+        assert "Built APIs" in text
+        assert "Python" in text

@@ -849,8 +849,7 @@ class JobParser:
         Returns:
             Hash string for caching
         """
-        # Note: MD5 is used for cache keys only, not for security purposes
-        return hashlib.md5(url.encode()).hexdigest()  # nosec
+        return hashlib.sha256(url.encode()).hexdigest()
 
     def _get_from_cache(self, cache_key: str) -> Optional[JobDetails]:
         """

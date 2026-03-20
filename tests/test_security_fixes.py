@@ -29,64 +29,57 @@ def test_latex_escape_security():
     assert isinstance(escaped, Markup)
 
 
-def test_template_generator_autoescape():
+@patch("cli.generators.template.ResumeYAML")
+@patch("cli.generators.template.Config")
+def test_template_generator_autoescape(MockConfig, MockResumeYAML):
     """Test that TemplateGenerator automatically escapes variables in LaTeX templates."""
-    # Mock ResumeYAML and Config
-    with (
-        patch("cli.generators.template.ResumeYAML") as MockResumeYAML,
-        patch("cli.generators.template.Config"),
-    ):
+    mock_yaml = MockResumeYAML.return_value
+    mock_yaml.get_contact.return_value = {"name": "Alice & Bob"}
+    # Mock other methods to return empty/defaults
+    mock_yaml.get_variant.return_value = {}
+    mock_yaml.get_summary.return_value = ""
+    mock_yaml.get_skills.return_value = {}
+    mock_yaml.get_experience.return_value = []
+    mock_yaml.get_education.return_value = []
+    mock_yaml.get_projects.return_value = {}
+    mock_yaml.data = {}
 
-        mock_yaml = MockResumeYAML.return_value
-        mock_yaml.get_contact.return_value = {"name": "Alice & Bob"}
-        # Mock other methods to return empty/defaults
-        mock_yaml.get_variant.return_value = {}
-        mock_yaml.get_summary.return_value = ""
-        mock_yaml.get_skills.return_value = {}
-        mock_yaml.get_experience.return_value = []
-        mock_yaml.get_education.return_value = []
-        mock_yaml.get_projects.return_value = {}
-        mock_yaml.data = {}
+    generator = TemplateGenerator()
 
-        generator = TemplateGenerator()
+    # Test tex_env directly
+    template = generator.tex_env.from_string("{{ contact.name }}")
+    rendered = template.render(contact={"name": "Alice & Bob"})
 
-        # Test tex_env directly
-        template = generator.tex_env.from_string("{{ contact.name }}")
-        rendered = template.render(contact={"name": "Alice & Bob"})
+    assert rendered == r"Alice \& Bob"
 
-        assert rendered == r"Alice \& Bob"
-
-        # Test double escaping prevention (if variable is already marked safe)
-        safe_var = Markup(r"Already \& Safe")
-        template = generator.tex_env.from_string("{{ var }}")
-        rendered = template.render(var=safe_var)
-        assert rendered == r"Already \& Safe"
+    # Test double escaping prevention (if variable is already marked safe)
+    safe_var = Markup(r"Already \& Safe")
+    template = generator.tex_env.from_string("{{ var }}")
+    rendered = template.render(var=safe_var)
+    assert rendered == r"Already \& Safe"
 
 
-def test_custom_template_loading():
+@patch("cli.generators.template.ResumeYAML")
+@patch("cli.generators.template.Config")
+@patch("pathlib.Path.exists", return_value=True)
+@patch("pathlib.Path.read_text", return_value="{{ '&'|latex_escape }}")
+def test_custom_template_loading(mock_read_text, mock_exists, MockConfig, MockResumeYAML):
     """Test that custom templates are loaded with the correct environment."""
-    with (
-        patch("cli.generators.template.ResumeYAML"),
-        patch("cli.generators.template.Config"),
-        patch("pathlib.Path.exists", return_value=True),
-        patch("pathlib.Path.read_text", return_value="{{ '&'|latex_escape }}"),
-    ):
+    generator = TemplateGenerator()
+    generator.yaml_handler.get_contact.return_value = {"name": "Test"}
+    # Mock other required methods
+    generator.yaml_handler.get_variant.return_value = {}
+    generator.yaml_handler.get_summary.return_value = ""
+    generator.yaml_handler.get_skills.return_value = {}
+    generator.yaml_handler.get_experience.return_value = []
+    generator.yaml_handler.get_education.return_value = []
+    generator.yaml_handler.get_projects.return_value = {}
+    generator.yaml_handler.data = {}
 
-        generator = TemplateGenerator()
-        generator.yaml_handler.get_contact.return_value = {"name": "Test"}
-        # Mock other required methods
-        generator.yaml_handler.get_variant.return_value = {}
-        generator.yaml_handler.get_summary.return_value = ""
-        generator.yaml_handler.get_skills.return_value = {}
-        generator.yaml_handler.get_experience.return_value = []
-        generator.yaml_handler.get_education.return_value = []
-        generator.yaml_handler.get_projects.return_value = {}
-        generator.yaml_handler.data = {}
+    # Generate LaTeX
+    content = generator.generate(
+        variant="base", output_format="tex", custom_template_path="dummy.j2"
+    )
 
-        # Generate LaTeX
-        content = generator.generate(
-            variant="base", output_format="tex", custom_template_path="dummy.j2"
-        )
-
-        # Should be escaped
-        assert content == r"\&"
+    # Should be escaped
+    assert content == r"\&"

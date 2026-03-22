@@ -15,11 +15,14 @@ Outputs structured JSON for use with AI resume tailoring.
 """
 
 import hashlib
+import ipaddress
 import json
 import re
+import socket
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup, Tag
 
@@ -27,7 +30,7 @@ from bs4 import BeautifulSoup, Tag
 try:
     import requests
 except ImportError:
-    requests = None
+    requests = None  # type: ignore
 
 
 @dataclass
@@ -200,6 +203,68 @@ class JobParser:
             job_details.url = url
         return job_details
 
+    def _fetch_url_safe(self, url: str) -> str:
+        """
+        Safely fetch URL to prevent SSRF attacks.
+
+        Validates URL scheme, resolves IP, and checks for private/internal IPs.
+
+        Args:
+            url: URL to fetch
+
+        Returns:
+            str: Response text
+
+        Raises:
+            ValueError: If URL is invalid or unsafe
+            RuntimeError: If request fails
+            ImportError: If requests library is not installed
+        """
+        if not requests:
+            raise ImportError(
+                "URL fetching requires 'requests' library. Install with: pip install requests"
+            )
+
+        parsed_url = urlparse(url)
+        if parsed_url.scheme not in ("http", "https"):
+            raise ValueError(f"Invalid URL scheme: {parsed_url.scheme}")
+
+        hostname = parsed_url.hostname
+        if not hostname:
+            raise ValueError("Invalid URL: Missing hostname")
+
+        try:
+            # Resolve hostname to IP
+            ip_address = socket.gethostbyname(hostname)
+            ip_obj = ipaddress.ip_address(ip_address)
+
+            # Check for private, loopback, link-local, multicast, etc.
+            if (
+                ip_obj.is_private
+                or ip_obj.is_loopback
+                or ip_obj.is_link_local
+                or ip_obj.is_multicast
+                or ip_obj.is_reserved
+                or ip_obj.is_unspecified
+            ):
+                raise ValueError(f"Unsafe URL: resolves to internal/private IP ({ip_address})")
+
+        except socket.gaierror as e:
+            raise ValueError(f"Failed to resolve hostname '{hostname}': {e}")
+
+        # If safe, perform the request
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        try:
+            # Note: We pass the original URL so TLS/Host headers match,
+            # but relies on requests resolving the same safe IP,
+            # or could explicitly connect to the resolved IP while sending the host header.
+            # However, for basic SSRF protection, pre-resolution check is often enough unless DNS rebinding is a concern.
+            response = requests.get(url, headers=headers, timeout=30)
+            response.raise_for_status()
+            return response.text
+        except requests.RequestException as e:
+            raise RuntimeError(f"Failed to fetch URL: {e}")
+
     def parse_from_url(self, url: str) -> JobDetails:
         """
         Parse job posting from URL.
@@ -219,14 +284,10 @@ class JobParser:
         if cached:
             return cached
 
-        # Fetch and parse
+        # Fetch and parse securely
         try:
-
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-            response = requests.get(url, headers=headers, timeout=30)
-            response.raise_for_status()
-
-            job_details = self._parse_html(response.text)
+            html_text = self._fetch_url_safe(url)
+            job_details = self._parse_html(html_text)
             job_details.url = url
 
             # Save to cache
@@ -234,12 +295,8 @@ class JobParser:
 
             return job_details
 
-        except ImportError:
-            raise NotImplementedError(
-                "URL fetching requires 'requests' library. Install with: pip install requests"
-            )
-        except requests.RequestException as e:
-            raise RuntimeError(f"Failed to fetch URL: {e}")
+        except ImportError as e:
+            raise NotImplementedError(str(e))
 
     def _parse_html(self, html: str) -> JobDetails:
         """
@@ -426,7 +483,8 @@ class JobParser:
             # Look for company in meta tags
             meta_company = soup.find("meta", attrs={"name": "company"})
             if meta_company:
-                company = meta_company.get("content", "")
+                company_content = meta_company.get("content", "")
+                company = str(company_content) if company_content else ""
 
         # Extract position from h1 or title
         position = ""
@@ -447,11 +505,11 @@ class JobParser:
         salary = self._extract_salary_from_text(html)
 
         # Extract requirements section - look for heading tags first
-        requirements = []
+        requirements: List[str] = []
         req_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
             string=re.compile(r"requirements|qualifications|skills", re.IGNORECASE),
-        )
+        )  # type: ignore[call-overload]
         if req_heading:
             # Get the next sibling element(s) containing the list
             next_elem = req_heading.find_next_sibling(["ul", "ol", "div", "p"])
@@ -462,11 +520,11 @@ class JobParser:
             requirements = self._extract_list_by_keyword(html, "requirements")
 
         # Extract responsibilities section
-        responsibilities = []
+        responsibilities: List[str] = []
         resp_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
             string=re.compile(r"responsibilities|duties|what you", re.IGNORECASE),
-        )
+        )  # type: ignore[call-overload]
         if resp_heading:
             next_elem = resp_heading.find_next_sibling(["ul", "ol", "div", "p"])
             if next_elem:
@@ -586,8 +644,8 @@ class JobParser:
         Returns:
             Tuple of (requirements, responsibilities)
         """
-        requirements = []
-        responsibilities = []
+        requirements: List[str] = []
+        responsibilities: List[str] = []
 
         if not description:
             return requirements, responsibilities

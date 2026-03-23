@@ -37,6 +37,18 @@ except ImportError:
 
 console = Console()
 
+# Pre-compile patterns for performance
+_TITLE_PATTERNS = [
+    re.compile(r"(?:job title|position|title):\s*([^\n]+)", re.IGNORECASE | re.MULTILINE),
+    re.compile(r"^([^\n]+)\s*[-|]\s*[^|]+$", re.IGNORECASE | re.MULTILINE),
+    re.compile(r"#\s*([^\n]+)", re.IGNORECASE | re.MULTILINE),  # Markdown headers
+]
+
+_COMPANY_PATTERNS = [
+    re.compile(r"(?:company|organization):\s*([^\n]+)", re.IGNORECASE),
+    re.compile(r"(?:at|from)\s+([A-Z][^\n]+?)(?:\s+[-\u2014]|\s+$)", re.IGNORECASE),
+]
+
 
 @dataclass
 class KeywordInfo:
@@ -208,26 +220,15 @@ class KeywordDensityGenerator:
         company = ""
 
         # Try to extract job title (common patterns)
-        title_patterns = [
-            r"(?:job title|position|title):\s*([^\n]+)",
-            r"^([^\n]+)\s*[-|]\s*[^|]+$",
-            r"#\s*([^\n]+)",  # Markdown headers often have job title
-        ]
-
-        for pattern in title_patterns:
-            match = re.search(pattern, job_description, re.IGNORECASE | re.MULTILINE)
+        for pattern in _TITLE_PATTERNS:
+            match = pattern.search(job_description)
             if match:
                 job_title = match.group(1).strip()
                 break
 
         # Try to extract company name
-        company_patterns = [
-            r"(?:company|organization):\s*([^\n]+)",
-            r"(?:at|from)\s+([A-Z][^\n]+?)(?:\s+[-\u2014]|\s+$)",
-        ]
-
-        for pattern in company_patterns:
-            match = re.search(pattern, job_description, re.IGNORECASE)
+        for pattern in _COMPANY_PATTERNS:
+            match = pattern.search(job_description)
             if match:
                 company = match.group(1).strip()
                 break
@@ -361,12 +362,13 @@ Please extract the keywords:"""
         """Count occurrences of keywords in resume."""
         counts = {}
 
-        # Get all resume text
-        all_text = self._get_all_text(resume_data)
+        # Get all resume text and lower it once to avoid re.IGNORECASE overhead
+        all_text = self._get_all_text(resume_data).lower()
 
         for keyword, _ in keywords:
-            # Count occurrences (case-insensitive)
-            count = len(re.findall(rf"\b{re.escape(keyword)}\b", all_text, re.IGNORECASE))
+            # Count occurrences using lowercased text and keywords
+            # Using \b to ensure whole word matches
+            count = len(re.findall(rf"\b{re.escape(keyword.lower())}\b", all_text))
             counts[keyword] = count
 
         return counts

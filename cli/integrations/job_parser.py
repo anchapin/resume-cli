@@ -16,6 +16,11 @@ Outputs structured JSON for use with AI resume tailoring.
 
 import hashlib
 import json
+
+import socket
+import urllib.parse
+import ipaddress
+
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -221,23 +226,16 @@ class JobParser:
 
         # Fetch and parse
         try:
-
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-            response = requests.get(url, headers=headers, timeout=30)
-            response.raise_for_status()
-
-            job_details = self._parse_html(response.text)
+            html_content = self._fetch_url_safe(url)
+            job_details = self._parse_html(html_content)
             job_details.url = url
 
             # Save to cache
             self._save_to_cache(cache_key, job_details)
 
             return job_details
-
-        except ImportError:
-            raise NotImplementedError(
-                "URL fetching requires 'requests' library. Install with: pip install requests"
-            )
+        except ValueError as e:
+            raise RuntimeError(f"Unsafe or invalid URL provided: {e}")
         except requests.RequestException as e:
             raise RuntimeError(f"Failed to fetch URL: {e}")
 
@@ -258,6 +256,52 @@ class JobParser:
             return self._parse_indeed(html)
         else:
             return self._parse_generic(html)
+
+
+    def _fetch_url_safe(self, url: str) -> str:
+        """
+        Safely fetch a URL, preventing Server-Side Request Forgery (SSRF) by checking
+        if the URL resolves to an internal/private IP address or uses an unexpected scheme.
+        """
+        if globals().get('requests') is None:
+            raise NotImplementedError(
+                "URL fetching requires 'requests' library. Install with: pip install requests"
+            )
+
+        parsed_url = urllib.parse.urlparse(url)
+        if parsed_url.scheme not in ["http", "https"]:
+            raise ValueError(f"Invalid URL scheme: {parsed_url.scheme}. Only http and https are allowed.")
+
+        hostname = parsed_url.hostname
+        if not hostname:
+            raise ValueError("Invalid URL: missing hostname")
+
+        # Strip brackets from IPv6 hostnames (e.g., "[::1]")
+        hostname = hostname.strip("[]")
+
+        try:
+            # Resolve the hostname to an IP address, handling both IPv4 and IPv6
+            addr_info = socket.getaddrinfo(hostname, None)
+
+            # Get the first resolved IP
+            ip = addr_info[0][4][0]
+            ip_obj = ipaddress.ip_address(ip)
+
+            # Check if the IP is private, loopback, link-local, or reserved
+            if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_reserved or ip_obj.is_multicast:
+                raise ValueError(f"URL resolves to a restricted IP address: {ip}")
+        except socket.gaierror as e:
+            # Fail closed: If the hostname cannot be resolved, we block the request
+            raise ValueError(f"Failed to resolve hostname '{hostname}': {e}")
+        except ValueError as e:
+            # This catches exceptions from ipaddress.ip_address and our own ValueErrors
+            raise ValueError(f"Invalid IP address format or restricted IP: {e}")
+
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        response = requests.get(url, headers=headers, timeout=30)
+        response.raise_for_status()
+
+        return response.text
 
     def _is_linkedin(self, html: str) -> bool:
         """Check if HTML is from LinkedIn."""

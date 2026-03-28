@@ -363,10 +363,12 @@ Please extract the keywords:"""
 
         # Get all resume text
         all_text = self._get_all_text(resume_data)
+        all_text_lower = all_text.lower()
 
         for keyword, _ in keywords:
             # Count occurrences (case-insensitive)
-            count = len(re.findall(rf"\b{re.escape(keyword)}\b", all_text, re.IGNORECASE))
+            # The keyword should already be lowercased from extraction
+            count = len(re.findall(rf"\b{re.escape(keyword.lower())}\b", all_text_lower))
             counts[keyword] = count
 
         return counts

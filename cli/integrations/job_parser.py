@@ -172,6 +172,25 @@ class JobParser:
         "remote available",
     ]
 
+    # Pre-compiled regex patterns for extraction
+    _SALARY_PATTERNS = [
+        re.compile(r"\$[\d,]+(?:\s*[-–to]+\s*\$[\d,]+)?", re.IGNORECASE),  # $100k - $150k
+        re.compile(r"\$[\d,]+k(?:\s*[-–to]+\s*\$[\d,]+k)?", re.IGNORECASE),  # $100k - $150k
+        re.compile(r"[\d,]+k(?:\s*[-–to]+\s*[\d,]+k)", re.IGNORECASE),  # 100k - 150k
+        re.compile(r"(?:salary|pay|compensation)[:\s]*(\$[^<>\n]+)", re.IGNORECASE),  # Salary: $X
+        re.compile(r"(?:per|/)\s*(?:year|annum)[:\s]*(\$[^<>\n]+)", re.IGNORECASE),  # per year: $X
+    ]
+
+    _JOB_TYPE_PATTERNS = [
+        re.compile(r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b", re.IGNORECASE),
+        re.compile(r"\b(permanent|fixed[- ]?term)\b", re.IGNORECASE),
+    ]
+
+    _EXPERIENCE_LEVEL_PATTERNS = [
+        re.compile(r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b", re.IGNORECASE),
+        re.compile(r"\b(associate|vice[- ]?president|director|executive)\b", re.IGNORECASE),
+    ]
+
     def __init__(self, cache_dir: Optional[Path] = None):
         """
         Initialize job parser.
@@ -555,17 +574,8 @@ class JobParser:
         Returns:
             Salary string or None
         """
-        # Common salary patterns
-        patterns = [
-            r"\$[\d,]+(?:\s*[-–to]+\s*\$[\d,]+)?",  # $100k - $150k
-            r"\$[\d,]+k(?:\s*[-–to]+\s*\$[\d,]+k)?",  # $100k - $150k
-            r"[\d,]+k(?:\s*[-–to]+\s*[\d,]+k)",  # 100k - 150k
-            r"(?:salary|pay|compensation)[:\s]*(\$[^<>\n]+)",  # Salary: $X
-            r"(?:per|/)\s*(?:year|annum)[:\s]*(\$[^<>\n]+)",  # per year: $X
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
+        for pattern in self._SALARY_PATTERNS:
+            match = pattern.search(text)
             if match:
                 salary = match.group(0) if match.lastindex is None else match.group(1)
                 # Clean up the salary string
@@ -805,13 +815,8 @@ class JobParser:
         Returns:
             Job type string or None
         """
-        patterns = [
-            r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b",
-            r"\b(permanent|fixed[- ]?term)\b",
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, html, re.IGNORECASE)
+        for pattern in self._JOB_TYPE_PATTERNS:
+            match = pattern.search(html)
             if match:
                 return match.group(1).lower().replace("-", "-")
 
@@ -827,13 +832,8 @@ class JobParser:
         Returns:
             Experience level string or None
         """
-        patterns = [
-            r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b",
-            r"\b(associate|vice[- ]?president|director|executive)\b",
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, html, re.IGNORECASE)
+        for pattern in self._EXPERIENCE_LEVEL_PATTERNS:
+            match = pattern.search(html)
             if match:
                 return match.group(1).lower().replace("-", "-")
 

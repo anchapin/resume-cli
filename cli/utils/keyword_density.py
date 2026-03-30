@@ -1,5 +1,6 @@
 """Keyword density analysis for resumes."""
 
+import collections
 import json
 import re
 from dataclasses import dataclass
@@ -36,6 +37,18 @@ except ImportError:
     OPENAI_AVAILABLE = False
 
 console = Console()
+
+# Pre-compiled regex patterns for performance
+_TITLE_PATTERNS = [
+    re.compile(r"(?:job title|position|title):\s*([^\n]+)", re.IGNORECASE | re.MULTILINE),
+    re.compile(r"^([^\n]+)\s*[-|]\s*[^|]+$", re.IGNORECASE | re.MULTILINE),
+    re.compile(r"#\s*([^\n]+)", re.IGNORECASE | re.MULTILINE),
+]
+
+_COMPANY_PATTERNS = [
+    re.compile(r"(?:company|organization):\s*([^\n]+)", re.IGNORECASE),
+    re.compile(r"(?:at|from)\s+([A-Z][^\n]+?)(?:\s+[-\u2014]|\s+$)", re.IGNORECASE),
+]
 
 
 @dataclass
@@ -208,26 +221,15 @@ class KeywordDensityGenerator:
         company = ""
 
         # Try to extract job title (common patterns)
-        title_patterns = [
-            r"(?:job title|position|title):\s*([^\n]+)",
-            r"^([^\n]+)\s*[-|]\s*[^|]+$",
-            r"#\s*([^\n]+)",  # Markdown headers often have job title
-        ]
-
-        for pattern in title_patterns:
-            match = re.search(pattern, job_description, re.IGNORECASE | re.MULTILINE)
+        for pattern in _TITLE_PATTERNS:
+            match = pattern.search(job_description)
             if match:
                 job_title = match.group(1).strip()
                 break
 
         # Try to extract company name
-        company_patterns = [
-            r"(?:company|organization):\s*([^\n]+)",
-            r"(?:at|from)\s+([A-Z][^\n]+?)(?:\s+[-\u2014]|\s+$)",
-        ]
-
-        for pattern in company_patterns:
-            match = re.search(pattern, job_description, re.IGNORECASE)
+        for pattern in _COMPANY_PATTERNS:
+            match = pattern.search(job_description)
             if match:
                 company = match.group(1).strip()
                 break
@@ -361,12 +363,15 @@ Please extract the keywords:"""
         """Count occurrences of keywords in resume."""
         counts = {}
 
-        # Get all resume text
-        all_text = self._get_all_text(resume_data)
+        # Get all resume text and lowercase it once for performance
+        # This is safe because _extract_job_keywords already lowercases the keywords
+        all_text_lower = self._get_all_text(resume_data).lower()
 
         for keyword, _ in keywords:
-            # Count occurrences (case-insensitive)
-            count = len(re.findall(rf"\b{re.escape(keyword)}\b", all_text, re.IGNORECASE))
+            # We don't use re.IGNORECASE here since text is already lowercased
+            # Avoid combining keywords into a single regex (e.g., "(kw1|kw2)") to correctly
+            # count overlapping keywords (e.g., "React" vs "React Native")
+            count = len(re.findall(rf"\b{re.escape(keyword)}\b", all_text_lower))
             counts[keyword] = count
 
         return counts
@@ -375,17 +380,17 @@ Please extract the keywords:"""
         """Extract all text from resume data."""
         text_parts = []
 
-        def extract_value(value):
+        queue = collections.deque([resume_data])
+
+        while queue:
+            value = queue.popleft()
             if isinstance(value, str):
                 text_parts.append(value)
             elif isinstance(value, list):
-                for item in value:
-                    extract_value(item)
+                queue.extend(value)
             elif isinstance(value, dict):
-                for v in value.values():
-                    extract_value(v)
+                queue.extend(value.values())
 
-        extract_value(resume_data)
         return " ".join(text_parts)
 
     def _suggest_sections_for_keyword(

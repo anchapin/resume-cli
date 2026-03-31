@@ -1,8 +1,10 @@
 import logging
 import os
 import tempfile
+from functools import partial
 from pathlib import Path
 
+import anyio
 import yaml
 from fastapi import FastAPI, HTTPException, Response, Security
 from fastapi.middleware.cors import CORSMiddleware
@@ -171,13 +173,22 @@ async def render_pdf(request: ResumeRequest):
             # We output to a temp file
             output_pdf = temp_path / "output.pdf"
 
-            generator.generate(variant=request.variant, output_format="pdf", output_path=output_pdf)
+            # Offload blocking PDF generation to a worker thread
+            generate_func = partial(
+                generator.generate,
+                variant=request.variant,
+                output_format="pdf",
+                output_path=output_pdf,
+            )
+            await anyio.to_thread.run_sync(generate_func)
 
-            if not output_pdf.exists():
+            # Offload blocking filesystem checks and reads
+            exists = await anyio.to_thread.run_sync(output_pdf.exists)
+            if not exists:
                 raise HTTPException(status_code=500, detail="PDF generation failed")
 
             # Read bytes
-            content = output_pdf.read_bytes()
+            content = await anyio.to_thread.run_sync(output_pdf.read_bytes)
 
             return Response(
                 content=content,
@@ -560,12 +571,21 @@ async def render_resume_pdf(resume_id: str, variant: str = "base"):
             generator = TemplateGenerator(yaml_path=resume_yaml_path)
             output_pdf = temp_path / "output.pdf"
 
-            generator.generate(variant=variant, output_format="pdf", output_path=output_pdf)
+            # Offload blocking PDF generation
+            generate_func = partial(
+                generator.generate,
+                variant=variant,
+                output_format="pdf",
+                output_path=output_pdf,
+            )
+            await anyio.to_thread.run_sync(generate_func)
 
-            if not output_pdf.exists():
+            # Offload blocking I/O
+            exists = await anyio.to_thread.run_sync(output_pdf.exists)
+            if not exists:
                 raise HTTPException(status_code=500, detail="PDF generation failed")
 
-            content = output_pdf.read_bytes()
+            content = await anyio.to_thread.run_sync(output_pdf.read_bytes)
 
             return Response(
                 content=content,

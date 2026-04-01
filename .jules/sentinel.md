@@ -1,9 +1,10 @@
-## 2025-02-12 - [Critical] API Authentication Fail-Open Default
-**Vulnerability:** The API authentication mechanism (`api/auth.py`) defaulted to allowing access if the `RESUME_API_KEY` environment variable was not set ("dev mode"). Additionally, it used a timing-vulnerable string comparison for the API key check.
-**Learning:** "Dev mode" defaults that bypass security controls are dangerous because they can easily be deployed to production by accident, leaving the system wide open.
-**Prevention:** Implement a "fail-closed" strategy. If a security configuration (like an API key) is missing, the application should refuse to start or deny all requests, rather than failing open. Always use `secrets.compare_digest` for sensitive string comparisons.
+## 2024-03-22 - [JobParser] Add SSRF protection
 
-## 2025-02-19 - [Critical] LaTeX Injection in Cover Letter Generator
-**Vulnerability:** The `CoverLetterGenerator` used a standard Jinja2 environment (intended for HTML/XML or plain text) to render LaTeX templates. This allowed malicious user input (or AI hallucinations) containing LaTeX control characters (e.g., `\input{...}`) to be injected directly into the LaTeX source, leading to potential Local File Inclusion (LFI) or other exploits.
-**Learning:** Jinja2's default `autoescape` is context-aware based on file extensions, but usually only for HTML/XML. It does NOT automatically escape LaTeX special characters. Relying on manual filters (like `| latex_escape`) in templates is error-prone and brittle, as developers might forget to apply them to every variable.
-**Prevention:** Always use a dedicated Jinja2 environment for LaTeX generation that enforces auto-escaping via a `finalize` hook (e.g., `tex_env.finalize = latex_escape`). This ensures *all* variable output is sanitized by default, providing defense-in-depth even if the template author forgets explicit filters.
+**Vulnerability:**
+The `JobParser.parse_from_url` method passed arbitrary user-provided URLs directly to `requests.get` without any validation. This exposed the application to Server-Side Request Forgery (SSRF) attacks, where an attacker could coerce the server into making requests to internal network resources (e.g., AWS IMDS at `169.254.169.254`, `localhost`, etc).
+
+**Learning:**
+When an application takes a URL from untrusted user input and makes a server-side request using it, it is critical to resolve the hostname and validate the target IP address to ensure it does not belong to private or reserved IP ranges. Additionally, the IP validation should fail securely if resolution errors occur, and `0.0.0.0` needs explicit checks as it may resolve to localhost depending on the environment. Time-of-check to time-of-use (TOCTOU) issues via DNS rebinding can still technically occur if the hostname is passed to requests instead of the verified IP, but validating the IP is a crucial first step.
+
+**Prevention:**
+Always validate both the scheme and the resolved IP address (using a tool like Python's `ipaddress` library with `is_private`, `is_loopback`, `is_reserved`, etc.) before making requests to user-supplied URLs. Ensure the failure modes fail closed instead of open.

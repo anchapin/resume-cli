@@ -27,7 +27,7 @@ from bs4 import BeautifulSoup, Tag
 try:
     import requests
 except ImportError:
-    requests = None
+    requests = None  # type: ignore[assignment]
 
 
 @dataclass
@@ -200,6 +200,54 @@ class JobParser:
             job_details.url = url
         return job_details
 
+    def _fetch_url_safe(self, url: str) -> requests.Response:
+        """
+        Safely fetch a URL protecting against Server-Side Request Forgery (SSRF).
+
+        Validates URL scheme, resolves hostname, and ensures the IP is not private,
+        loopback, link-local, or reserved.
+
+        Args:
+            url: URL to fetch
+
+        Returns:
+            requests.Response
+        """
+        import ipaddress
+        import socket
+        from urllib.parse import urlparse
+
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError(f"Invalid URL scheme: {parsed.scheme}")
+
+        hostname = parsed.hostname
+        if not hostname:
+            raise ValueError("Invalid URL: no hostname")
+
+        # Resolve IP to check if it's safe
+        try:
+            addrinfo = socket.getaddrinfo(hostname, None)
+            for result in addrinfo:
+                ip_addr = result[4][0]
+                ip = ipaddress.ip_address(ip_addr)
+                if (
+                    ip.is_private
+                    or ip.is_loopback
+                    or ip.is_link_local
+                    or ip.is_reserved
+                    or ip.is_unspecified
+                ):
+                    raise RuntimeError(f"Access to internal IP address is not allowed: {ip_addr}")
+        except socket.gaierror as e:
+            raise ValueError(f"Could not resolve hostname {hostname}: {e}")
+        except ValueError as e:
+            # Catch ValueError from ipaddress parsing and fail closed
+            raise ValueError(f"Invalid IP address resolved for hostname: {e}")
+
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        return requests.get(url, headers=headers, timeout=30)
+
     def parse_from_url(self, url: str) -> JobDetails:
         """
         Parse job posting from URL.
@@ -221,9 +269,7 @@ class JobParser:
 
         # Fetch and parse
         try:
-
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-            response = requests.get(url, headers=headers, timeout=30)
+            response = self._fetch_url_safe(url)
             response.raise_for_status()
 
             job_details = self._parse_html(response.text)
@@ -238,7 +284,7 @@ class JobParser:
             raise NotImplementedError(
                 "URL fetching requires 'requests' library. Install with: pip install requests"
             )
-        except requests.RequestException as e:
+        except (requests.RequestException, ValueError, RuntimeError) as e:
             raise RuntimeError(f"Failed to fetch URL: {e}")
 
     def _parse_html(self, html: str) -> JobDetails:
@@ -426,7 +472,8 @@ class JobParser:
             # Look for company in meta tags
             meta_company = soup.find("meta", attrs={"name": "company"})
             if meta_company:
-                company = meta_company.get("content", "")
+                content = meta_company.get("content", "")
+                company = str(content) if isinstance(content, list) else content
 
         # Extract position from h1 or title
         position = ""
@@ -447,11 +494,11 @@ class JobParser:
         salary = self._extract_salary_from_text(html)
 
         # Extract requirements section - look for heading tags first
-        requirements = []
+        requirements: List[str] = []
         req_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
             string=re.compile(r"requirements|qualifications|skills", re.IGNORECASE),
-        )
+        )  # type: ignore[call-overload]
         if req_heading:
             # Get the next sibling element(s) containing the list
             next_elem = req_heading.find_next_sibling(["ul", "ol", "div", "p"])
@@ -462,11 +509,11 @@ class JobParser:
             requirements = self._extract_list_by_keyword(html, "requirements")
 
         # Extract responsibilities section
-        responsibilities = []
+        responsibilities: List[str] = []
         resp_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
             string=re.compile(r"responsibilities|duties|what you", re.IGNORECASE),
-        )
+        )  # type: ignore[call-overload]
         if resp_heading:
             next_elem = resp_heading.find_next_sibling(["ul", "ol", "div", "p"])
             if next_elem:
@@ -586,8 +633,8 @@ class JobParser:
         Returns:
             Tuple of (requirements, responsibilities)
         """
-        requirements = []
-        responsibilities = []
+        requirements: List[str] = []
+        responsibilities: List[str] = []
 
         if not description:
             return requirements, responsibilities

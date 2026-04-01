@@ -498,7 +498,7 @@ class JobParser:
         req_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
             string=re.compile(r"requirements|qualifications|skills", re.IGNORECASE),
-        ) # type: ignore[call-overload]
+        )  # type: ignore[call-overload]
         if req_heading:
             # Get the next sibling element(s) containing the list
             next_elem = req_heading.find_next_sibling(["ul", "ol", "div", "p"])
@@ -513,7 +513,7 @@ class JobParser:
         resp_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
             string=re.compile(r"responsibilities|duties|what you", re.IGNORECASE),
-        ) # type: ignore[call-overload]
+        )  # type: ignore[call-overload]
         if resp_heading:
             next_elem = resp_heading.find_next_sibling(["ul", "ol", "div", "p"])
             if next_elem:

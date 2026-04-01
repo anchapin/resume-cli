@@ -27,7 +27,7 @@ from bs4 import BeautifulSoup, Tag
 try:
     import requests
 except ImportError:
-    requests = None
+    requests = None  # type: ignore[assignment]
 
 
 @dataclass
@@ -213,9 +213,9 @@ class JobParser:
         Returns:
             requests.Response
         """
-        from urllib.parse import urlparse
-        import socket
         import ipaddress
+        import socket
+        from urllib.parse import urlparse
 
         parsed = urlparse(url)
         if parsed.scheme not in ("http", "https"):
@@ -472,7 +472,8 @@ class JobParser:
             # Look for company in meta tags
             meta_company = soup.find("meta", attrs={"name": "company"})
             if meta_company:
-                company = meta_company.get("content", "")
+                content = meta_company.get("content", "")
+                company = str(content) if isinstance(content, list) else content
 
         # Extract position from h1 or title
         position = ""
@@ -493,11 +494,11 @@ class JobParser:
         salary = self._extract_salary_from_text(html)
 
         # Extract requirements section - look for heading tags first
-        requirements = []
+        requirements: List[str] = []
         req_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
             string=re.compile(r"requirements|qualifications|skills", re.IGNORECASE),
-        )
+        ) # type: ignore[call-overload]
         if req_heading:
             # Get the next sibling element(s) containing the list
             next_elem = req_heading.find_next_sibling(["ul", "ol", "div", "p"])
@@ -508,11 +509,11 @@ class JobParser:
             requirements = self._extract_list_by_keyword(html, "requirements")
 
         # Extract responsibilities section
-        responsibilities = []
+        responsibilities: List[str] = []
         resp_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
             string=re.compile(r"responsibilities|duties|what you", re.IGNORECASE),
-        )
+        ) # type: ignore[call-overload]
         if resp_heading:
             next_elem = resp_heading.find_next_sibling(["ul", "ol", "div", "p"])
             if next_elem:
@@ -632,8 +633,8 @@ class JobParser:
         Returns:
             Tuple of (requirements, responsibilities)
         """
-        requirements = []
-        responsibilities = []
+        requirements: List[str] = []
+        responsibilities: List[str] = []
 
         if not description:
             return requirements, responsibilities

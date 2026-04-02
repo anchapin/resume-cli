@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2024-05-15 - [Regex replacement for LaTeX escaping in resume_pdf_lib]
+**Learning:** The `resume_pdf_lib/generator.py` implementation of `latex_escape` was using a character-by-character `while` loop which is very slow in Python. Replacing it with a module-level compiled regex (`_LATEX_ESCAPE_PATTERN`) and a lookup map (`_LATEX_ESCAPE_MAP`) provides significantly faster performance. This implementation intentionally omits Markdown bold processing, distinguishing it from `cli/utils/template_filters.py`.
+**Action:** Always favor pre-compiled module-level regex `.sub()` with a mapping function over manual string loops in Python when performing character translations. Look out for differences in expected behavior (like the intentional omission of Markdown parsing) when porting optimizations between similar functions.

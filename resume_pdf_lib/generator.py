@@ -16,6 +16,25 @@ from typing import Any, Dict, List, Optional
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 
+_LATEX_ESCAPE_MAP = {
+    "\\": r"\textbackslash{}",
+    "&": r"\&",
+    "%": r"\%",
+    "$": r"\$",
+    "#": r"\#",
+    "_": r"\_",
+    "{": r"\{",
+    "}": r"\}",
+    "~": r"\textasciitilde{}",
+    "^": r"\^{}",
+    "<": r"\textless{}",
+    ">": r"\textgreater{}",
+    "[": r"{[}",
+    "]": r"{]}",
+}
+
+_LATEX_ESCAPE_PATTERN = re.compile("|".join(map(re.escape, _LATEX_ESCAPE_MAP.keys())))
+
 from .exceptions import (
     InvalidVariantError,
     LaTeXCompilationError,
@@ -483,37 +502,10 @@ def latex_escape(text: Any) -> Markup:
 
     text_str = str(text)
 
-    # Process the string character by character
-    result = []
-    i = 0
-    while i < len(text_str):
-        char = text_str[i]
+    def replace(match: re.Match) -> str:
+        return _LATEX_ESCAPE_MAP[match.group(0)]
 
-        if char == "\\":
-            result.append(r"\textbackslash{}")
-        elif char in "&%$#_{}~^<>[]":
-            escaped_map = {
-                "&": r"\&",
-                "%": r"\%",
-                "$": r"\$",
-                "#": r"\#",
-                "_": r"\_",
-                "{": r"\{",
-                "}": r"\}",
-                "~": r"\textasciitilde{}",
-                "^": r"\^{}",
-                "<": r"\textless{}",
-                ">": r"\textgreater{}",
-                "[": r"{[}",
-                "]": r"{]}",
-            }
-            result.append(escaped_map[char])
-        else:
-            result.append(char)
-
-        i += 1
-
-    return Markup("".join(result))
+    return Markup(_LATEX_ESCAPE_PATTERN.sub(replace, text_str))
 
 
 def proper_title(text: str) -> str:

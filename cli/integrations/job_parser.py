@@ -15,11 +15,14 @@ Outputs structured JSON for use with AI resume tailoring.
 """
 
 import hashlib
+import ipaddress
 import json
 import re
+import socket
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup, Tag
 
@@ -28,6 +31,11 @@ try:
     import requests
 except ImportError:
     requests = None
+
+
+class SSRFError(ValueError):
+    """Raised when a potential SSRF attack is detected."""
+    pass
 
 
 @dataclass
@@ -219,11 +227,15 @@ class JobParser:
         if cached:
             return cached
 
+        # Check dependency first before any exception blocks try to reference it
+        if requests is None:
+            raise NotImplementedError(
+                "URL fetching requires 'requests' library. Install with: pip install requests"
+            )
+
         # Fetch and parse
         try:
-
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-            response = requests.get(url, headers=headers, timeout=30)
+            response = self._fetch_url_safe(url)
             response.raise_for_status()
 
             job_details = self._parse_html(response.text)
@@ -234,12 +246,93 @@ class JobParser:
 
             return job_details
 
-        except ImportError:
-            raise NotImplementedError(
-                "URL fetching requires 'requests' library. Install with: pip install requests"
-            )
-        except requests.RequestException as e:
+        except (requests.RequestException, SSRFError) as e:
             raise RuntimeError(f"Failed to fetch URL: {e}")
+
+    def _fetch_url_safe(self, url: str) -> Any:
+        """
+        Safely fetch a URL protecting against Server-Side Request Forgery (SSRF).
+
+        Args:
+            url: The URL to fetch.
+
+        Returns:
+            The requests Response object.
+        """
+        parsed_url = urlparse(url)
+        if parsed_url.scheme not in ("http", "https"):
+            raise SSRFError(f"Invalid URL scheme: {parsed_url.scheme}")
+
+        hostname = parsed_url.hostname
+        if not hostname:
+            raise SSRFError("Invalid URL: missing hostname")
+
+        try:
+            # Resolve hostname using socket.getaddrinfo for IPv4 and IPv6
+            # Returns a list of tuples: (family, type, proto, canonname, sockaddr)
+            addr_info = socket.getaddrinfo(hostname, None)
+        except socket.gaierror as e:
+            raise SSRFError(f"DNS resolution failed for hostname {hostname}: {e}")
+
+        # Check all resolved IPs to ensure they are safe
+        for info in addr_info:
+            ip_str = info[4][0]
+            try:
+                ip = ipaddress.ip_address(ip_str)
+            except ValueError:
+                # Fail closed if we cannot parse the IP returned by DNS
+                raise SSRFError(f"SSRF Protection: could not parse resolved IP {ip_str}")
+
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+                raise SSRFError(f"SSRF Protection: resolved IP {ip_str} is not allowed")
+
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+
+        # Follow redirects manually to validate them
+        # Note: This approach provides a good first layer of defense against SSRF,
+        # but it is technically vulnerable to Time-Of-Check to Time-Of-Use (TOCTOU) DNS
+        # Rebinding attacks because requests.get() performs its own DNS resolution.
+        max_redirects = 5
+        current_url = url
+
+        for _ in range(max_redirects):
+            response = requests.get(current_url, headers=headers, timeout=30, allow_redirects=False)
+
+            if response.is_redirect:
+                redirect_url = response.headers.get("location")
+                if not redirect_url:
+                    break
+
+                # Handle relative redirects
+                redirect_url = urljoin(current_url, redirect_url)
+
+                # Validate the redirect URL as well to prevent SSRF via redirect
+                parsed_redirect = urlparse(redirect_url)
+                if parsed_redirect.scheme not in ("http", "https"):
+                    raise SSRFError(f"Invalid redirect scheme: {parsed_redirect.scheme}")
+
+                hostname = parsed_redirect.hostname
+                if not hostname:
+                    raise SSRFError("Invalid redirect URL: missing hostname")
+
+                try:
+                    addr_info = socket.getaddrinfo(hostname, None)
+                    for info in addr_info:
+                        ip_str = info[4][0]
+                        try:
+                            ip = ipaddress.ip_address(ip_str)
+                            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+                                raise SSRFError(f"SSRF Protection: redirected IP {ip_str} is not allowed")
+                        except ValueError:
+                            raise SSRFError(f"SSRF Protection: could not parse redirected IP {ip_str}")
+                except socket.gaierror as e:
+                    raise SSRFError(f"DNS resolution failed for redirected hostname {hostname}: {e}")
+
+                current_url = redirect_url
+            else:
+                return response
+
+        raise SSRFError("Too many redirects")
 
     def _parse_html(self, html: str) -> JobDetails:
         """

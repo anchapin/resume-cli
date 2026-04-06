@@ -19,7 +19,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from bs4 import BeautifulSoup, Tag
 
@@ -28,6 +28,29 @@ try:
     import requests
 except ImportError:
     requests = None
+
+# Pre-compiled regex patterns for performance optimization
+_SALARY_PATTERNS = [
+    re.compile(r"\$[\d,]+(?:\s*[-–to]+\s*\$[\d,]+)?", re.IGNORECASE),  # $100k - $150k
+    re.compile(r"\$[\d,]+k(?:\s*[-–to]+\s*\$[\d,]+k)?", re.IGNORECASE),  # $100k - $150k
+    re.compile(r"[\d,]+k(?:\s*[-–to]+\s*[\d,]+k)", re.IGNORECASE),  # 100k - 150k
+    re.compile(r"(?:salary|pay|compensation)[:\s]*(\$[^<>\n]+)", re.IGNORECASE),  # Salary: $X
+    re.compile(r"(?:per|/)\s*(?:year|annum)[:\s]*(\$[^<>\n]+)", re.IGNORECASE),  # per year: $X
+]
+
+_JOB_TYPE_PATTERNS = [
+    re.compile(
+        r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b", re.IGNORECASE
+    ),
+    re.compile(r"\b(permanent|fixed[- ]?term)\b", re.IGNORECASE),
+]
+
+_EXPERIENCE_LEVEL_PATTERNS = [
+    re.compile(
+        r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b", re.IGNORECASE
+    ),
+    re.compile(r"\b(associate|vice[- ]?president|director|executive)\b", re.IGNORECASE),
+]
 
 
 @dataclass
@@ -529,18 +552,21 @@ class JobParser:
                 return elem
         return None
 
-    def _extract_text_by_pattern(self, text: str, pattern: str) -> Optional[str]:
+    def _extract_text_by_pattern(self, text: str, pattern: Union[str, re.Pattern]) -> Optional[str]:
         """
         Extract text using regex pattern.
 
         Args:
             text: Text to search
-            pattern: Regex pattern
+            pattern: Regex pattern (string or pre-compiled)
 
         Returns:
             Extracted text or None
         """
-        match = re.search(pattern, text, re.IGNORECASE)
+        if isinstance(pattern, re.Pattern):
+            match = pattern.search(text)
+        else:
+            match = re.search(pattern, text, re.IGNORECASE)
         if match:
             return match.group(1).strip()
         return None
@@ -555,17 +581,8 @@ class JobParser:
         Returns:
             Salary string or None
         """
-        # Common salary patterns
-        patterns = [
-            r"\$[\d,]+(?:\s*[-–to]+\s*\$[\d,]+)?",  # $100k - $150k
-            r"\$[\d,]+k(?:\s*[-–to]+\s*\$[\d,]+k)?",  # $100k - $150k
-            r"[\d,]+k(?:\s*[-–to]+\s*[\d,]+k)",  # 100k - 150k
-            r"(?:salary|pay|compensation)[:\s]*(\$[^<>\n]+)",  # Salary: $X
-            r"(?:per|/)\s*(?:year|annum)[:\s]*(\$[^<>\n]+)",  # per year: $X
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
+        for pattern in _SALARY_PATTERNS:
+            match = pattern.search(text)
             if match:
                 salary = match.group(0) if match.lastindex is None else match.group(1)
                 # Clean up the salary string
@@ -805,13 +822,8 @@ class JobParser:
         Returns:
             Job type string or None
         """
-        patterns = [
-            r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b",
-            r"\b(permanent|fixed[- ]?term)\b",
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, html, re.IGNORECASE)
+        for pattern in _JOB_TYPE_PATTERNS:
+            match = pattern.search(html)
             if match:
                 return match.group(1).lower().replace("-", "-")
 
@@ -827,13 +839,8 @@ class JobParser:
         Returns:
             Experience level string or None
         """
-        patterns = [
-            r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b",
-            r"\b(associate|vice[- ]?president|director|executive)\b",
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, html, re.IGNORECASE)
+        for pattern in _EXPERIENCE_LEVEL_PATTERNS:
+            match = pattern.search(html)
             if match:
                 return match.group(1).lower().replace("-", "-")
 

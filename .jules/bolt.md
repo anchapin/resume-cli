@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-23 - BeautifulSoup Regex Searching
+**Learning:** When using BeautifulSoup `soup.find(string=...)`, passing a pre-compiled regex `re.Pattern` object is valid at runtime but can cause `mypy` overload errors with older stubs.
+**Action:** Append `# type: ignore[call-overload]` to the `soup.find()` call when passing a compiled regex pattern object.

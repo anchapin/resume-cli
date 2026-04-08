@@ -23,6 +23,44 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from bs4 import BeautifulSoup, Tag
 
+# Pre-compile regex patterns for performance
+_SALARY_PATTERNS = [
+    re.compile(p, re.IGNORECASE)
+    for p in [
+        r"\$[\d,]+(?:\s*[-–to]+\s*\$[\d,]+)?",  # $100k - $150k
+        r"\$[\d,]+k(?:\s*[-–to]+\s*\$[\d,]+k)?",  # $100k - $150k
+        r"[\d,]+k(?:\s*[-–to]+\s*[\d,]+k)",  # 100k - 150k
+        r"(?:salary|pay|compensation)[:\s]*(\$[^<>\n]+)",  # Salary: $X
+        r"(?:per|/)\s*(?:year|annum)[:\s]*(\$[^<>\n]+)",  # per year: $X
+    ]
+]
+
+_JOB_TYPE_PATTERNS = [
+    re.compile(p, re.IGNORECASE)
+    for p in [
+        r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b",
+        r"\b(permanent|fixed[- ]?term)\b",
+    ]
+]
+
+_EXPERIENCE_LEVEL_PATTERNS = [
+    re.compile(p, re.IGNORECASE)
+    for p in [
+        r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b",
+        r"\b(associate|vice[- ]?president|director|executive)\b",
+    ]
+]
+
+_BULLET_PATTERNS = [
+    re.compile(p, re.MULTILINE)
+    for p in [
+        r"[•\-\*]\s*([^\n]+)",  # Standard bullets
+        r"^\s*\d+[\.\)]\s*([^\n]+)",  # Numbered lists
+    ]
+]
+
+_COMMA_SPLIT_PATTERN = re.compile(r",\s*(?=[A-Z])")
+
 # Optional import for URL fetching
 try:
     import requests
@@ -555,17 +593,8 @@ class JobParser:
         Returns:
             Salary string or None
         """
-        # Common salary patterns
-        patterns = [
-            r"\$[\d,]+(?:\s*[-–to]+\s*\$[\d,]+)?",  # $100k - $150k
-            r"\$[\d,]+k(?:\s*[-–to]+\s*\$[\d,]+k)?",  # $100k - $150k
-            r"[\d,]+k(?:\s*[-–to]+\s*[\d,]+k)",  # 100k - 150k
-            r"(?:salary|pay|compensation)[:\s]*(\$[^<>\n]+)",  # Salary: $X
-            r"(?:per|/)\s*(?:year|annum)[:\s]*(\$[^<>\n]+)",  # per year: $X
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
+        for pattern in _SALARY_PATTERNS:
+            match = pattern.search(text)
             if match:
                 salary = match.group(0) if match.lastindex is None else match.group(1)
                 # Clean up the salary string
@@ -673,13 +702,8 @@ class JobParser:
         ]
 
         # Match bullet points
-        bullet_patterns = [
-            r"[•\-\*]\s*([^\n]+)",  # Standard bullets
-            r"^\s*\d+[\.\)]\s*([^\n]+)",  # Numbered lists
-        ]
-
-        for pattern in bullet_patterns:
-            matches = re.findall(pattern, text, re.MULTILINE)
+        for pattern in _BULLET_PATTERNS:
+            matches = pattern.findall(text)
             if matches:
                 items = [m.strip() for m in matches if m.strip() and len(m.strip()) > 5]
                 break
@@ -706,7 +730,7 @@ class JobParser:
 
         # If still no items, try comma-separated
         if not items:
-            parts = re.split(r",\s*(?=[A-Z])", text)
+            parts = _COMMA_SPLIT_PATTERN.split(text)
             items = [p.strip() for p in parts if p.strip() and len(p.strip()) > 5]
 
         return items[:15]
@@ -805,13 +829,8 @@ class JobParser:
         Returns:
             Job type string or None
         """
-        patterns = [
-            r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b",
-            r"\b(permanent|fixed[- ]?term)\b",
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, html, re.IGNORECASE)
+        for pattern in _JOB_TYPE_PATTERNS:
+            match = pattern.search(html)
             if match:
                 return match.group(1).lower().replace("-", "-")
 
@@ -827,13 +846,8 @@ class JobParser:
         Returns:
             Experience level string or None
         """
-        patterns = [
-            r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b",
-            r"\b(associate|vice[- ]?president|director|executive)\b",
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, html, re.IGNORECASE)
+        for pattern in _EXPERIENCE_LEVEL_PATTERNS:
+            match = pattern.search(html)
             if match:
                 return match.group(1).lower().replace("-", "-")
 

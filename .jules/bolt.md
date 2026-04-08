@@ -13,3 +13,10 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+## 2026-04-08 - Pre-compile Regex Patterns in Hot Paths
+**Learning:** Re-compiling regular expressions inside loops or frequently called functions (like 's extraction methods) creates measurable performance overhead. For example, pre-compiling the salary extraction patterns yielded a ~1.7x speedup in local benchmarks.
+**Action:** When working on performance, identify regex compilations inside loops or parsing functions and move them to module-level constants (e.g., ). Ensure flags like  and  are preserved in the compiled object.
+
+## 2024-05-22 - Pre-compile Regex Patterns in JobParser
+**Learning:** Re-compiling regular expressions inside loops or frequently called parsing methods (like `_extract_salary_from_text` or `_extract_job_type`) creates measurable performance overhead. Pre-compiling them to module-level constants yields significant speedups.
+**Action:** Identify regex compilations inside loops or parsing functions and move them to module-level constants (e.g., `_SALARY_PATTERNS = [re.compile(p) for p in [...]]`). Ensure flags like `re.IGNORECASE` are preserved.

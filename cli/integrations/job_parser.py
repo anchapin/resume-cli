@@ -15,7 +15,6 @@ Outputs structured JSON for use with AI resume tailoring.
 """
 
 import hashlib
-
 import json
 import re
 from dataclasses import asdict, dataclass, field

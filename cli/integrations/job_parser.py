@@ -16,6 +16,9 @@ Outputs structured JSON for use with AI resume tailoring.
 
 import hashlib
 import json
+import ipaddress
+import socket
+from urllib.parse import urlparse, urljoin
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -200,6 +203,80 @@ class JobParser:
             job_details.url = url
         return job_details
 
+    def _fetch_url_safe(self, url: str) -> str:
+        """
+        Safely fetch URL content, preventing SSRF attacks.
+
+        Args:
+            url: The URL to fetch.
+
+        Returns:
+            The HTML content of the URL.
+        """
+        if requests is None:
+            raise NotImplementedError(
+                "URL fetching requires 'requests' library. Install with: pip install requests"
+            )
+
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        session = requests.Session()
+        current_url = url
+        max_redirects = 5
+
+        for _ in range(max_redirects):
+            parsed_url = urlparse(current_url)
+
+            # Validate scheme
+            if parsed_url.scheme not in ("http", "https"):
+                raise ValueError(f"Invalid URL scheme: {parsed_url.scheme}")
+
+            # Validate hostname
+            hostname = parsed_url.hostname
+            if not hostname:
+                raise ValueError("No hostname found in URL")
+
+            try:
+                # Resolve hostname to IP
+                addr_info = socket.getaddrinfo(hostname, None)
+                for family, _, _, _, sockaddr in addr_info:
+                    ip_str = sockaddr[0]
+                    ip = ipaddress.ip_address(ip_str)
+
+                    # Security checks for IP
+                    if (
+                        ip.is_private
+                        or ip.is_loopback
+                        or ip.is_link_local
+                        or ip.is_multicast
+                        or ip.is_reserved
+                        or (isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped)
+                    ):
+                        raise ValueError(
+                            f"URL resolves to a restricted/internal IP address: {ip_str}"
+                        )
+            except socket.gaierror:
+                raise ValueError(f"Could not resolve hostname: {hostname}")
+
+            # Fetch without following redirects automatically
+            try:
+                response = session.get(
+                    current_url, headers=headers, timeout=30, allow_redirects=False
+                )
+            except requests.RequestException as e:
+                raise RuntimeError(f"Failed to fetch URL: {e}")
+
+            if response.is_redirect:
+                # Get redirect location and resolve it
+                location = response.headers.get("Location")
+                if not location:
+                    break
+                current_url = urljoin(current_url, location)
+            else:
+                response.raise_for_status()
+                return response.text
+
+        raise ValueError("Too many redirects")
+
     def parse_from_url(self, url: str) -> JobDetails:
         """
         Parse job posting from URL.
@@ -218,15 +295,10 @@ class JobParser:
         cached = self._get_from_cache(cache_key)
         if cached:
             return cached
-
         # Fetch and parse
         try:
-
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-            response = requests.get(url, headers=headers, timeout=30)
-            response.raise_for_status()
-
-            job_details = self._parse_html(response.text)
+            html_content = self._fetch_url_safe(url)
+            job_details = self._parse_html(html_content)
             job_details.url = url
 
             # Save to cache

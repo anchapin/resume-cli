@@ -15,11 +15,14 @@ Outputs structured JSON for use with AI resume tailoring.
 """
 
 import hashlib
+import ipaddress
 import json
 import re
+import socket
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup, Tag
 
@@ -219,14 +222,10 @@ class JobParser:
         if cached:
             return cached
 
-        # Fetch and parse
+        # Fetch and parse safely (SSRF protection)
         try:
-
-            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-            response = requests.get(url, headers=headers, timeout=30)
-            response.raise_for_status()
-
-            job_details = self._parse_html(response.text)
+            html_content = self._fetch_url_safe(url)
+            job_details = self._parse_html(html_content)
             job_details.url = url
 
             # Save to cache
@@ -238,8 +237,75 @@ class JobParser:
             raise NotImplementedError(
                 "URL fetching requires 'requests' library. Install with: pip install requests"
             )
-        except requests.RequestException as e:
-            raise RuntimeError(f"Failed to fetch URL: {e}")
+
+    def _fetch_url_safe(self, url: str, timeout: int = 30, max_redirects: int = 5) -> str:
+        """
+        Safely fetch a URL with SSRF protection.
+
+        Args:
+            url: URL to fetch
+            timeout: Request timeout in seconds
+            max_redirects: Maximum number of redirects to follow
+
+        Returns:
+            HTML content of the page
+
+        Raises:
+            ValueError: If URL is invalid or points to a restricted IP
+            RuntimeError: If request fails
+        """
+        if requests is None:
+            raise ImportError("requests library is not installed")
+
+        current_url = url
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+
+        for _ in range(max_redirects):
+            parsed = urlparse(current_url)
+            if parsed.scheme not in ("http", "https"):
+                raise ValueError(f"Invalid URL scheme: {parsed.scheme}")
+
+            try:
+                addr_info = socket.getaddrinfo(
+                    parsed.hostname, parsed.port or (443 if parsed.scheme == "https" else 80)
+                )
+                for family, _, _, _, sockaddr in addr_info:
+                    ip = ipaddress.ip_address(sockaddr[0])
+                    if hasattr(ip, "ipv4_mapped") and ip.ipv4_mapped:
+                        ip = ip.ipv4_mapped
+                    if (
+                        ip.is_private
+                        or ip.is_loopback
+                        or ip.is_link_local
+                        or ip.is_multicast
+                        or ip.is_reserved
+                        or ip.is_unspecified
+                    ):
+                        raise ValueError(f"Access to internal/private IP is forbidden: {ip}")
+            except socket.gaierror:
+                raise ValueError(f"Could not resolve hostname: {parsed.hostname}")
+
+            try:
+                response = requests.get(
+                    current_url, headers=headers, timeout=timeout, allow_redirects=False
+                )
+                response.raise_for_status()
+            except requests.RequestException as e:
+                raise RuntimeError(f"Failed to fetch URL: {e}")
+
+            if response.status_code in (301, 302, 303, 307, 308):
+                redirect_url = response.headers.get("Location")
+                if not redirect_url:
+                    raise RuntimeError("Redirect missing Location header")
+                if not redirect_url.startswith("http"):
+                    current_url = urljoin(current_url, redirect_url)
+                else:
+                    current_url = redirect_url
+                continue
+
+            return response.text
+
+        raise ValueError(f"Too many redirects ({max_redirects})")
 
     def _parse_html(self, html: str) -> JobDetails:
         """

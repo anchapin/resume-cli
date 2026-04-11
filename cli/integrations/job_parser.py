@@ -15,14 +15,14 @@ Outputs structured JSON for use with AI resume tailoring.
 """
 
 import hashlib
+import ipaddress
 import json
 import re
 import socket
-import ipaddress
-from urllib.parse import urlparse, urljoin
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup, Tag
 

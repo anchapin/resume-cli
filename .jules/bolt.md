@@ -13,3 +13,9 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+## 2025-02-18 - Pre-lowercasing vs re.IGNORECASE
+**Learning:** Benchmarked counting occurrences of keywords in text using  vs pre-lowercasing the text and keywords (both with and without compiled patterns). In Python, for this specific use case, the performance difference was negligible (speedup was ~1.0x to 1.07x). It is not worth replacing  with pre-lowercasing if it adds complexity.
+**Action:** Focus on hoisting regex compilation out of loops ( at the module level) rather than manual lowercasing, as / already handles case-insensitivity efficiently.
+## 2025-02-18 - Pre-lowercasing vs re.IGNORECASE
+**Learning:** Benchmarked counting occurrences of keywords in text using `re.IGNORECASE` vs pre-lowercasing the text and keywords. In Python, for this specific use case, the performance difference was negligible (speedup was ~1.0x to 1.07x). It is not worth replacing `re.IGNORECASE` with pre-lowercasing if it adds complexity.
+**Action:** Focus on hoisting regex compilation out of loops (`re.compile()` at the module level) rather than manual lowercasing, as `re.search()`/`re.findall()` already handles case-insensitivity efficiently.

@@ -13,3 +13,6 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+## 2025-02-18 - Async Endpoint Offloading
+**Learning:** Using synchronous, blocking operations (like file I/O or PDF generation) directly inside `async def` route handlers in FastAPI can cause event loop starvation and significantly degrade throughput under load.
+**Action:** When a route handler is defined as `async def`, any blocking code should be explicitly offloaded to a worker thread pool using `anyio.to_thread.run_sync`.

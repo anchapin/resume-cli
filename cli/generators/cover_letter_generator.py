@@ -798,7 +798,7 @@ Return ONLY valid JSON, nothing else."""
                             "-o",
                             str(output_path),
                             "--pdf-engine=xelatex",
-                            "--pdf-engine-opt=-no-shell-escape"
+                            "--pdf-engine-opt=-no-shell-escape",
                         ],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,

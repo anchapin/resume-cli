@@ -132,7 +132,7 @@ class PDFConverter:
                     "-o",
                     str(output_path),
                     "--pdf-engine=xelatex",
-                    "--pdf-engine-opt=-no-shell-escape"
+                    "--pdf-engine-opt=-no-shell-escape",
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

@@ -19,15 +19,77 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from bs4 import BeautifulSoup, Tag
+
+# Pre-compiled regex patterns for performance optimization
+_REQ_HEADING_PATTERN = re.compile(r"requirements|qualifications|skills", re.IGNORECASE)
+_RESP_HEADING_PATTERN = re.compile(r"responsibilities|duties|what you", re.IGNORECASE)
+_JOBSEARCH_HEADER_PATTERN = re.compile(r"jobsearch-JobInfoHeader")
+_COMMON_POSITION_SUFFIX_PATTERN = re.compile(r"\s*[-|]\s*.*$")
+_COMMA_SEP_PATTERN = re.compile(r",\s*(?=[A-Z])")
+_WHITESPACE_PATTERN = re.compile(r"\s+")
+_K_SALARY_PATTERN = re.compile(r"\d+k")
+
+_SALARY_PATTERNS = [
+    re.compile(r"\$[\d,]+(?:\s*[-–to]+\s*\$[\d,]+)?", re.IGNORECASE),  # $100k - $150k
+    re.compile(r"\$[\d,]+k(?:\s*[-–to]+\s*\$[\d,]+k)?", re.IGNORECASE),  # $100k - $150k
+    re.compile(r"[\d,]+k(?:\s*[-–to]+\s*[\d,]+k)", re.IGNORECASE),  # 100k - 150k
+    re.compile(r"(?:salary|pay|compensation)[:\s]*(\$[^<>\n]+)", re.IGNORECASE),  # Salary: $X
+    re.compile(r"(?:per|/)\s*(?:year|annum)[:\s]*(\$[^<>\n]+)", re.IGNORECASE),  # per year: $X
+]
+
+_REQ_SECTION_PATTERN = re.compile(
+    r"(?:^|\n)\s*(requirements?|qualifications?|what we(?:'re)? looking for|what you(?:'ll)? bring)\s*:?\s*\n",
+    re.IGNORECASE,
+)
+_RESP_SECTION_PATTERN = re.compile(
+    r"(?:^|\n)\s*(responsibilities?|duties?|what you(?:'ll)? do|your impact|key responsibilities)\s*:?\s*\n",
+    re.IGNORECASE,
+)
+
+_NEXT_SECTION_PATTERNS = [
+    re.compile(
+        r"(?:^|\n)\s*(benefits|compensation|perks|about|company|team)\s*:?\s*\n", re.IGNORECASE
+    ),
+    re.compile(r"(?:^|\n)\s*(requirements?|qualifications?)\s*:?\s*\n", re.IGNORECASE),
+]
+
+_BULLET_PATTERNS = [
+    re.compile(r"[•\-\*]\s*([^\n]+)", re.MULTILINE),  # Standard bullets
+    re.compile(r"^\s*\d+[\.\)]\s*([^\n]+)", re.MULTILINE),  # Numbered lists
+]
+
+
+_COMPANY_PATTERN_LINKEDIN = re.compile(
+    r'(?:company|employer|organization)["\s:]+([^"<>\n]+)', re.IGNORECASE
+)
+_COMPANY_PATTERN_INDEED = re.compile(r'company["\s:]+([^"<>\n]+)', re.IGNORECASE)
+_COMPANY_PATTERN_GENERIC = re.compile(
+    r'(?:company|employer|organization|hiring)[:\s]+([^"<>\n]+)', re.IGNORECASE
+)
+_LOCATION_PATTERN_GENERIC = re.compile(r"(?:location|based|office)[:\s]+([^<>\n]+)", re.IGNORECASE)
+
+_JOB_TYPE_PATTERNS = [
+    re.compile(
+        r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b", re.IGNORECASE
+    ),
+    re.compile(r"\b(permanent|fixed[- ]?term)\b", re.IGNORECASE),
+]
+
+_EXP_LEVEL_PATTERNS = [
+    re.compile(
+        r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b", re.IGNORECASE
+    ),
+    re.compile(r"\b(associate|vice[- ]?president|director|executive)\b", re.IGNORECASE),
+]
 
 # Optional import for URL fetching
 try:
     import requests
 except ImportError:
-    requests = None
+    requests = None  # type: ignore[assignment]
 
 
 @dataclass
@@ -297,9 +359,7 @@ class JobParser:
         company = self._extract_by_selectors(soup, self.LINKEDIN_SELECTORS["company"])
         if not company:
             # Fallback: look for common patterns
-            company = self._extract_text_by_pattern(
-                html, r'(?:company|employer|organization)["\s:]+([^"<>\n]+)'
-            )
+            company = self._extract_text_by_pattern(html, _COMPANY_PATTERN_LINKEDIN)
 
         # Extract position
         position = self._extract_by_selectors(soup, self.LINKEDIN_SELECTORS["position"])
@@ -361,12 +421,12 @@ class JobParser:
         company = self._extract_by_selectors(soup, self.INDEED_SELECTORS["company"])
         if not company:
             # Fallback patterns
-            company = self._extract_text_by_pattern(html, r'company["\s:]+([^"<>\n]+)')
+            company = self._extract_text_by_pattern(html, _COMPANY_PATTERN_INDEED)
 
         # Extract position
         position = self._extract_by_selectors(soup, self.INDEED_SELECTORS["position"])
         if not position:
-            h1 = soup.find("h1", class_=re.compile(r"jobsearch-JobInfoHeader"))
+            h1 = soup.find("h1", class_=_JOBSEARCH_HEADER_PATTERN)
             position = h1.get_text(strip=True) if h1 else ""
 
         # Extract location
@@ -419,14 +479,12 @@ class JobParser:
         soup = BeautifulSoup(html, "lxml")
 
         # Try to extract company from various patterns
-        company = self._extract_text_by_pattern(
-            html, r'(?:company|employer|organization|hiring)[:\s]+([^"<>\n]+)'
-        )
+        company = self._extract_text_by_pattern(html, _COMPANY_PATTERN_GENERIC)
         if not company:
             # Look for company in meta tags
             meta_company = soup.find("meta", attrs={"name": "company"})
-            if meta_company:
-                company = meta_company.get("content", "")
+            if meta_company and isinstance(meta_company, Tag):
+                company = str(meta_company.get("content", ""))
 
         # Extract position from h1 or title
         position = ""
@@ -438,38 +496,38 @@ class JobParser:
             if title_tag:
                 title = title_tag.get_text(strip=True)
                 # Remove common suffixes
-                position = re.sub(r"\s*[-|]\s*.*$", "", title)
+                position = _COMMON_POSITION_SUFFIX_PATTERN.sub("", title)
 
         # Extract location
-        location = self._extract_text_by_pattern(html, r"(?:location|based|office)[:\s]+([^<>\n]+)")
+        location = self._extract_text_by_pattern(html, _LOCATION_PATTERN_GENERIC)
 
         # Extract salary
         salary = self._extract_salary_from_text(html)
 
         # Extract requirements section - look for heading tags first
-        requirements = []
+        requirements: List[str] = []
         req_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
-            string=re.compile(r"requirements|qualifications|skills", re.IGNORECASE),
+            string=_REQ_HEADING_PATTERN,
         )
         if req_heading:
             # Get the next sibling element(s) containing the list
             next_elem = req_heading.find_next_sibling(["ul", "ol", "div", "p"])
-            if next_elem:
+            if next_elem and isinstance(next_elem, Tag):
                 requirements = self._extract_list_items(next_elem)
         if not requirements:
             # Try to find by text pattern
             requirements = self._extract_list_by_keyword(html, "requirements")
 
         # Extract responsibilities section
-        responsibilities = []
+        responsibilities: List[str] = []
         resp_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
-            string=re.compile(r"responsibilities|duties|what you", re.IGNORECASE),
+            string=_RESP_HEADING_PATTERN,
         )
         if resp_heading:
             next_elem = resp_heading.find_next_sibling(["ul", "ol", "div", "p"])
-            if next_elem:
+            if next_elem and isinstance(next_elem, Tag):
                 responsibilities = self._extract_list_items(next_elem)
         if not responsibilities:
             responsibilities = self._extract_list_by_keyword(html, "responsibilities")
@@ -529,7 +587,7 @@ class JobParser:
                 return elem
         return None
 
-    def _extract_text_by_pattern(self, text: str, pattern: str) -> Optional[str]:
+    def _extract_text_by_pattern(self, text: str, pattern: Union[str, re.Pattern]) -> Optional[str]:
         """
         Extract text using regex pattern.
 
@@ -540,7 +598,10 @@ class JobParser:
         Returns:
             Extracted text or None
         """
-        match = re.search(pattern, text, re.IGNORECASE)
+        if isinstance(pattern, str):
+            match = re.search(pattern, text, re.IGNORECASE)
+        else:
+            match = pattern.search(text)
         if match:
             return match.group(1).strip()
         return None
@@ -555,22 +616,13 @@ class JobParser:
         Returns:
             Salary string or None
         """
-        # Common salary patterns
-        patterns = [
-            r"\$[\d,]+(?:\s*[-–to]+\s*\$[\d,]+)?",  # $100k - $150k
-            r"\$[\d,]+k(?:\s*[-–to]+\s*\$[\d,]+k)?",  # $100k - $150k
-            r"[\d,]+k(?:\s*[-–to]+\s*[\d,]+k)",  # 100k - 150k
-            r"(?:salary|pay|compensation)[:\s]*(\$[^<>\n]+)",  # Salary: $X
-            r"(?:per|/)\s*(?:year|annum)[:\s]*(\$[^<>\n]+)",  # per year: $X
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
+        for pattern in _SALARY_PATTERNS:
+            match = pattern.search(text)
             if match:
                 salary = match.group(0) if match.lastindex is None else match.group(1)
                 # Clean up the salary string
-                salary = re.sub(r"\s+", " ", salary.strip())
-                if "$" not in salary and re.search(r"\d+k", salary):
+                salary = _WHITESPACE_PATTERN.sub(" ", salary.strip())
+                if "$" not in salary and _K_SALARY_PATTERN.search(salary):
                     salary = "$" + salary
                 return salary
 
@@ -586,20 +638,15 @@ class JobParser:
         Returns:
             Tuple of (requirements, responsibilities)
         """
-        requirements = []
-        responsibilities = []
+        requirements: List[str] = []
+        responsibilities: List[str] = []
 
         if not description:
             return requirements, responsibilities
 
-        # Find section boundaries using regex
-        # Match section headers with optional colon, at start of line or after newline
-        req_pattern = r"(?:^|\n)\s*(requirements?|qualifications?|what we(?:'re)? looking for|what you(?:'ll)? bring)\s*:?\s*\n"
-        resp_pattern = r"(?:^|\n)\s*(responsibilities?|duties?|what you(?:'ll)? do|your impact|key responsibilities)\s*:?\s*\n"
-
         # Find positions of section headers
-        req_match = re.search(req_pattern, description, re.IGNORECASE)
-        resp_match = re.search(resp_pattern, description, re.IGNORECASE)
+        req_match = _REQ_SECTION_PATTERN.search(description)
+        resp_match = _RESP_SECTION_PATTERN.search(description)
 
         req_start = req_match.start() if req_match else -1
         resp_start = resp_match.start() if resp_match else -1
@@ -618,13 +665,9 @@ class JobParser:
         # Extract responsibilities section
         if resp_start >= 0:
             # Find end of responsibilities section (look for next section or end)
-            next_section_patterns = [
-                r"(?:^|\n)\s*(benefits|compensation|perks|about|company|team)\s*:?\s*\n",
-                r"(?:^|\n)\s*(requirements?|qualifications?)\s*:?\s*\n",
-            ]
             resp_end = len(description)
-            for pattern in next_section_patterns:
-                next_match = re.search(pattern, description[resp_start:], re.IGNORECASE)
+            for pattern in _NEXT_SECTION_PATTERNS:
+                next_match = pattern.search(description[resp_start:])
                 if next_match:
                     resp_end = resp_start + next_match.start()
                     break
@@ -672,14 +715,8 @@ class JobParser:
             "the company",
         ]
 
-        # Match bullet points
-        bullet_patterns = [
-            r"[•\-\*]\s*([^\n]+)",  # Standard bullets
-            r"^\s*\d+[\.\)]\s*([^\n]+)",  # Numbered lists
-        ]
-
-        for pattern in bullet_patterns:
-            matches = re.findall(pattern, text, re.MULTILINE)
+        for pattern in _BULLET_PATTERNS:
+            matches = pattern.findall(text)
             if matches:
                 items = [m.strip() for m in matches if m.strip() and len(m.strip()) > 5]
                 break
@@ -706,7 +743,7 @@ class JobParser:
 
         # If still no items, try comma-separated
         if not items:
-            parts = re.split(r",\s*(?=[A-Z])", text)
+            parts = _COMMA_SEP_PATTERN.split(text)
             items = [p.strip() for p in parts if p.strip() and len(p.strip()) > 5]
 
         return items[:15]
@@ -734,7 +771,7 @@ class JobParser:
 
         return [item for item in items if len(item) > 3][:15]
 
-    def _extract_list_by_keyword(self, html: str, keyword: str) -> List[str]:
+    def _extract_list_by_keyword(self, html: str, keyword: Union[str, re.Pattern]) -> List[str]:
         """
         Extract list items near a keyword.
 
@@ -748,7 +785,11 @@ class JobParser:
         soup = BeautifulSoup(html, "lxml")
 
         # Find element containing the keyword
-        for elem in soup.find_all(string=re.compile(keyword, re.IGNORECASE)):
+        if isinstance(keyword, str):
+            pattern = re.compile(keyword, re.IGNORECASE)
+        else:
+            pattern = keyword
+        for elem in soup.find_all(string=pattern):
             parent = elem.find_parent(["div", "section", "ul", "li"])
             if parent:
                 # Look for list items in parent or siblings
@@ -805,13 +846,8 @@ class JobParser:
         Returns:
             Job type string or None
         """
-        patterns = [
-            r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b",
-            r"\b(permanent|fixed[- ]?term)\b",
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, html, re.IGNORECASE)
+        for pattern in _JOB_TYPE_PATTERNS:
+            match = pattern.search(html)
             if match:
                 return match.group(1).lower().replace("-", "-")
 
@@ -827,13 +863,8 @@ class JobParser:
         Returns:
             Experience level string or None
         """
-        patterns = [
-            r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b",
-            r"\b(associate|vice[- ]?president|director|executive)\b",
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, html, re.IGNORECASE)
+        for pattern in _EXP_LEVEL_PATTERNS:
+            match = pattern.search(html)
             if match:
                 return match.group(1).lower().replace("-", "-")
 

@@ -13,3 +13,11 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2026-04-19 - Pre-compile regexes in keyword density
+**Learning:** Recompiling regular expressions with  inside loops for every method call creates unnecessary overhead, particularly in text parsing utilities.
+**Action:** Extract list of patterns and pre-compile them to module-level constants  and  using , and match against them with  inside the loops.
+
+## 2025-02-18 - Pre-compile regexes in keyword density
+**Learning:** Recompiling regular expressions with `re.search(pattern, ...)` inside loops for every method call creates unnecessary overhead, particularly in text parsing utilities.
+**Action:** Extract list of patterns and pre-compile them to module-level constants `_TITLE_PATTERNS` and `_COMPANY_PATTERNS` using `re.compile`, and match against them with `.search(string)` inside the loops.

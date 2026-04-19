@@ -41,7 +41,9 @@ console = Console()
 _TITLE_PATTERNS = [
     re.compile(r"(?:job title|position|title):\s*([^\n]+)", re.IGNORECASE | re.MULTILINE),
     re.compile(r"^([^\n]+)\s*[-|]\s*[^|]+$", re.IGNORECASE | re.MULTILINE),
-    re.compile(r"#\s*([^\n]+)", re.IGNORECASE | re.MULTILINE),  # Markdown headers often have job title
+    re.compile(
+        r"#\s*([^\n]+)", re.IGNORECASE | re.MULTILINE
+    ),  # Markdown headers often have job title
 ]
 
 _COMPANY_PATTERNS = [

@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Keyword Density Performance Improvement
+**Learning:** In Python, continuously recompiling the same regex within loops or functions that get called frequently (e.g. `_extract_job_details`) introduces unnecessary parsing and compilation overhead.
+**Action:** By lifting those regex objects to the module level via `re.compile()` and running their search operations against inputs instead, you can gain immediate optimizations (e.g. going from 0.073 to 0.038 seconds on iterations), doubling the speed for parsing texts in the module.

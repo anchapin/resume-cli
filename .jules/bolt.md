@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Set vs List for keyword lookups
+**Learning:** Using a list for an `in` membership check inside a frequently called function (like `_suggest_sections_for_keyword`) results in O(n) performance and repeated allocations.
+**Action:** Always convert static lists used for membership testing to module-level sets for O(1) performance and to avoid reallocation overhead.

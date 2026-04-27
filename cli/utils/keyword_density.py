@@ -37,6 +37,45 @@ except ImportError:
 
 console = Console()
 
+_TECH_KEYWORDS = {
+    "python",
+    "javascript",
+    "typescript",
+    "react",
+    "vue",
+    "angular",
+    "node.js",
+    "django",
+    "flask",
+    "fastapi",
+    "kubernetes",
+    "docker",
+    "aws",
+    "gcp",
+    "azure",
+    "sql",
+    "mongodb",
+    "postgresql",
+    "redis",
+    "ci/cd",
+    "devops",
+    "machine learning",
+    "ai",
+    "llm",
+    "pytorch",
+    "tensorflow",
+    "graphql",
+    "rest api",
+    "microservices",
+    "java",
+    "go",
+    "rust",
+    "c++",
+    "c#",
+    ".net",
+    "spring",
+}
+
 
 @dataclass
 class KeywordInfo:
@@ -398,46 +437,7 @@ Please extract the keywords:"""
         suggestions = []
 
         # Check if keyword is tech-related
-        tech_keywords = [
-            "python",
-            "javascript",
-            "typescript",
-            "react",
-            "vue",
-            "angular",
-            "node.js",
-            "django",
-            "flask",
-            "fastapi",
-            "kubernetes",
-            "docker",
-            "aws",
-            "gcp",
-            "azure",
-            "sql",
-            "mongodb",
-            "postgresql",
-            "redis",
-            "ci/cd",
-            "devops",
-            "machine learning",
-            "ai",
-            "llm",
-            "pytorch",
-            "tensorflow",
-            "graphql",
-            "rest api",
-            "microservices",
-            "java",
-            "go",
-            "rust",
-            "c++",
-            "c#",
-            ".net",
-            "spring",
-        ]
-
-        if keyword.lower() in tech_keywords:
+        if keyword.lower() in _TECH_KEYWORDS:
             suggestions.append("Skills section")
 
         # Check experience bullets

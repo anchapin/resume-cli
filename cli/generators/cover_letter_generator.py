@@ -771,12 +771,19 @@ Return ONLY valid JSON, nothing else."""
         try:
             # Use Popen with explicit cleanup to avoid double-free issues
             process = subprocess.Popen(
-                ["pdflatex", "-interaction=nonstopmode", tex_path.name],
+                ["pdflatex", "-interaction=nonstopmode", "-no-shell-escape", tex_path.name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=tex_path.parent,
             )
-            stdout, stderr = process.communicate()
+            try:
+                stdout, stderr = process.communicate(timeout=30)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate()
+                # Skip to pandoc fallback by raising
+                raise subprocess.CalledProcessError(1, process.args)
+
             if process.returncode == 0 or output_path.exists():
                 pdf_created = True
         except (subprocess.CalledProcessError, FileNotFoundError):
@@ -787,11 +794,25 @@ Return ONLY valid JSON, nothing else."""
                 # Fallback to pandoc
                 try:
                     process = subprocess.Popen(
-                        ["pandoc", str(tex_path), "-o", str(output_path), "--pdf-engine=xelatex"],
+                        [
+                            "pandoc",
+                            str(tex_path),
+                            "-o",
+                            str(output_path),
+                            "--pdf-engine=xelatex",
+                            "--pdf-engine-opt=-no-shell-escape",
+                        ],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                     )
-                    stdout, stderr = process.communicate()
+                    try:
+                        stdout, stderr = process.communicate(timeout=30)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.communicate()
+                        # Pass to failure handler below
+                        raise subprocess.CalledProcessError(1, process.args)
+
                     if process.returncode == 0 or output_path.exists():
                         pdf_created = True
                 except (subprocess.CalledProcessError, FileNotFoundError):

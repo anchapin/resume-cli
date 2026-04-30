@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Regex Pre-compilation in Web Scraping
+**Learning:** Instantiating `re.compile` within parsing methods (e.g. `soup.find`) or inside list comprehensions over HTML strings incurs redundant overhead during document parsing.
+**Action:** Lift regex compilations for BeautifulSoup lookups and string extractions to module-level constants to ensure they're evaluated exactly once.

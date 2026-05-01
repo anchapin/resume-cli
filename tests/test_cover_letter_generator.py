@@ -442,6 +442,7 @@ class TestCompilePdf:
     def test_compile_pdf_timeout(self, mock_popen, sample_yaml_file: Path, temp_dir: Path):
         """Test PDF compilation handles timeout."""
         import subprocess
+
         gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
         output_path = temp_dir / "cover-letter.pdf"
         tex_content = r"\documentclass{article}\begin{document}Test\end{document}"

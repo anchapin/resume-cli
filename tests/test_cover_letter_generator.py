@@ -417,6 +417,16 @@ class TestCompilePdf:
 
         assert result is True
 
+        # Verify arguments
+        args, _ = mock_popen.call_args
+        command = args[0]
+        assert "-no-shell-escape" in command
+        assert "-interaction=nonstopmode" in command
+        assert "pdflatex" in command
+
+        # Verify timeout was passed to communicate
+        mock_process.communicate.assert_any_call(timeout=30)
+
     @patch("subprocess.Popen", side_effect=FileNotFoundError)
     def test_compile_pdf_failure(self, mock_popen, sample_yaml_file: Path, temp_dir: Path):
         """Test PDF compilation fails gracefully."""
@@ -427,6 +437,28 @@ class TestCompilePdf:
         result = gen._compile_pdf(output_path, tex_content)
 
         assert result is False
+
+    @patch("subprocess.Popen")
+    def test_compile_pdf_timeout(self, mock_popen, sample_yaml_file: Path, temp_dir: Path):
+        """Test PDF compilation handles timeout."""
+        import subprocess
+        gen = CoverLetterGenerator(yaml_path=sample_yaml_file)
+        output_path = temp_dir / "cover-letter.pdf"
+        tex_content = r"\documentclass{article}\begin{document}Test\end{document}"
+
+        mock_process = MagicMock()
+        # Raise TimeoutExpired on first call, return empty bytes on second call (cleanup)
+        mock_process.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="pdflatex", timeout=30),
+            (b"", b""),
+        ]
+        mock_popen.return_value = mock_process
+
+        result = gen._compile_pdf(output_path, tex_content)
+
+        assert result is False
+        mock_process.kill.assert_called_once()
+        mock_process.communicate.assert_any_call(timeout=30)
 
 
 class TestClearCache:

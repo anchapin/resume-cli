@@ -42,7 +42,9 @@ _TABLE_PATTERN = re.compile(r"\|[^\n]+\|")
 _SPECIAL_CHARS_PATTERN = re.compile(r"[^a-zA-Z0-9\s\-\.\,\@\(\)\#\/]")
 _EMAIL_PATTERN = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
 _PHONE_PATTERN = re.compile(r"\d")
-_QUANTIFIABLE_PATTERN = re.compile(r"\d+%|\$\d+|\d+\s*(?:users|customers|projects)", flags=re.IGNORECASE)
+_QUANTIFIABLE_PATTERN = re.compile(
+    r"\d+%|\$\d+|\d+\s*(?:users|customers|projects)", flags=re.IGNORECASE
+)
 _ACRONYM_PATTERN = re.compile(r"\b[A-Z]{2,4}\b")
 _JSON_ARRAY_PATTERN = re.compile(r"\[.*\]", flags=re.DOTALL)
 _TECH_TERM_PATTERN = re.compile(r"\b[a-z]+(?:\s+[a-z]+)?\b")

@@ -13,6 +13,9 @@ import click
 
 from ..utils.json_resume_converter import JSONResumeConverter, convert_yaml_to_json_resume
 
+# Optimize file extension checks with O(1) set lookup to prevent repeated list allocations
+_YAML_EXTENSIONS = {".yaml", ".yml"}
+
 
 @click.command()
 @click.argument("input_file", type=click.Path(exists=True, path_type=Path))
@@ -67,9 +70,9 @@ def convert(input_file: Path, output_file: Path, direction: str, format: str, no
         input_ext = input_file.suffix.lower()
         output_ext = output_file.suffix.lower()
 
-        if input_ext in [".yaml", ".yml"] and output_ext == ".json":
+        if input_ext in _YAML_EXTENSIONS and output_ext == ".json":
             direction = "to_json"
-        elif input_ext == ".json" and output_ext in [".yaml", ".yml"]:
+        elif input_ext == ".json" and output_ext in _YAML_EXTENSIONS:
             direction = "to_yaml"
         else:
             click.echo(
@@ -269,7 +272,7 @@ def import_resume(input_file: Path, fmt: Optional[str], output: Optional[Path], 
         ext = input_file.suffix.lower()
         if ext == ".json":
             fmt = "json"
-        elif ext in [".yaml", ".yml"]:
+        elif ext in _YAML_EXTENSIONS:
             fmt = "yaml"
         else:
             click.echo(
@@ -375,7 +378,7 @@ def export_resume(input_file: Path, fmt: Optional[str], output: Optional[Path]):
         ext = input_file.suffix.lower()
         if ext == ".json":
             fmt = "json"
-        elif ext in [".yaml", ".yml"]:
+        elif ext in _YAML_EXTENSIONS:
             fmt = "yaml"
         else:
             click.echo(

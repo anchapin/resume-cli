@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2024-05-22 - Python In-Membership Checks vs Sets
+**Learning:** Do not attempt to optimize string membership checks like `ext in [".yaml", ".yml"]` by converting them to module-level sets. Modern CPython already optimizes these into constant tuple lookups at compile-time (`LOAD_CONST`), making such changes useless micro-optimizations.
+**Action:** Focus on algorithmic complexity, DB queries, or actual runtime bottlenecks (like re-compiling regexes inside loops) instead of simple constant membership checks.

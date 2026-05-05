@@ -19,9 +19,14 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from bs4 import BeautifulSoup, Tag
+
+# Pre-compile regex patterns for performance in parsing
+_INDEED_HEADER_PATTERN = re.compile(r"jobsearch-JobInfoHeader")
+_REQUIREMENTS_HEADING_PATTERN = re.compile(r"requirements|qualifications|skills", re.IGNORECASE)
+_RESPONSIBILITIES_HEADING_PATTERN = re.compile(r"responsibilities|duties|what you", re.IGNORECASE)
 
 # Optional import for URL fetching
 try:
@@ -366,7 +371,7 @@ class JobParser:
         # Extract position
         position = self._extract_by_selectors(soup, self.INDEED_SELECTORS["position"])
         if not position:
-            h1 = soup.find("h1", class_=re.compile(r"jobsearch-JobInfoHeader"))
+            h1 = soup.find("h1", class_=_INDEED_HEADER_PATTERN)  # type: ignore[call-overload]
             position = h1.get_text(strip=True) if h1 else ""
 
         # Extract location
@@ -447,10 +452,10 @@ class JobParser:
         salary = self._extract_salary_from_text(html)
 
         # Extract requirements section - look for heading tags first
-        requirements = []
+        requirements: List[str] = []
         req_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
-            string=re.compile(r"requirements|qualifications|skills", re.IGNORECASE),
+            string=_REQUIREMENTS_HEADING_PATTERN,  # type: ignore[call-overload]
         )
         if req_heading:
             # Get the next sibling element(s) containing the list
@@ -462,10 +467,10 @@ class JobParser:
             requirements = self._extract_list_by_keyword(html, "requirements")
 
         # Extract responsibilities section
-        responsibilities = []
+        responsibilities: List[str] = []
         resp_heading = soup.find(
             ["h1", "h2", "h3", "h4", "h5", "h6"],
-            string=re.compile(r"responsibilities|duties|what you", re.IGNORECASE),
+            string=_RESPONSIBILITIES_HEADING_PATTERN,  # type: ignore[call-overload]
         )
         if resp_heading:
             next_elem = resp_heading.find_next_sibling(["ul", "ol", "div", "p"])
@@ -734,21 +739,23 @@ class JobParser:
 
         return [item for item in items if len(item) > 3][:15]
 
-    def _extract_list_by_keyword(self, html: str, keyword: str) -> List[str]:
+    def _extract_list_by_keyword(self, html: str, keyword: Union[str, re.Pattern]) -> List[str]:
         """
         Extract list items near a keyword.
 
         Args:
             html: HTML content
-            keyword: Keyword to search for
+            keyword: Keyword to search for (string or compiled regex)
 
         Returns:
             List of extracted items
         """
         soup = BeautifulSoup(html, "lxml")
 
+        pattern = keyword if isinstance(keyword, re.Pattern) else re.compile(keyword, re.IGNORECASE)
+
         # Find element containing the keyword
-        for elem in soup.find_all(string=re.compile(keyword, re.IGNORECASE)):
+        for elem in soup.find_all(string=pattern):  # type: ignore[call-overload]
             parent = elem.find_parent(["div", "section", "ul", "li"])
             if parent:
                 # Look for list items in parent or siblings

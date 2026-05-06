@@ -81,7 +81,7 @@ class TestResumeValidatorValidateAll:
 
         assert is_valid is False
         assert len(validator.errors) > 0
-        assert "YAML parsing error" in validator.errors[0].message
+        assert "Invalid YAML format" in validator.errors[0].message
 
     def test_validate_all_missing_required_section(self, temp_dir: Path):
         """Test validate_all detects missing required section."""

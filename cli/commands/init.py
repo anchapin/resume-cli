@@ -4,8 +4,6 @@ import re
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import yaml
-
 
 def init_from_existing(
     base_resume_path: Optional[Path] = None,
@@ -64,6 +62,7 @@ def init_from_existing(
     _add_default_variants(data)
 
     # Write YAML
+    import yaml
     with open(output_path, "w") as f:
         yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
 

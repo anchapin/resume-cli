@@ -13,3 +13,8 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## $(date +%Y-%m-%d) - Lazy Loading `yaml`
+
+**Learning:** The `import yaml` statement at module level adds about 30ms-40ms to the startup time of all CLI commands (even `resume-cli --help`).
+**Action:** Defer `import yaml` to local function scope where possible so that it is only loaded when absolutely needed. Be careful not to remove module-level imports that are needed by standard top-level logic or try/except error catching.

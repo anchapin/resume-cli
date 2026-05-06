@@ -4,8 +4,6 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import yaml
-
 # Resume YAML Schema
 RESUME_SCHEMA = {
     "meta": {
@@ -186,9 +184,13 @@ class ResumeValidator:
         except FileNotFoundError as e:
             self.errors.append(ValidationError("root", str(e), "error"))
             return False
-        except yaml.YAMLError as e:
-            self.errors.append(ValidationError("root", f"YAML parsing error: {e}", "error"))
-            return False
+        except Exception as e:
+            # Replaced yaml.YAMLError to avoid importing yaml at module level
+            import yaml
+            if isinstance(e, yaml.YAMLError):
+                self.errors.append(ValidationError("file", f"Invalid YAML format: {str(e)}", "error"))
+                return False
+            raise
 
         self._validate_structure(data)
         self._validate_contact(data)

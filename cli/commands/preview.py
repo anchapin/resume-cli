@@ -13,7 +13,6 @@ from threading import Timer
 from typing import Optional
 
 import click
-import yaml as yaml_module
 
 
 @click.command()
@@ -90,6 +89,7 @@ def preview(
 
     # Load resume data
     click.echo(f"Loading resume from {yaml}...")
+    import yaml as yaml_module
     with open(yaml, "r", encoding="utf-8") as f:
         resume_data = yaml_module.safe_load(f)
 

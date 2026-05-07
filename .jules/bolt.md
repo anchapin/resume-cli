@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Regex Pre-compilation and Hoisting
+**Learning:** Re-compiling regexes like `_QUANTIFIABLE_PATTERN` inside loops or frequent operations adds overhead. Similarly, repeatedly lowercasing the entire resume text in loops is inefficient.
+**Action:** Always extract regex patterns as module-level constants and pre-calculate string conversions (like `all_text.lower()`) before iterations to improve string matching performance.

@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Caching outside comprehension & Hoisting regex
+**Learning:** Re-evaluating `.lower()` strings inside loops or list comprehensions, and compiling regex at runtime inside methods results in repeated overhead. Specifically, `all_text.lower()` in the readability checks and `re.compile()` being missed for several ATS checks creates significant overhead for ATS scoring.
+**Action:** Always cache string transformations like `.lower()` to a local variable *outside* the loop/comprehension. Hoist regex patterns as pre-compiled module-level constants `re.compile(r"pattern")` for frequent operations.

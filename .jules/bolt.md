@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-05-10 - Module-Level Constant Hoisting for Keyword Extraction
+**Learning:** Initializing large collections (like lists of 39 tuples for fallback keywords, or sets of 36 strings for tech keywords) inside a function, combined with dynamic compilation of regex patterns inside a method loop (like `_TITLE_PATTERNS` or `_COMPANY_PATTERNS`), adds measurable allocation and compilation overhead in hot paths during keyword density extraction.
+**Action:** Hoist these static datasets to module-level constants (e.g. `_COMMON_KEYWORDS`, `_TECH_KEYWORDS`, `_TITLE_PATTERNS`, `_COMPANY_PATTERNS`) and pre-compile regular expressions directly in the declarations to minimize runtime allocations and enable O(1) loop setups/lookups.

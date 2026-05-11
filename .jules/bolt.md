@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Caching String Normalization in Loops
+**Learning:** Calling `.lower()` on a large text payload inside a comprehension loop (e.g., iterating through a static list to check membership) triggers O(N) string reallocations, significantly slowing down generator passes. Additionally, performing regex evaluations within methods unnecessarily recompiles patterns every call. Finally, changing the default output of text extraction from lowercased to case-preserved revealed that case-sensitive constants like acronyms would fail if not matched against the original text.
+**Action:** Always pre-compile regexes as module-level constants. Cache `.lower()` outside of loops. When updating text pipelines, explicitly verify case-sensitivity of all downstream consumers to avoid silent bugs.

@@ -356,8 +356,8 @@ class TestGetAllText:
 
         text = ats_generator._get_all_text(resume_data)
 
-        # Text is lowercased
-        assert "john" in text
-        assert "tech corp" in text
-        assert "built apis" in text
-        assert "python" in text
+        # Text is raw and case-preserved
+        assert "John" in text
+        assert "Tech Corp" in text
+        assert "Built APIs" in text
+        assert "Python" in text

@@ -60,6 +60,7 @@ _ACTION_VERBS = [
     "achieved",
 ]
 
+
 @dataclass
 class ATSCategoryScore:
     """Score for a single ATS category."""

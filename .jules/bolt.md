@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2024-05-23 - Generator Expressions and Re-evaluations
+**Learning:** Calling a method like `.lower()` on a variable inside a generator expression or list comprehension (e.g. `sum(1 for verb in verbs if verb in text.lower())`) causes the method to be re-evaluated for every single iteration. For a loop of N elements, this does an O(M) string allocation N times, resulting in O(N*M) instead of O(N+M).
+**Action:** Always extract static transformations (like `.lower()`) to a local variable *outside* the loop before executing the comprehension.

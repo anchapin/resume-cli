@@ -356,8 +356,9 @@ class TestGetAllText:
 
         text = ats_generator._get_all_text(resume_data)
 
-        # Text is lowercased
-        assert "john" in text
-        assert "tech corp" in text
-        assert "built apis" in text
-        assert "python" in text
+        # Text is NOT lowercased anymore to preserve case for regexes
+        text_lower = text.lower()
+        assert "john" in text_lower
+        assert "tech corp" in text_lower
+        assert "built apis" in text_lower
+        assert "python" in text_lower

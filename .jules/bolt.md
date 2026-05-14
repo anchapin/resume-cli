@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Case Sensitivity in Text Extraction
+**Learning:** `_get_all_text` in `ats_generator.py` was lowercasing the entire text by default (`.lower()`). This meant that any case-sensitive optimizations or regex patterns (like `_ACRONYM_PATTERN` = `r"\b[A-Z]{2,4}\b"`) were rendered completely useless and would NEVER match anything.
+**Action:** Always verify if text extraction helpers perform destructive transformations (like lowercasing) before applying regexes or heuristics that depend on case preservation. Fix extraction methods to return raw text and explicitly lowercase at the call-site only when needed.

@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-05-15 - Regex Pre-compilation in ATS Generator Hot Paths
+**Learning:** Compiling regex patterns directly inside string processing functions or loops (like `re.search(r"\|[^\n]+\|", all_text)`) in `ats_generator.py` causes significant overhead because the engine has to recompile them continuously.
+**Action:** Always pre-compile these patterns using `re.compile()` as module-level constants (e.g., `_TABLE_PATTERN = re.compile(r"\|[^\n]+\|")`) to optimize execution performance, especially for generators parsing large text blobs.

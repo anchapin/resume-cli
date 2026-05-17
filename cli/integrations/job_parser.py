@@ -23,7 +23,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from bs4 import BeautifulSoup, Tag
 
-
 # Pre-compiled regex patterns for performance
 _SALARY_PATTERNS = [
     re.compile(r"\$[\d,]+(?:\s*[-–to]+\s*\$[\d,]+)?", re.IGNORECASE),
@@ -34,11 +33,19 @@ _SALARY_PATTERNS = [
 ]
 _SALARY_K_PATTERN = re.compile(r"\d+k", re.IGNORECASE)
 
-_REQ_SECTION_PATTERN = re.compile(r"(?:^|\n)\s*(requirements?|qualifications?|what we(?:'re)? looking for|what you(?:'ll)? bring)\s*:?\s*\n", re.IGNORECASE)
-_RESP_SECTION_PATTERN = re.compile(r"(?:^|\n)\s*(responsibilities?|duties?|what you(?:'ll)? do|your impact|key responsibilities)\s*:?\s*\n", re.IGNORECASE)
+_REQ_SECTION_PATTERN = re.compile(
+    r"(?:^|\n)\s*(requirements?|qualifications?|what we(?:'re)? looking for|what you(?:'ll)? bring)\s*:?\s*\n",
+    re.IGNORECASE,
+)
+_RESP_SECTION_PATTERN = re.compile(
+    r"(?:^|\n)\s*(responsibilities?|duties?|what you(?:'ll)? do|your impact|key responsibilities)\s*:?\s*\n",
+    re.IGNORECASE,
+)
 
 _NEXT_SECTION_PATTERNS = [
-    re.compile(r"(?:^|\n)\s*(benefits|compensation|perks|about|company|team)\s*:?\s*\n", re.IGNORECASE),
+    re.compile(
+        r"(?:^|\n)\s*(benefits|compensation|perks|about|company|team)\s*:?\s*\n", re.IGNORECASE
+    ),
     re.compile(r"(?:^|\n)\s*(requirements?|qualifications?)\s*:?\s*\n", re.IGNORECASE),
 ]
 
@@ -49,12 +56,16 @@ _BULLET_PATTERNS = [
 _COMMA_LIST_PATTERN = re.compile(r",\s*(?=[A-Z])")
 
 _JOB_TYPE_PATTERNS = [
-    re.compile(r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b", re.IGNORECASE),
+    re.compile(
+        r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b", re.IGNORECASE
+    ),
     re.compile(r"\b(permanent|fixed[- ]?term)\b", re.IGNORECASE),
 ]
 
 _EXPERIENCE_PATTERNS = [
-    re.compile(r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b", re.IGNORECASE),
+    re.compile(
+        r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b", re.IGNORECASE
+    ),
     re.compile(r"\b(associate|vice[- ]?president|director|executive)\b", re.IGNORECASE),
 ]
 

@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2024-05-23 - Pre-compiled Regex search vs Sliced string search
+**Learning:** When refactoring `re.search(pattern, text[start:])` to `pattern.search(text, pos=start)`, the `.start()` method on the resulting match object returns an absolute index (relative to the original string), whereas `re.search` on a slice returns a relative index (relative to the slice).
+**Action:** When migrating to pre-compiled patterns with `pos`, always update coordinate logic. Specifically, change `start + match.start()` to simply `match.start()`.

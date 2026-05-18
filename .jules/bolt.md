@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2026-05-18 - Pre-compile Regex in Job Parser
+**Learning:** Re-compiling regular expressions repeatedly inside loops or multiple function calls (like in `job_parser.py`) causes unnecessary overhead during text extraction.
+**Action:** Move regex patterns to module-level constants (e.g., `_SALARY_PATTERNS`) using `re.compile` to ensure they are compiled exactly once at module load, improving parsing speed.

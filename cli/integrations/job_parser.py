@@ -45,7 +45,9 @@ _RESP_SECTION_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _NEXT_SECTION_PATTERNS = [
-    re.compile(r"(?:^|\n)\s*(benefits|compensation|perks|about|company|team)\s*:?\s*\n", re.IGNORECASE),
+    re.compile(
+        r"(?:^|\n)\s*(benefits|compensation|perks|about|company|team)\s*:?\s*\n", re.IGNORECASE
+    ),
     re.compile(r"(?:^|\n)\s*(requirements?|qualifications?)\s*:?\s*\n", re.IGNORECASE),
 ]
 
@@ -56,12 +58,16 @@ _BULLET_PATTERNS = [
 _COMMA_SPLIT_PATTERN = re.compile(r",\s*(?=[A-Z])")
 
 _JOB_TYPE_PATTERNS = [
-    re.compile(r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b", re.IGNORECASE),
+    re.compile(
+        r"\b(full[- ]?time|part[- ]?time|contract|freelance|intern|temporary)\b", re.IGNORECASE
+    ),
     re.compile(r"\b(permanent|fixed[- ]?term)\b", re.IGNORECASE),
 ]
 
 _EXPERIENCE_LEVEL_PATTERNS = [
-    re.compile(r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b", re.IGNORECASE),
+    re.compile(
+        r"\b(entry[- ]?level|junior|mid[- ]?level|senior|staff|principal|lead)\b", re.IGNORECASE
+    ),
     re.compile(r"\b(associate|vice[- ]?president|director|executive)\b", re.IGNORECASE),
 ]
 

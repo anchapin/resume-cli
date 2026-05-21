@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2024-05-22 - Regex Grouping for Keyword Matching
+**Learning:** Checking a string against a large list of keywords individually (e.g., `any(re.search(pattern, text) for pattern in keywords)`) is highly inefficient and incurs massive Python iteration and C-level overhead. Pre-compiling the entire list of keywords into a single regex using alternations (e.g., `re.compile(r"\b(?:kw1|kw2|...)\b")`) reduces overhead significantly.
+**Action:** Always combine static lists of keywords into single pre-compiled regex objects when performing membership or presence checks inside large loops.

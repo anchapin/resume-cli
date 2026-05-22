@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Module-level Regex and List Caching
+**Learning:** Re-compiling regexes and allocating lists inside functions on each call (e.g. `_TITLE_PATTERNS`, `_COMPANY_PATTERNS`, `_COMMON_KEYWORDS`) incurs unnecessary overhead, especially for tools analyzing text density.
+**Action:** Extract list allocations to constant tuples and set membership to set collections, and hoist regex compilations to the module level for O(1) performance and to avoid redundancy across executions.

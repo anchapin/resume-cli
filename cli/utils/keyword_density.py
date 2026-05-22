@@ -13,6 +13,106 @@ from rich.table import Table
 from ..utils.config import Config
 from ..utils.yaml_parser import ResumeYAML
 
+# Pre-compiled constants for performance optimization
+_TITLE_PATTERNS = [
+    re.compile(r"(?:job title|position|title):\s*([^\n]+)", re.IGNORECASE | re.MULTILINE),
+    re.compile(r"^([^\n]+)\s*[-|]\s*[^|]+$", re.IGNORECASE | re.MULTILINE),
+    re.compile(
+        r"#\s*([^\n]+)", re.IGNORECASE | re.MULTILINE
+    ),  # Markdown headers often have job title
+]
+
+_COMPANY_PATTERNS = [
+    re.compile(r"(?:company|organization):\s*([^\n]+)", re.IGNORECASE),
+    re.compile(r"(?:at|from)\s+([A-Z][^\n]+?)(?:\s+[-\u2014]|\s+$)", re.IGNORECASE),
+]
+
+_COMMON_KEYWORDS = (
+    ("python", "high"),
+    ("javascript", "high"),
+    ("typescript", "high"),
+    ("react", "high"),
+    ("vue", "medium"),
+    ("angular", "medium"),
+    ("node.js", "high"),
+    ("django", "medium"),
+    ("flask", "medium"),
+    ("fastapi", "medium"),
+    ("kubernetes", "high"),
+    ("docker", "high"),
+    ("aws", "high"),
+    ("gcp", "medium"),
+    ("azure", "medium"),
+    ("sql", "high"),
+    ("mongodb", "medium"),
+    ("postgresql", "medium"),
+    ("redis", "medium"),
+    ("ci/cd", "high"),
+    ("devops", "high"),
+    ("machine learning", "high"),
+    ("ai", "high"),
+    ("llm", "high"),
+    ("pytorch", "medium"),
+    ("tensorflow", "medium"),
+    ("react native", "medium"),
+    ("graphql", "medium"),
+    ("rest api", "high"),
+    ("microservices", "high"),
+    ("java", "high"),
+    ("go", "medium"),
+    ("rust", "medium"),
+    ("c++", "medium"),
+    ("c#", "medium"),
+    (".net", "medium"),
+    ("spring", "medium"),
+    ("hibernate", "medium"),
+    ("agile", "high"),
+    ("scrum", "medium"),
+    ("kanban", "medium"),
+    ("leadership", "high"),
+    ("communication", "high"),
+    ("teamwork", "medium"),
+)
+
+_TECH_KEYWORDS = {
+    "python",
+    "javascript",
+    "typescript",
+    "react",
+    "vue",
+    "angular",
+    "node.js",
+    "django",
+    "flask",
+    "fastapi",
+    "kubernetes",
+    "docker",
+    "aws",
+    "gcp",
+    "azure",
+    "sql",
+    "mongodb",
+    "postgresql",
+    "redis",
+    "ci/cd",
+    "devops",
+    "machine learning",
+    "ai",
+    "llm",
+    "pytorch",
+    "tensorflow",
+    "graphql",
+    "rest api",
+    "microservices",
+    "java",
+    "go",
+    "rust",
+    "c++",
+    "c#",
+    ".net",
+    "spring",
+}
+
 # Load environment variables from .env file if present
 try:
     from dotenv import load_dotenv
@@ -208,26 +308,15 @@ class KeywordDensityGenerator:
         company = ""
 
         # Try to extract job title (common patterns)
-        title_patterns = [
-            r"(?:job title|position|title):\s*([^\n]+)",
-            r"^([^\n]+)\s*[-|]\s*[^|]+$",
-            r"#\s*([^\n]+)",  # Markdown headers often have job title
-        ]
-
-        for pattern in title_patterns:
-            match = re.search(pattern, job_description, re.IGNORECASE | re.MULTILINE)
+        for pattern in _TITLE_PATTERNS:
+            match = pattern.search(job_description)
             if match:
                 job_title = match.group(1).strip()
                 break
 
         # Try to extract company name
-        company_patterns = [
-            r"(?:company|organization):\s*([^\n]+)",
-            r"(?:at|from)\s+([A-Z][^\n]+?)(?:\s+[-\u2014]|\s+$)",
-        ]
-
-        for pattern in company_patterns:
-            match = re.search(pattern, job_description, re.IGNORECASE)
+        for pattern in _COMPANY_PATTERNS:
+            match = pattern.search(job_description)
             if match:
                 company = match.group(1).strip()
                 break
@@ -289,57 +378,10 @@ Please extract the keywords:"""
 
     def _simple_keyword_extraction(self, job_description: str) -> List[Tuple[str, str]]:
         """Simple fallback keyword extraction without AI."""
-        common_keywords = [
-            ("python", "high"),
-            ("javascript", "high"),
-            ("typescript", "high"),
-            ("react", "high"),
-            ("vue", "medium"),
-            ("angular", "medium"),
-            ("node.js", "high"),
-            ("django", "medium"),
-            ("flask", "medium"),
-            ("fastapi", "medium"),
-            ("kubernetes", "high"),
-            ("docker", "high"),
-            ("aws", "high"),
-            ("gcp", "medium"),
-            ("azure", "medium"),
-            ("sql", "high"),
-            ("mongodb", "medium"),
-            ("postgresql", "medium"),
-            ("redis", "medium"),
-            ("ci/cd", "high"),
-            ("devops", "high"),
-            ("machine learning", "high"),
-            ("ai", "high"),
-            ("llm", "high"),
-            ("pytorch", "medium"),
-            ("tensorflow", "medium"),
-            ("react native", "medium"),
-            ("graphql", "medium"),
-            ("rest api", "high"),
-            ("microservices", "high"),
-            ("java", "high"),
-            ("go", "medium"),
-            ("rust", "medium"),
-            ("c++", "medium"),
-            ("c#", "medium"),
-            (".net", "medium"),
-            ("spring", "medium"),
-            ("hibernate", "medium"),
-            ("agile", "high"),
-            ("scrum", "medium"),
-            ("kanban", "medium"),
-            ("leadership", "high"),
-            ("communication", "high"),
-            ("teamwork", "medium"),
-        ]
-
         jd_lower = job_description.lower()
         found = []
 
-        for kw, importance in common_keywords:
+        for kw, importance in _COMMON_KEYWORDS:
             if kw in jd_lower:
                 found.append((kw, importance))
 
@@ -398,46 +440,7 @@ Please extract the keywords:"""
         suggestions = []
 
         # Check if keyword is tech-related
-        tech_keywords = [
-            "python",
-            "javascript",
-            "typescript",
-            "react",
-            "vue",
-            "angular",
-            "node.js",
-            "django",
-            "flask",
-            "fastapi",
-            "kubernetes",
-            "docker",
-            "aws",
-            "gcp",
-            "azure",
-            "sql",
-            "mongodb",
-            "postgresql",
-            "redis",
-            "ci/cd",
-            "devops",
-            "machine learning",
-            "ai",
-            "llm",
-            "pytorch",
-            "tensorflow",
-            "graphql",
-            "rest api",
-            "microservices",
-            "java",
-            "go",
-            "rust",
-            "c++",
-            "c#",
-            ".net",
-            "spring",
-        ]
-
-        if keyword.lower() in tech_keywords:
+        if keyword.lower() in _TECH_KEYWORDS:
             suggestions.append("Skills section")
 
         # Check experience bullets

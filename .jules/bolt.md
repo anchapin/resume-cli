@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2024-05-23 - Hoist regex patterns to module scope for ATS Generator
+**Learning:** Found that `_check_readability`, `_check_format_parsing`, and keyword extraction dynamically compiled and allocated multiple regular expressions and arrays on every execution. The `_get_all_text` method was converting everything to lowercase too early which created conflict for acronym checks using regex.
+**Action:** Pre-compile all regular expressions statically at module level (e.g. `_ACRONYM_PATTERN`, `_TABLE_PATTERN`), hoist arrays like `_ACTION_VERBS` to module level. Removing early string manipulation and using regex flags like `re.IGNORECASE` when case is not needed, or caching `.lower()` strings locally before loop comprehension prevents redundant work per list item.

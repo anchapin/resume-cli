@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2024-05-29 - Regex Alternate Pattern Pre-compilation
+**Learning:** Re-compiling simple keyword search loops into single alternate regex patterns (`re.compile(r"kw1|kw2")`) and moving them to the module level turns O(skills * categories * keywords) evaluations into O(skills * categories) pre-compiled searches, dramatically improving categorization routines in places like `LinkedInSync._categorize_skills` by > 30x.
+**Action:** When categorizing elements against static word lists inside a loop, pre-compile the lists as a single alternated regex pattern at the module level.

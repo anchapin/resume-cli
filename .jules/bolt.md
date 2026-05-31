@@ -13,3 +13,6 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+## 2025-02-18 - Regex Pre-compilation and Hoisting in ATS Generator
+**Learning:** Re-compiling regexes and creating large lists/sets (like `_ACTION_VERBS` or `r"\d+%|\$\d+|\d+\s*(users|customers|projects)"`) inside frequently called loops or functions causes unnecessary object creation and compilation overhead. Furthermore, `.lower()` on large strings for entire document parsing just for case-insensitive checks is inefficient and can cause matching bugs (e.g. acronym matching).
+**Action:** Always pre-compile regexes and hoist static lists to module-level constants. Use `re.IGNORECASE` when case-insensitive matching is needed instead of eagerly lowercasing the entire large input string if the original case is still required for other patterns.

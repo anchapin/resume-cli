@@ -575,9 +575,7 @@ class JobParser:
                 return elem
         return None
 
-    def _extract_text_by_pattern(
-        self, text: str, pattern: Union[str, re.Pattern]
-    ) -> Optional[str]:
+    def _extract_text_by_pattern(self, text: str, pattern: Union[str, re.Pattern]) -> Optional[str]:
         """
         Extract text using regex pattern.
 
@@ -764,9 +762,7 @@ class JobParser:
 
         return [item for item in items if len(item) > 3][:15]
 
-    def _extract_list_by_keyword(
-        self, html: str, keyword: Union[str, re.Pattern]
-    ) -> List[str]:
+    def _extract_list_by_keyword(self, html: str, keyword: Union[str, re.Pattern]) -> List[str]:
         """
         Extract list items near a keyword.
 
@@ -779,9 +775,7 @@ class JobParser:
         """
         soup = BeautifulSoup(html, "lxml")
 
-        search_kw = (
-            re.compile(keyword, re.IGNORECASE) if isinstance(keyword, str) else keyword
-        )
+        search_kw = re.compile(keyword, re.IGNORECASE) if isinstance(keyword, str) else keyword
 
         # Find element containing the keyword
         for elem in soup.find_all(string=search_kw):  # type: ignore[call-overload]

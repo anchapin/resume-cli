@@ -8,6 +8,95 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
+_LANGUAGE_KEYWORDS = [
+    "python",
+    "javascript",
+    "java",
+    "go",
+    "rust",
+    "c\\+\\+",
+    "c#",
+    "ruby",
+    "php",
+    "swift",
+    "kotlin",
+    "scala",
+    "haskell",
+    "typescript",
+    "sql",
+]
+
+_FRAMEWORK_KEYWORDS = [
+    "django",
+    "flask",
+    "fastapi",
+    "spring",
+    "react",
+    "angular",
+    "vue",
+    "express",
+    "rails",
+    "laravel",
+    "next\\.js",
+    "nuxt",
+    "tensorflow",
+    "pytorch",
+    "keras",
+    "pandas",
+    "numpy",
+    "scikit",
+    "langchain",
+]
+
+_CLOUD_KEYWORDS = [
+    "aws",
+    "azure",
+    "gcp",
+    "google cloud",
+    "amazon web services",
+    "heroku",
+    "vercel",
+    "netlify",
+    "digitalocean",
+    "linode",
+]
+
+_DATABASE_KEYWORDS = [
+    "postgres",
+    "postgresql",
+    "mysql",
+    "mongodb",
+    "redis",
+    "sqlite",
+    "oracle",
+    "sql server",
+    "cassandra",
+    "elasticsearch",
+    "dynamodb",
+]
+
+_TOOL_KEYWORDS = [
+    "docker",
+    "kubernetes",
+    "git",
+    "github",
+    "gitlab",
+    "jenkins",
+    "circleci",
+    "terraform",
+    "ansible",
+    "nagios",
+    "grafana",
+    "prometheus",
+]
+
+_LANGUAGE_PATTERN = re.compile(rf"\b(?:{'|'.join(_LANGUAGE_KEYWORDS)})\b")
+_FRAMEWORK_PATTERN = re.compile(rf"\b(?:{'|'.join(_FRAMEWORK_KEYWORDS)})\b")
+_CLOUD_PATTERN = re.compile(rf"\b(?:{'|'.join(_CLOUD_KEYWORDS)})\b")
+_DATABASE_PATTERN = re.compile(rf"\b(?:{'|'.join(_DATABASE_KEYWORDS)})\b")
+_TOOL_PATTERN = re.compile(rf"\b(?:{'|'.join(_TOOL_KEYWORDS)})\b")
+
+
 class LinkedInSync:
     """Sync LinkedIn profile data to/from resume.yaml."""
 
@@ -442,103 +531,21 @@ class LinkedInSync:
             "other": [],
         }
 
-        language_keywords = [
-            "python",
-            "javascript",
-            "java",
-            "go",
-            "rust",
-            "c\\+\\+",
-            "c#",
-            "ruby",
-            "php",
-            "swift",
-            "kotlin",
-            "scala",
-            "haskell",
-            "typescript",
-            "sql",
-        ]
-
-        framework_keywords = [
-            "django",
-            "flask",
-            "fastapi",
-            "spring",
-            "react",
-            "angular",
-            "vue",
-            "express",
-            "rails",
-            "laravel",
-            "next\\.js",
-            "nuxt",
-            "tensorflow",
-            "pytorch",
-            "keras",
-            "pandas",
-            "numpy",
-            "scikit",
-            "langchain",
-        ]
-
-        cloud_keywords = [
-            "aws",
-            "azure",
-            "gcp",
-            "google cloud",
-            "amazon web services",
-            "heroku",
-            "vercel",
-            "netlify",
-            "digitalocean",
-            "linode",
-        ]
-
-        database_keywords = [
-            "postgres",
-            "postgresql",
-            "mysql",
-            "mongodb",
-            "redis",
-            "sqlite",
-            "oracle",
-            "sql server",
-            "cassandra",
-            "elasticsearch",
-            "dynamodb",
-        ]
-
-        tool_keywords = [
-            "docker",
-            "kubernetes",
-            "git",
-            "github",
-            "gitlab",
-            "jenkins",
-            "circleci",
-            "terraform",
-            "ansible",
-            "nagios",
-            "grafana",
-            "prometheus",
+        # Optimized: Pre-compiled regex patterns to avoid repeated compilation inside loops
+        patterns = [
+            (_LANGUAGE_PATTERN, "languages"),
+            (_FRAMEWORK_PATTERN, "frameworks"),
+            (_CLOUD_PATTERN, "cloud_platforms"),
+            (_DATABASE_PATTERN, "databases"),
+            (_TOOL_PATTERN, "tools"),
         ]
 
         for skill in skills:
             skill_lower = skill.lower()
-
-            # Check each category (use first match)
             matched = False
-            patterns = [
-                (language_keywords, "languages"),
-                (framework_keywords, "frameworks"),
-                (cloud_keywords, "cloud_platforms"),
-                (database_keywords, "databases"),
-                (tool_keywords, "tools"),
-            ]
 
-            for keywords, category in patterns:
-                if any(re.search(rf"\b{kw}\b", skill_lower) for kw in keywords):
+            for pattern, category in patterns:
+                if pattern.search(skill_lower):
                     categories[category].append(skill)
                     matched = True
                     break

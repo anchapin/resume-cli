@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Pre-compiled Regex Alternations in Loops
+**Learning:** Checking elements against a list of keywords using iterated string `.lower()` and multiple `re.search()` calls per loop is very slow (O(n * k * m)).
+**Action:** Always extract keyword list into module-level alternated regex patterns (e.g., `re.compile(r'\b(?:kw1|kw2)\b')`) and use `.search()` directly on the pre-compiled pattern for significant speedups.

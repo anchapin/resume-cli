@@ -7,7 +7,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-
 _LANGUAGE_KEYWORDS = [
     "python",
     "javascript",

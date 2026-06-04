@@ -7,6 +7,127 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+# Pre-compiled regex patterns for skill categorization
+_LANGUAGE_PATTERN = re.compile(
+    r"\b(?:"
+    + "|".join(
+        [
+            "python",
+            "javascript",
+            "java",
+            "go",
+            "rust",
+            "c\\+\\+",
+            "c#",
+            "ruby",
+            "php",
+            "swift",
+            "kotlin",
+            "scala",
+            "haskell",
+            "typescript",
+            "sql",
+        ]
+    )
+    + r")\b"
+)
+
+_FRAMEWORK_PATTERN = re.compile(
+    r"\b(?:"
+    + "|".join(
+        [
+            "django",
+            "flask",
+            "fastapi",
+            "spring",
+            "react",
+            "angular",
+            "vue",
+            "express",
+            "rails",
+            "laravel",
+            "next\\.js",
+            "nuxt",
+            "tensorflow",
+            "pytorch",
+            "keras",
+            "pandas",
+            "numpy",
+            "scikit",
+            "langchain",
+        ]
+    )
+    + r")\b"
+)
+
+_CLOUD_PATTERN = re.compile(
+    r"\b(?:"
+    + "|".join(
+        [
+            "aws",
+            "azure",
+            "gcp",
+            "google cloud",
+            "amazon web services",
+            "heroku",
+            "vercel",
+            "netlify",
+            "digitalocean",
+            "linode",
+        ]
+    )
+    + r")\b"
+)
+
+_DATABASE_PATTERN = re.compile(
+    r"\b(?:"
+    + "|".join(
+        [
+            "postgres",
+            "postgresql",
+            "mysql",
+            "mongodb",
+            "redis",
+            "sqlite",
+            "oracle",
+            "sql server",
+            "cassandra",
+            "elasticsearch",
+            "dynamodb",
+        ]
+    )
+    + r")\b"
+)
+
+_TOOL_PATTERN = re.compile(
+    r"\b(?:"
+    + "|".join(
+        [
+            "docker",
+            "kubernetes",
+            "git",
+            "github",
+            "gitlab",
+            "jenkins",
+            "circleci",
+            "terraform",
+            "ansible",
+            "nagios",
+            "grafana",
+            "prometheus",
+        ]
+    )
+    + r")\b"
+)
+
+_SKILL_PATTERNS = [
+    (_LANGUAGE_PATTERN, "languages"),
+    (_FRAMEWORK_PATTERN, "frameworks"),
+    (_CLOUD_PATTERN, "cloud_platforms"),
+    (_DATABASE_PATTERN, "databases"),
+    (_TOOL_PATTERN, "tools"),
+]
+
 
 class LinkedInSync:
     """Sync LinkedIn profile data to/from resume.yaml."""
@@ -442,103 +563,14 @@ class LinkedInSync:
             "other": [],
         }
 
-        language_keywords = [
-            "python",
-            "javascript",
-            "java",
-            "go",
-            "rust",
-            "c\\+\\+",
-            "c#",
-            "ruby",
-            "php",
-            "swift",
-            "kotlin",
-            "scala",
-            "haskell",
-            "typescript",
-            "sql",
-        ]
-
-        framework_keywords = [
-            "django",
-            "flask",
-            "fastapi",
-            "spring",
-            "react",
-            "angular",
-            "vue",
-            "express",
-            "rails",
-            "laravel",
-            "next\\.js",
-            "nuxt",
-            "tensorflow",
-            "pytorch",
-            "keras",
-            "pandas",
-            "numpy",
-            "scikit",
-            "langchain",
-        ]
-
-        cloud_keywords = [
-            "aws",
-            "azure",
-            "gcp",
-            "google cloud",
-            "amazon web services",
-            "heroku",
-            "vercel",
-            "netlify",
-            "digitalocean",
-            "linode",
-        ]
-
-        database_keywords = [
-            "postgres",
-            "postgresql",
-            "mysql",
-            "mongodb",
-            "redis",
-            "sqlite",
-            "oracle",
-            "sql server",
-            "cassandra",
-            "elasticsearch",
-            "dynamodb",
-        ]
-
-        tool_keywords = [
-            "docker",
-            "kubernetes",
-            "git",
-            "github",
-            "gitlab",
-            "jenkins",
-            "circleci",
-            "terraform",
-            "ansible",
-            "nagios",
-            "grafana",
-            "prometheus",
-        ]
-
         for skill in skills:
             skill_lower = skill.lower()
 
             # Check each category (use first match)
             matched = False
-            patterns = [
-                (language_keywords, "languages"),
-                (framework_keywords, "frameworks"),
-                (cloud_keywords, "cloud_platforms"),
-                (database_keywords, "databases"),
-                (tool_keywords, "tools"),
-            ]
 
-            for keywords, category in patterns:
-                if any(re.search(rf"\b{kw}\b", skill_lower) for kw in keywords):
+            for pattern, category in _SKILL_PATTERNS:
+                if pattern.search(skill_lower):
                     categories[category].append(skill)
                     matched = True
                     break

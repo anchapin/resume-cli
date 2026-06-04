@@ -7,7 +7,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-
 # Pre-compiled regex patterns for skill categorization
 _LANGUAGE_PATTERN = re.compile(
     r"\b(?:"

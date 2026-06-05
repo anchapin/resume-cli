@@ -2,9 +2,7 @@ import logging
 import os
 import tempfile
 from pathlib import Path
-from functools import partial
 
-import anyio
 import yaml
 from fastapi import FastAPI, HTTPException, Response, Security
 from fastapi.middleware.cors import CORSMiddleware
@@ -142,7 +140,7 @@ async def health_check():
         401: {"description": "Invalid or missing API key"},
     },
 )
-async def get_variants():
+def get_variants():
     config = Config()  # Uses default config path logic
     return config.get("variants")
 
@@ -160,7 +158,7 @@ async def get_variants():
         500: {"description": "PDF generation failed"},
     },
 )
-async def render_pdf(request: ResumeRequest):
+def render_pdf(request: ResumeRequest):
     # Create temp directory for output
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
@@ -173,15 +171,13 @@ async def render_pdf(request: ResumeRequest):
             # We output to a temp file
             output_pdf = temp_path / "output.pdf"
 
-            await anyio.to_thread.run_sync(
-                partial(generator.generate, variant=request.variant, output_format="pdf", output_path=output_pdf)
-            )
+            generator.generate(variant=request.variant, output_format="pdf", output_path=output_pdf)
 
-            if not await anyio.to_thread.run_sync(output_pdf.exists):
+            if not output_pdf.exists():
                 raise HTTPException(status_code=500, detail="PDF generation failed")
 
             # Read bytes
-            content = await anyio.to_thread.run_sync(output_pdf.read_bytes)
+            content = output_pdf.read_bytes()
 
             return Response(
                 content=content,
@@ -211,7 +207,7 @@ async def render_pdf(request: ResumeRequest):
         500: {"description": "Resume tailoring failed"},
     },
 )
-async def tailor_resume(request: TailorRequest):
+def tailor_resume(request: TailorRequest):
     try:
         # Initialize AI Generator
         config = Config()
@@ -219,12 +215,8 @@ async def tailor_resume(request: TailorRequest):
         # We pass None for yaml_path as we use direct data
         generator = AIGenerator(yaml_path=None, config=config)
 
-        tailored_data = await anyio.to_thread.run_sync(
-            partial(
-                generator.tailor_data,
-                resume_data=request.resume_data,
-                job_description=request.job_description
-            )
+        tailored_data = generator.tailor_data(
+            resume_data=request.resume_data, job_description=request.job_description
         )
 
         return tailored_data
@@ -249,16 +241,14 @@ async def tailor_resume(request: TailorRequest):
         500: {"description": "ATS check failed"},
     },
 )
-async def ats_check(request: ATSRequest):
+def ats_check(request: ATSRequest):
     """Check ATS compatibility score for a resume against a job description."""
     try:
         config = Config()
 
         # Generate ATS report directly from resume data
         generator = ATSGenerator(config=config, resume_data=request.resume_data)
-        report = await anyio.to_thread.run_sync(
-            partial(generator.generate_report, request.job_description, request.variant)
-        )
+        report = generator.generate_report(request.job_description, request.variant)
 
         # Convert to JSON-serializable format
         result = {
@@ -300,7 +290,7 @@ async def ats_check(request: ATSRequest):
         500: {"description": "Cover letter generation failed"},
     },
 )
-async def generate_cover_letter(request: CoverLetterRequest):
+def generate_cover_letter(request: CoverLetterRequest):
     """Generate a cover letter for a job application."""
     try:
         config = Config()
@@ -310,14 +300,11 @@ async def generate_cover_letter(request: CoverLetterRequest):
 
         # Generate cover letter (always use non-interactive for API)
         # The provided answers will be used as context by the AI
-        outputs, job_details = await anyio.to_thread.run_sync(
-            partial(
-                generator.generate_non_interactive,
-                job_description=request.job_description,
-                company_name=request.company_name,
-                variant=request.variant,
-                output_formats=[request.format],
-            )
+        outputs, job_details = generator.generate_non_interactive(
+            job_description=request.job_description,
+            company_name=request.company_name,
+            variant=request.variant,
+            output_formats=[request.format],
         )
 
         # Return the generated content
@@ -336,14 +323,11 @@ async def generate_cover_letter(request: CoverLetterRequest):
 
                 # Compile LaTeX to PDF
                 pdf_path = temp_path / "cover-letter.pdf"
-                if await anyio.to_thread.run_sync(partial(generator._compile_pdf, pdf_path, outputs["pdf"])):
+                if generator._compile_pdf(pdf_path, outputs["pdf"]):
                     import base64
 
-                    def _read_pdf():
-                        with open(pdf_path, "rb") as f:
-                            return f.read()
-
-                    pdf_bytes = await anyio.to_thread.run_sync(_read_pdf)
+                    with open(pdf_path, "rb") as f:
+                        pdf_bytes = f.read()
                     return {
                         "content": base64.b64encode(pdf_bytes).decode("utf-8"),
                         "format": "pdf",
@@ -388,7 +372,7 @@ _resume_storage: dict = {}
         401: {"description": "Invalid or missing API key"},
     },
 )
-async def list_resumes():
+def list_resumes():
     """List all stored resumes."""
     resumes = [
         ResumeMetadata(
@@ -416,7 +400,7 @@ async def list_resumes():
         500: {"description": "Resume creation failed"},
     },
 )
-async def create_resume(request: JSONResumeRequest):
+def create_resume(request: JSONResumeRequest):
     """Create a new resume from JSON Resume format."""
     import uuid
     from datetime import datetime
@@ -426,9 +410,7 @@ async def create_resume(request: JSONResumeRequest):
 
         # Convert JSON Resume to YAML format
         converter = JSONResumeConverter()
-        yaml_data = await anyio.to_thread.run_sync(
-            partial(converter.json_resume_to_yaml, request.json_resume, include_variants=True)
-        )
+        yaml_data = converter.json_resume_to_yaml(request.json_resume, include_variants=True)
 
         # Generate a unique ID
         resume_id = str(uuid.uuid4())
@@ -466,7 +448,7 @@ async def create_resume(request: JSONResumeRequest):
         404: {"description": "Resume not found"},
     },
 )
-async def get_resume(resume_id: str):
+def get_resume(resume_id: str):
     """Get a specific resume by ID."""
     if resume_id not in _resume_storage:
         raise HTTPException(status_code=404, detail="Resume not found")
@@ -493,7 +475,7 @@ async def get_resume(resume_id: str):
         500: {"description": "Resume update failed"},
     },
 )
-async def update_resume(resume_id: str, request: JSONResumeRequest):
+def update_resume(resume_id: str, request: JSONResumeRequest):
     """Update an existing resume."""
     from datetime import datetime
 
@@ -534,7 +516,7 @@ async def update_resume(resume_id: str, request: JSONResumeRequest):
         404: {"description": "Resume not found"},
     },
 )
-async def delete_resume(resume_id: str):
+def delete_resume(resume_id: str):
     """Delete a resume by ID."""
     if resume_id not in _resume_storage:
         raise HTTPException(status_code=404, detail="Resume not found")
@@ -556,7 +538,7 @@ async def delete_resume(resume_id: str):
         500: {"description": "PDF generation failed"},
     },
 )
-async def render_resume_pdf(resume_id: str, variant: str = "base"):
+def render_resume_pdf(resume_id: str, variant: str = "base"):
     """Render a stored resume as PDF."""
     if resume_id not in _resume_storage:
         raise HTTPException(status_code=404, detail="Resume not found")
@@ -569,28 +551,21 @@ async def render_resume_pdf(resume_id: str, variant: str = "base"):
         from cli.utils.json_resume_converter import JSONResumeConverter
 
         converter = JSONResumeConverter()
-        yaml_data = await anyio.to_thread.run_sync(
-            partial(converter.json_resume_to_yaml, _resume_storage[resume_id]["json_resume"])
-        )
+        yaml_data = converter.json_resume_to_yaml(_resume_storage[resume_id]["json_resume"])
 
-        def _write_yaml():
-            with open(resume_yaml_path, "w", encoding="utf-8") as f:
-                yaml.dump(yaml_data, f, default_flow_style=False)
-
-        await anyio.to_thread.run_sync(_write_yaml)
+        with open(resume_yaml_path, "w", encoding="utf-8") as f:
+            yaml.dump(yaml_data, f, default_flow_style=False)
 
         try:
             generator = TemplateGenerator(yaml_path=resume_yaml_path)
             output_pdf = temp_path / "output.pdf"
 
-            await anyio.to_thread.run_sync(
-                partial(generator.generate, variant=variant, output_format="pdf", output_path=output_pdf)
-            )
+            generator.generate(variant=variant, output_format="pdf", output_path=output_pdf)
 
-            if not await anyio.to_thread.run_sync(output_pdf.exists):
+            if not output_pdf.exists():
                 raise HTTPException(status_code=500, detail="PDF generation failed")
 
-            content = await anyio.to_thread.run_sync(output_pdf.read_bytes)
+            content = output_pdf.read_bytes()
 
             return Response(
                 content=content,

@@ -140,7 +140,7 @@ async def health_check():
         401: {"description": "Invalid or missing API key"},
     },
 )
-async def get_variants():
+def get_variants():
     config = Config()  # Uses default config path logic
     return config.get("variants")
 
@@ -158,7 +158,7 @@ async def get_variants():
         500: {"description": "PDF generation failed"},
     },
 )
-async def render_pdf(request: ResumeRequest):
+def render_pdf(request: ResumeRequest):
     # Create temp directory for output
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
@@ -207,7 +207,7 @@ async def render_pdf(request: ResumeRequest):
         500: {"description": "Resume tailoring failed"},
     },
 )
-async def tailor_resume(request: TailorRequest):
+def tailor_resume(request: TailorRequest):
     try:
         # Initialize AI Generator
         config = Config()
@@ -241,7 +241,7 @@ async def tailor_resume(request: TailorRequest):
         500: {"description": "ATS check failed"},
     },
 )
-async def ats_check(request: ATSRequest):
+def ats_check(request: ATSRequest):
     """Check ATS compatibility score for a resume against a job description."""
     try:
         config = Config()
@@ -290,7 +290,7 @@ async def ats_check(request: ATSRequest):
         500: {"description": "Cover letter generation failed"},
     },
 )
-async def generate_cover_letter(request: CoverLetterRequest):
+def generate_cover_letter(request: CoverLetterRequest):
     """Generate a cover letter for a job application."""
     try:
         config = Config()
@@ -372,7 +372,7 @@ _resume_storage: dict = {}
         401: {"description": "Invalid or missing API key"},
     },
 )
-async def list_resumes():
+def list_resumes():
     """List all stored resumes."""
     resumes = [
         ResumeMetadata(
@@ -400,7 +400,7 @@ async def list_resumes():
         500: {"description": "Resume creation failed"},
     },
 )
-async def create_resume(request: JSONResumeRequest):
+def create_resume(request: JSONResumeRequest):
     """Create a new resume from JSON Resume format."""
     import uuid
     from datetime import datetime
@@ -448,7 +448,7 @@ async def create_resume(request: JSONResumeRequest):
         404: {"description": "Resume not found"},
     },
 )
-async def get_resume(resume_id: str):
+def get_resume(resume_id: str):
     """Get a specific resume by ID."""
     if resume_id not in _resume_storage:
         raise HTTPException(status_code=404, detail="Resume not found")
@@ -475,7 +475,7 @@ async def get_resume(resume_id: str):
         500: {"description": "Resume update failed"},
     },
 )
-async def update_resume(resume_id: str, request: JSONResumeRequest):
+def update_resume(resume_id: str, request: JSONResumeRequest):
     """Update an existing resume."""
     from datetime import datetime
 
@@ -516,7 +516,7 @@ async def update_resume(resume_id: str, request: JSONResumeRequest):
         404: {"description": "Resume not found"},
     },
 )
-async def delete_resume(resume_id: str):
+def delete_resume(resume_id: str):
     """Delete a resume by ID."""
     if resume_id not in _resume_storage:
         raise HTTPException(status_code=404, detail="Resume not found")
@@ -538,7 +538,7 @@ async def delete_resume(resume_id: str):
         500: {"description": "PDF generation failed"},
     },
 )
-async def render_resume_pdf(resume_id: str, variant: str = "base"):
+def render_resume_pdf(resume_id: str, variant: str = "base"):
     """Render a stored resume as PDF."""
     if resume_id not in _resume_storage:
         raise HTTPException(status_code=404, detail="Resume not found")

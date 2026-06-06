@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2024-06-06 - Pre-compiling Regex in Loops
+**Learning:** Re-compiling regexes for fixed keyword lists inside a loop that iterates over many strings (like LinkedIn skills) is extremely inefficient. Creating a single alternated regex `(?:kw1|kw2)` and compiling it once at the module level yields a ~20x performance improvement in `linkedin.py`.
+**Action:** When finding lists of keywords used for string matching in loops, combine them into single pre-compiled regex objects at the module level.

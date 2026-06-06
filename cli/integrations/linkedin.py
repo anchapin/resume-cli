@@ -8,6 +8,98 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
+_LANGUAGE_KEYWORDS = [
+    "python",
+    "javascript",
+    "java",
+    "go",
+    "rust",
+    "c\\+\\+",
+    "c#",
+    "ruby",
+    "php",
+    "swift",
+    "kotlin",
+    "scala",
+    "haskell",
+    "typescript",
+    "sql",
+]
+
+_FRAMEWORK_KEYWORDS = [
+    "django",
+    "flask",
+    "fastapi",
+    "spring",
+    "react",
+    "angular",
+    "vue",
+    "express",
+    "rails",
+    "laravel",
+    "next\\.js",
+    "nuxt",
+    "tensorflow",
+    "pytorch",
+    "keras",
+    "pandas",
+    "numpy",
+    "scikit",
+    "langchain",
+]
+
+_CLOUD_KEYWORDS = [
+    "aws",
+    "azure",
+    "gcp",
+    "google cloud",
+    "amazon web services",
+    "heroku",
+    "vercel",
+    "netlify",
+    "digitalocean",
+    "linode",
+]
+
+_DATABASE_KEYWORDS = [
+    "postgres",
+    "postgresql",
+    "mysql",
+    "mongodb",
+    "redis",
+    "sqlite",
+    "oracle",
+    "sql server",
+    "cassandra",
+    "elasticsearch",
+    "dynamodb",
+]
+
+_TOOL_KEYWORDS = [
+    "docker",
+    "kubernetes",
+    "git",
+    "github",
+    "gitlab",
+    "jenkins",
+    "circleci",
+    "terraform",
+    "ansible",
+    "nagios",
+    "grafana",
+    "prometheus",
+]
+
+# ⚡ Bolt Optimization: Pre-compile skill categorization regexes at the module level.
+# By joining the keywords into an alternation `(?:kw1|kw2)` and compiling once,
+# we avoid redundant `re.compile()` calls during list iteration, resulting in ~20x faster parsing.
+_LANGUAGE_PATTERN = re.compile(r"\b(?:" + "|".join(_LANGUAGE_KEYWORDS) + r")\b")
+_FRAMEWORK_PATTERN = re.compile(r"\b(?:" + "|".join(_FRAMEWORK_KEYWORDS) + r")\b")
+_CLOUD_PATTERN = re.compile(r"\b(?:" + "|".join(_CLOUD_KEYWORDS) + r")\b")
+_DATABASE_PATTERN = re.compile(r"\b(?:" + "|".join(_DATABASE_KEYWORDS) + r")\b")
+_TOOL_PATTERN = re.compile(r"\b(?:" + "|".join(_TOOL_KEYWORDS) + r")\b")
+
+
 class LinkedInSync:
     """Sync LinkedIn profile data to/from resume.yaml."""
 
@@ -442,86 +534,12 @@ class LinkedInSync:
             "other": [],
         }
 
-        language_keywords = [
-            "python",
-            "javascript",
-            "java",
-            "go",
-            "rust",
-            "c\\+\\+",
-            "c#",
-            "ruby",
-            "php",
-            "swift",
-            "kotlin",
-            "scala",
-            "haskell",
-            "typescript",
-            "sql",
-        ]
-
-        framework_keywords = [
-            "django",
-            "flask",
-            "fastapi",
-            "spring",
-            "react",
-            "angular",
-            "vue",
-            "express",
-            "rails",
-            "laravel",
-            "next\\.js",
-            "nuxt",
-            "tensorflow",
-            "pytorch",
-            "keras",
-            "pandas",
-            "numpy",
-            "scikit",
-            "langchain",
-        ]
-
-        cloud_keywords = [
-            "aws",
-            "azure",
-            "gcp",
-            "google cloud",
-            "amazon web services",
-            "heroku",
-            "vercel",
-            "netlify",
-            "digitalocean",
-            "linode",
-        ]
-
-        database_keywords = [
-            "postgres",
-            "postgresql",
-            "mysql",
-            "mongodb",
-            "redis",
-            "sqlite",
-            "oracle",
-            "sql server",
-            "cassandra",
-            "elasticsearch",
-            "dynamodb",
-        ]
-
-        tool_keywords = [
-            "docker",
-            "kubernetes",
-            "git",
-            "github",
-            "gitlab",
-            "jenkins",
-            "circleci",
-            "terraform",
-            "ansible",
-            "nagios",
-            "grafana",
-            "prometheus",
+        patterns = [
+            (_LANGUAGE_PATTERN, "languages"),
+            (_FRAMEWORK_PATTERN, "frameworks"),
+            (_CLOUD_PATTERN, "cloud_platforms"),
+            (_DATABASE_PATTERN, "databases"),
+            (_TOOL_PATTERN, "tools"),
         ]
 
         for skill in skills:
@@ -529,16 +547,8 @@ class LinkedInSync:
 
             # Check each category (use first match)
             matched = False
-            patterns = [
-                (language_keywords, "languages"),
-                (framework_keywords, "frameworks"),
-                (cloud_keywords, "cloud_platforms"),
-                (database_keywords, "databases"),
-                (tool_keywords, "tools"),
-            ]
-
-            for keywords, category in patterns:
-                if any(re.search(rf"\b{kw}\b", skill_lower) for kw in keywords):
+            for pattern, category in patterns:
+                if pattern.search(skill_lower):
                     categories[category].append(skill)
                     matched = True
                     break

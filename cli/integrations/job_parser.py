@@ -35,10 +35,18 @@ _SALARY_CLEANUP_PATTERN = re.compile(r"\s+")
 _SALARY_K_PATTERN = re.compile(r"\d+k", re.IGNORECASE)
 
 # Pre-compiled regex patterns for section extraction
-_REQ_PATTERN = re.compile(r"(?:^|\n)\s*(requirements?|qualifications?|what we(?:'re)? looking for|what you(?:'ll)? bring)\s*:?\s*\n", re.IGNORECASE)
-_RESP_PATTERN = re.compile(r"(?:^|\n)\s*(responsibilities?|duties?|what you(?:'ll)? do|your impact|key responsibilities)\s*:?\s*\n", re.IGNORECASE)
+_REQ_PATTERN = re.compile(
+    r"(?:^|\n)\s*(requirements?|qualifications?|what we(?:'re)? looking for|what you(?:'ll)? bring)\s*:?\s*\n",
+    re.IGNORECASE,
+)
+_RESP_PATTERN = re.compile(
+    r"(?:^|\n)\s*(responsibilities?|duties?|what you(?:'ll)? do|your impact|key responsibilities)\s*:?\s*\n",
+    re.IGNORECASE,
+)
 _NEXT_SECTION_PATTERNS = [
-    re.compile(r"(?:^|\n)\s*(benefits|compensation|perks|about|company|team)\s*:?\s*\n", re.IGNORECASE),
+    re.compile(
+        r"(?:^|\n)\s*(benefits|compensation|perks|about|company|team)\s*:?\s*\n", re.IGNORECASE
+    ),
     re.compile(r"(?:^|\n)\s*(requirements?|qualifications?)\s*:?\s*\n", re.IGNORECASE),
 ]
 
@@ -49,9 +57,13 @@ _BULLET_PATTERNS = [
 ]
 _COMMA_SPLIT_PATTERN = re.compile(r",\s*(?=[A-Z])")
 
-_GENERIC_COMPANY_PATTERN_1 = re.compile(r'(?:company|employer|organization)["\s:]+([^"<>\n]+)', re.IGNORECASE)
+_GENERIC_COMPANY_PATTERN_1 = re.compile(
+    r'(?:company|employer|organization)["\s:]+([^"<>\n]+)', re.IGNORECASE
+)
 _GENERIC_COMPANY_PATTERN_2 = re.compile(r'company["\s:]+([^"<>\n]+)', re.IGNORECASE)
-_GENERIC_COMPANY_PATTERN_3 = re.compile(r'(?:company|employer|organization|hiring)[:\s]+([^"<>\n]+)', re.IGNORECASE)
+_GENERIC_COMPANY_PATTERN_3 = re.compile(
+    r'(?:company|employer|organization|hiring)[:\s]+([^"<>\n]+)', re.IGNORECASE
+)
 _GENERIC_LOCATION_PATTERN = re.compile(r"(?:location|based|office)[:\s]+([^<>\n]+)", re.IGNORECASE)
 
 # Optional import for URL fetching

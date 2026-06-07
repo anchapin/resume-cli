@@ -49,11 +49,6 @@ _BULLET_PATTERNS = [
 ]
 _COMMA_SPLIT_PATTERN = re.compile(r",\s*(?=[A-Z])")
 
-_GENERIC_COMPANY_PATTERN_1 = re.compile(r'(?:company|employer|organization)["\s:]+([^"<>\n]+)', re.IGNORECASE)
-_GENERIC_COMPANY_PATTERN_2 = re.compile(r'company["\s:]+([^"<>\n]+)', re.IGNORECASE)
-_GENERIC_COMPANY_PATTERN_3 = re.compile(r'(?:company|employer|organization|hiring)[:\s]+([^"<>\n]+)', re.IGNORECASE)
-_GENERIC_LOCATION_PATTERN = re.compile(r"(?:location|based|office)[:\s]+([^<>\n]+)", re.IGNORECASE)
-
 # Optional import for URL fetching
 try:
     import requests
@@ -328,7 +323,9 @@ class JobParser:
         company = self._extract_by_selectors(soup, self.LINKEDIN_SELECTORS["company"])
         if not company:
             # Fallback: look for common patterns
-            company = self._extract_text_by_pattern(html, _GENERIC_COMPANY_PATTERN_1)
+            company = self._extract_text_by_pattern(
+                html, r'(?:company|employer|organization)["\s:]+([^"<>\n]+)'
+            )
 
         # Extract position
         position = self._extract_by_selectors(soup, self.LINKEDIN_SELECTORS["position"])
@@ -390,7 +387,7 @@ class JobParser:
         company = self._extract_by_selectors(soup, self.INDEED_SELECTORS["company"])
         if not company:
             # Fallback patterns
-            company = self._extract_text_by_pattern(html, _GENERIC_COMPANY_PATTERN_2)
+            company = self._extract_text_by_pattern(html, r'company["\s:]+([^"<>\n]+)')
 
         # Extract position
         position = self._extract_by_selectors(soup, self.INDEED_SELECTORS["position"])
@@ -448,7 +445,9 @@ class JobParser:
         soup = BeautifulSoup(html, "lxml")
 
         # Try to extract company from various patterns
-        company = self._extract_text_by_pattern(html, _GENERIC_COMPANY_PATTERN_3)
+        company = self._extract_text_by_pattern(
+            html, r'(?:company|employer|organization|hiring)[:\s]+([^"<>\n]+)'
+        )
         if not company:
             # Look for company in meta tags
             meta_company = soup.find("meta", attrs={"name": "company"})
@@ -468,7 +467,7 @@ class JobParser:
                 position = re.sub(r"\s*[-|]\s*.*$", "", title)
 
         # Extract location
-        location = self._extract_text_by_pattern(html, _GENERIC_LOCATION_PATTERN)
+        location = self._extract_text_by_pattern(html, r"(?:location|based|office)[:\s]+([^<>\n]+)")
 
         # Extract salary
         salary = self._extract_salary_from_text(html)

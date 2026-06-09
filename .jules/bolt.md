@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - String and Regex Optimization in Hot Paths
+**Learning:** Re-evaluating `.lower()` on a large string inside a list comprehension checks, compiling complex regex patterns in repeatedly called methods, and repeatedly allocating lists of constants instead of reusing tuples significantly slow down text-parsing functions like `ATSGenerator`.
+**Action:** Always pre-compile regexes as module-level constants. Use static tuples for constant collections. Cache expensive string transformations (like `.lower()`) outside of comprehensions or loops to prevent unnecessary re-allocations.

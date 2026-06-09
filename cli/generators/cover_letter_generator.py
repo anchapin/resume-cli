@@ -781,10 +781,10 @@ Return ONLY valid JSON, nothing else."""
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.communicate()
-                return False
-
-            if process.returncode == 0 or output_path.exists():
-                pdf_created = True
+                pdf_created = False
+            else:
+                if process.returncode == 0 or output_path.exists():
+                    pdf_created = True
         except (subprocess.CalledProcessError, FileNotFoundError):
             # Check if PDF was created anyway
             if output_path.exists():
@@ -799,7 +799,7 @@ Return ONLY valid JSON, nothing else."""
                             "-o",
                             str(output_path),
                             "--pdf-engine=xelatex",
-                            "--pdf-engine-opt=-no-shell-escape"
+                            "--pdf-engine-opt=-no-shell-escape",
                         ],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
@@ -809,10 +809,10 @@ Return ONLY valid JSON, nothing else."""
                     except subprocess.TimeoutExpired:
                         process.kill()
                         process.communicate()
-                        return False
-
-                    if process.returncode == 0 or output_path.exists():
-                        pdf_created = True
+                        pdf_created = False
+                    else:
+                        if process.returncode == 0 or output_path.exists():
+                            pdf_created = True
                 except (subprocess.CalledProcessError, FileNotFoundError):
                     pass
 

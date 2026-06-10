@@ -37,6 +37,25 @@ except ImportError:
 
 console = Console()
 
+# ⚡ Bolt: Define action verbs as a module-level tuple to avoid re-allocation
+_ACTION_VERBS = (
+    "developed",
+    "implemented",
+    "built",
+    "created",
+    "designed",
+    "managed",
+    "led",
+    "increased",
+    "decreased",
+    "improved",
+    "achieved",
+)
+
+# ⚡ Bolt: Pre-compile regex patterns to avoid recompilation overhead during checks
+_QUANTIFIABLE_PATTERN = re.compile(r"\d+%|\$\d+|\d+\s*(users|customers|projects)")
+_ACRONYM_PATTERN = re.compile(r"\b[A-Z]{2,4}\b")
+
 
 @dataclass
 class ATSCategoryScore:
@@ -393,21 +412,11 @@ class ATSGenerator:
 
         all_text = self._get_all_text(resume_data)
 
+        # ⚡ Bolt: Cache lowercased text to prevent re-evaluation in loop
+        all_text_lower = all_text.lower()
+
         # Check for action verbs in experience bullets
-        action_verbs = [
-            "developed",
-            "implemented",
-            "built",
-            "created",
-            "designed",
-            "managed",
-            "led",
-            "increased",
-            "decreased",
-            "improved",
-            "achieved",
-        ]
-        action_verb_count = sum(1 for verb in action_verbs if verb in all_text.lower())
+        action_verb_count = sum(1 for verb in _ACTION_VERBS if verb in all_text_lower)
 
         if action_verb_count >= 3:
             details.append(f"✓ Uses action verbs ({action_verb_count} found)")
@@ -416,7 +425,7 @@ class ATSGenerator:
             suggestions.append("Use more action verbs (e.g., developed, implemented)")
 
         # Check for quantifiable achievements
-        has_numbers = bool(re.search(r"\d+%|\$\d+|\d+\s*(users|customers|projects)", all_text))
+        has_numbers = bool(_QUANTIFIABLE_PATTERN.search(all_text))
         if has_numbers:
             details.append("✓ Includes quantifiable achievements")
         else:
@@ -425,8 +434,7 @@ class ATSGenerator:
 
         # Check for acronyms (should be minimal or defined)
         # This is a simple heuristic
-        acronym_pattern = r"\b[A-Z]{2,4}\b"
-        acronyms = re.findall(acronym_pattern, all_text)
+        acronyms = _ACRONYM_PATTERN.findall(all_text)
         if len(acronyms) < 10:
             details.append(f"✓ Minimal acronyms ({len(acronyms)} found)")
         else:

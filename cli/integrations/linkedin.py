@@ -7,6 +7,35 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+# ⚡ Bolt: Pre-compiled regex patterns for skill categorization
+# We use alternated regex patterns (e.g., r'\b(?:kw1|kw2)\b') rather than
+# looping over lists of keywords and interpolating regex strings.
+# This avoids massive overhead when iterating over a large number of skills.
+_LINKEDIN_LANGUAGE_PATTERN = re.compile(
+    r"\b(?:python|javascript|java|go|rust|c\+\+|c#|ruby|php|swift|kotlin|scala|haskell|typescript|sql)\b"
+)
+_LINKEDIN_FRAMEWORK_PATTERN = re.compile(
+    r"\b(?:django|flask|fastapi|spring|react|angular|vue|express|rails|laravel|next\.js|nuxt|tensorflow|pytorch|keras|pandas|numpy|scikit|langchain)\b"
+)
+_LINKEDIN_CLOUD_PATTERN = re.compile(
+    r"\b(?:aws|azure|gcp|google cloud|amazon web services|heroku|vercel|netlify|digitalocean|linode)\b"
+)
+_LINKEDIN_DATABASE_PATTERN = re.compile(
+    r"\b(?:postgres|postgresql|mysql|mongodb|redis|sqlite|oracle|sql server|cassandra|elasticsearch|dynamodb)\b"
+)
+_LINKEDIN_TOOL_PATTERN = re.compile(
+    r"\b(?:docker|kubernetes|git|github|gitlab|jenkins|circleci|terraform|ansible|nagios|grafana|prometheus)\b"
+)
+
+# Static collection to avoid repeated allocation
+_LINKEDIN_SKILL_PATTERNS = (
+    (_LINKEDIN_LANGUAGE_PATTERN, "languages"),
+    (_LINKEDIN_FRAMEWORK_PATTERN, "frameworks"),
+    (_LINKEDIN_CLOUD_PATTERN, "cloud_platforms"),
+    (_LINKEDIN_DATABASE_PATTERN, "databases"),
+    (_LINKEDIN_TOOL_PATTERN, "tools"),
+)
+
 
 class LinkedInSync:
     """Sync LinkedIn profile data to/from resume.yaml."""
@@ -442,103 +471,16 @@ class LinkedInSync:
             "other": [],
         }
 
-        language_keywords = [
-            "python",
-            "javascript",
-            "java",
-            "go",
-            "rust",
-            "c\\+\\+",
-            "c#",
-            "ruby",
-            "php",
-            "swift",
-            "kotlin",
-            "scala",
-            "haskell",
-            "typescript",
-            "sql",
-        ]
-
-        framework_keywords = [
-            "django",
-            "flask",
-            "fastapi",
-            "spring",
-            "react",
-            "angular",
-            "vue",
-            "express",
-            "rails",
-            "laravel",
-            "next\\.js",
-            "nuxt",
-            "tensorflow",
-            "pytorch",
-            "keras",
-            "pandas",
-            "numpy",
-            "scikit",
-            "langchain",
-        ]
-
-        cloud_keywords = [
-            "aws",
-            "azure",
-            "gcp",
-            "google cloud",
-            "amazon web services",
-            "heroku",
-            "vercel",
-            "netlify",
-            "digitalocean",
-            "linode",
-        ]
-
-        database_keywords = [
-            "postgres",
-            "postgresql",
-            "mysql",
-            "mongodb",
-            "redis",
-            "sqlite",
-            "oracle",
-            "sql server",
-            "cassandra",
-            "elasticsearch",
-            "dynamodb",
-        ]
-
-        tool_keywords = [
-            "docker",
-            "kubernetes",
-            "git",
-            "github",
-            "gitlab",
-            "jenkins",
-            "circleci",
-            "terraform",
-            "ansible",
-            "nagios",
-            "grafana",
-            "prometheus",
-        ]
-
+        # ⚡ Bolt: Optimize matching using pre-compiled module-level alternated patterns
+        # Instead of allocating arrays and compiling N regexes per skill, we test against
+        # 5 pre-compiled master patterns.
         for skill in skills:
             skill_lower = skill.lower()
 
             # Check each category (use first match)
             matched = False
-            patterns = [
-                (language_keywords, "languages"),
-                (framework_keywords, "frameworks"),
-                (cloud_keywords, "cloud_platforms"),
-                (database_keywords, "databases"),
-                (tool_keywords, "tools"),
-            ]
-
-            for keywords, category in patterns:
-                if any(re.search(rf"\b{kw}\b", skill_lower) for kw in keywords):
+            for pattern, category in _LINKEDIN_SKILL_PATTERNS:
+                if pattern.search(skill_lower):
                     categories[category].append(skill)
                     matched = True
                     break

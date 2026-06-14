@@ -3,6 +3,7 @@ import os
 import tempfile
 from pathlib import Path
 
+import anyio
 import yaml
 from fastapi import FastAPI, HTTPException, Response, Security
 from fastapi.middleware.cors import CORSMiddleware
@@ -171,13 +172,20 @@ async def render_pdf(request: ResumeRequest):
             # We output to a temp file
             output_pdf = temp_path / "output.pdf"
 
-            generator.generate(variant=request.variant, output_format="pdf", output_path=output_pdf)
+            # ⚡ Bolt Optimization: Offload blocking PDF generation and file I/O to a worker thread
+            # to prevent event loop starvation and improve concurrent request handling.
+            def _generate_pdf():
+                generator.generate(
+                    variant=request.variant, output_format="pdf", output_path=output_pdf
+                )
+                if not output_pdf.exists():
+                    return None
+                return output_pdf.read_bytes()
 
-            if not output_pdf.exists():
+            content = await anyio.to_thread.run_sync(_generate_pdf)
+
+            if content is None:
                 raise HTTPException(status_code=500, detail="PDF generation failed")
-
-            # Read bytes
-            content = output_pdf.read_bytes()
 
             return Response(
                 content=content,
@@ -298,14 +306,17 @@ async def generate_cover_letter(request: CoverLetterRequest):
         # Initialize cover letter generator directly with resume data
         generator = CoverLetterGenerator(config=config, resume_data=request.resume_data)
 
-        # Generate cover letter (always use non-interactive for API)
-        # The provided answers will be used as context by the AI
-        outputs, job_details = generator.generate_non_interactive(
-            job_description=request.job_description,
-            company_name=request.company_name,
-            variant=request.variant,
-            output_formats=[request.format],
-        )
+        # ⚡ Bolt Optimization: Offload blocking AI generation to a worker thread
+        # to prevent event loop starvation.
+        def _generate():
+            return generator.generate_non_interactive(
+                job_description=request.job_description,
+                company_name=request.company_name,
+                variant=request.variant,
+                output_formats=[request.format],
+            )
+
+        outputs, job_details = await anyio.to_thread.run_sync(_generate)
 
         # Return the generated content
         # Note: outputs["md"] contains the rendered markdown, outputs["pdf"] contains LaTeX
@@ -323,13 +334,21 @@ async def generate_cover_letter(request: CoverLetterRequest):
 
                 # Compile LaTeX to PDF
                 pdf_path = temp_path / "cover-letter.pdf"
-                if generator._compile_pdf(pdf_path, outputs["pdf"]):
-                    import base64
 
-                    with open(pdf_path, "rb") as f:
-                        pdf_bytes = f.read()
+                # ⚡ Bolt Optimization: Offload blocking PDF compilation and file I/O to a worker thread
+                def _compile_and_read():
+                    if generator._compile_pdf(pdf_path, outputs["pdf"]):
+                        import base64
+
+                        with open(pdf_path, "rb") as f:
+                            return base64.b64encode(f.read()).decode("utf-8")
+                    return None
+
+                pdf_content = await anyio.to_thread.run_sync(_compile_and_read)
+
+                if pdf_content is not None:
                     return {
-                        "content": base64.b64encode(pdf_bytes).decode("utf-8"),
+                        "content": pdf_content,
                         "format": "pdf",
                         "company": job_details.get("company", request.company_name or "Company"),
                         "position": job_details.get("position", ""),
@@ -547,25 +566,33 @@ async def render_resume_pdf(resume_id: str, variant: str = "base"):
         temp_path = Path(temp_dir)
         resume_yaml_path = temp_path / "resume.yaml"
 
-        # Convert JSON Resume to YAML and save
-        from cli.utils.json_resume_converter import JSONResumeConverter
+        # ⚡ Bolt Optimization: Offload blocking JSON conversion, YAML dumping,
+        # PDF generation, and file I/O to a worker thread.
+        def _process_and_generate():
+            # Convert JSON Resume to YAML and save
+            from cli.utils.json_resume_converter import JSONResumeConverter
 
-        converter = JSONResumeConverter()
-        yaml_data = converter.json_resume_to_yaml(_resume_storage[resume_id]["json_resume"])
+            converter = JSONResumeConverter()
+            yaml_data = converter.json_resume_to_yaml(_resume_storage[resume_id]["json_resume"])
 
-        with open(resume_yaml_path, "w", encoding="utf-8") as f:
-            yaml.dump(yaml_data, f, default_flow_style=False)
+            with open(resume_yaml_path, "w", encoding="utf-8") as f:
+                yaml.dump(yaml_data, f, default_flow_style=False)
 
-        try:
             generator = TemplateGenerator(yaml_path=resume_yaml_path)
             output_pdf = temp_path / "output.pdf"
 
             generator.generate(variant=variant, output_format="pdf", output_path=output_pdf)
 
             if not output_pdf.exists():
-                raise HTTPException(status_code=500, detail="PDF generation failed")
+                return None
 
-            content = output_pdf.read_bytes()
+            return output_pdf.read_bytes()
+
+        try:
+            content = await anyio.to_thread.run_sync(_process_and_generate)
+
+            if content is None:
+                raise HTTPException(status_code=500, detail="PDF generation failed")
 
             return Response(
                 content=content,

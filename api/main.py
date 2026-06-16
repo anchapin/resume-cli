@@ -172,12 +172,7 @@ async def render_pdf(request: ResumeRequest):
             # We output to a temp file
             output_pdf = temp_path / "output.pdf"
 
-            await anyio.to_thread.run_sync(
-                generator.generate,
-                request.variant,
-                "pdf",
-                output_pdf
-            )
+            await anyio.to_thread.run_sync(generator.generate, request.variant, "pdf", output_pdf)
 
             if not output_pdf.exists():
                 raise HTTPException(status_code=500, detail="PDF generation failed")
@@ -311,7 +306,7 @@ async def generate_cover_letter(request: CoverLetterRequest):
             request.job_description,
             request.company_name,
             request.variant,
-            [request.format]
+            [request.format],
         )
 
         # Return the generated content
@@ -331,9 +326,7 @@ async def generate_cover_letter(request: CoverLetterRequest):
                 # Compile LaTeX to PDF
                 pdf_path = temp_path / "cover-letter.pdf"
                 compile_success = await anyio.to_thread.run_sync(
-                    generator._compile_pdf,
-                    pdf_path,
-                    outputs["pdf"]
+                    generator._compile_pdf, pdf_path, outputs["pdf"]
                 )
                 if compile_success:
                     import base64
@@ -571,12 +564,7 @@ async def render_resume_pdf(resume_id: str, variant: str = "base"):
             generator = TemplateGenerator(yaml_path=resume_yaml_path)
             output_pdf = temp_path / "output.pdf"
 
-            await anyio.to_thread.run_sync(
-                generator.generate,
-                variant,
-                "pdf",
-                output_pdf
-            )
+            await anyio.to_thread.run_sync(generator.generate, variant, "pdf", output_pdf)
 
             if not output_pdf.exists():
                 raise HTTPException(status_code=500, detail="PDF generation failed")

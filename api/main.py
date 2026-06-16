@@ -3,6 +3,7 @@ import os
 import tempfile
 from pathlib import Path
 
+import anyio
 import yaml
 from fastapi import FastAPI, HTTPException, Response, Security
 from fastapi.middleware.cors import CORSMiddleware
@@ -171,13 +172,13 @@ async def render_pdf(request: ResumeRequest):
             # We output to a temp file
             output_pdf = temp_path / "output.pdf"
 
-            generator.generate(variant=request.variant, output_format="pdf", output_path=output_pdf)
+            await anyio.to_thread.run_sync(generator.generate, request.variant, "pdf", output_pdf)
 
             if not output_pdf.exists():
                 raise HTTPException(status_code=500, detail="PDF generation failed")
 
             # Read bytes
-            content = output_pdf.read_bytes()
+            content = await anyio.to_thread.run_sync(output_pdf.read_bytes)
 
             return Response(
                 content=content,
@@ -300,11 +301,12 @@ async def generate_cover_letter(request: CoverLetterRequest):
 
         # Generate cover letter (always use non-interactive for API)
         # The provided answers will be used as context by the AI
-        outputs, job_details = generator.generate_non_interactive(
-            job_description=request.job_description,
-            company_name=request.company_name,
-            variant=request.variant,
-            output_formats=[request.format],
+        outputs, job_details = await anyio.to_thread.run_sync(
+            generator.generate_non_interactive,
+            request.job_description,
+            request.company_name,
+            request.variant,
+            [request.format],
         )
 
         # Return the generated content
@@ -323,11 +325,13 @@ async def generate_cover_letter(request: CoverLetterRequest):
 
                 # Compile LaTeX to PDF
                 pdf_path = temp_path / "cover-letter.pdf"
-                if generator._compile_pdf(pdf_path, outputs["pdf"]):
+                compile_success = await anyio.to_thread.run_sync(
+                    generator._compile_pdf, pdf_path, outputs["pdf"]
+                )
+                if compile_success:
                     import base64
 
-                    with open(pdf_path, "rb") as f:
-                        pdf_bytes = f.read()
+                    pdf_bytes = await anyio.to_thread.run_sync(pdf_path.read_bytes)
                     return {
                         "content": base64.b64encode(pdf_bytes).decode("utf-8"),
                         "format": "pdf",
@@ -560,12 +564,12 @@ async def render_resume_pdf(resume_id: str, variant: str = "base"):
             generator = TemplateGenerator(yaml_path=resume_yaml_path)
             output_pdf = temp_path / "output.pdf"
 
-            generator.generate(variant=variant, output_format="pdf", output_path=output_pdf)
+            await anyio.to_thread.run_sync(generator.generate, variant, "pdf", output_pdf)
 
             if not output_pdf.exists():
                 raise HTTPException(status_code=500, detail="PDF generation failed")
 
-            content = output_pdf.read_bytes()
+            content = await anyio.to_thread.run_sync(output_pdf.read_bytes)
 
             return Response(
                 content=content,

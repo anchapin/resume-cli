@@ -513,7 +513,7 @@ def latex_escape(text: Any) -> Markup:
 
         i += 1
 
-    return Markup("".join(result))
+    return Markup("".join(result))  # nosec B704
 
 
 def proper_title(text: str) -> str:

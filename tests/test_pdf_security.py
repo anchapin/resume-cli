@@ -3,7 +3,18 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from cli.generators.cover_letter_generator import CoverLetterGenerator
 from cli.generators.template import TemplateGenerator
+from cli.pdf.converter import PDFConverter
+
+
+class MockConfig:
+    def get(self, *args, **kwargs):
+        return {}
+
+    @property
+    def ai_provider(self):
+        return "anthropic"
 
 
 class TestPDFSecurity(unittest.TestCase):
@@ -54,6 +65,72 @@ class TestPDFSecurity(unittest.TestCase):
         self.assertIn("-no-shell-escape", command)
         self.assertIn("-interaction=nonstopmode", command)
         self.assertIn("pdflatex", command)
+
+    @patch("cli.pdf.converter.subprocess.Popen")
+    def test_pdflatex_timeout_converter(self, mock_popen):
+        process_mock = MagicMock()
+        process_mock.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="pdflatex", timeout=30),
+            (b"", b""),
+        ]
+        mock_popen.return_value = process_mock
+
+        converter = PDFConverter()
+        result = converter._compile_pdflatex(Path("test.tex"), Path("output.pdf"), Path("."))
+
+        self.assertFalse(result)
+        process_mock.kill.assert_called_once()
+        process_mock.communicate.assert_any_call(timeout=30)
+
+    @patch("cli.pdf.converter.subprocess.Popen")
+    def test_pdflatex_arguments_converter(self, mock_popen):
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"")
+        process_mock.returncode = 0
+        mock_popen.return_value = process_mock
+
+        converter = PDFConverter()
+        with patch.object(Path, "exists", return_value=True):
+            converter._compile_pdflatex(Path("test.tex"), Path("output.pdf"), Path("."))
+
+        args, _ = mock_popen.call_args
+        command = args[0]
+        self.assertIn("-no-shell-escape", command)
+
+    @patch("cli.generators.cover_letter_generator.subprocess.Popen")
+    def test_pdflatex_timeout_cover_letter(self, mock_popen):
+        process_mock = MagicMock()
+        process_mock.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="pdflatex", timeout=30),
+            (b"", b""),
+        ]
+        mock_popen.return_value = process_mock
+
+        with patch("cli.generators.cover_letter_generator.ANTHROPIC_AVAILABLE", True):
+            generator = CoverLetterGenerator(config=MockConfig())
+
+        result = generator._compile_pdf(Path("output.pdf"), "content")
+
+        self.assertFalse(result)
+        process_mock.kill.assert_called_once()
+        process_mock.communicate.assert_any_call(timeout=30)
+
+    @patch("cli.generators.cover_letter_generator.subprocess.Popen")
+    def test_pdflatex_arguments_cover_letter(self, mock_popen):
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"")
+        process_mock.returncode = 0
+        mock_popen.return_value = process_mock
+
+        with patch("cli.generators.cover_letter_generator.ANTHROPIC_AVAILABLE", True):
+            generator = CoverLetterGenerator(config=MockConfig())
+
+        with patch.object(Path, "exists", return_value=True):
+            generator._compile_pdf(Path("output.pdf"), "content")
+
+        args, _ = mock_popen.call_args
+        command = args[0]
+        self.assertIn("-no-shell-escape", command)
 
 
 if __name__ == "__main__":

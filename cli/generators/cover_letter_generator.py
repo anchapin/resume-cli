@@ -766,7 +766,6 @@ Return ONLY valid JSON, nothing else."""
             f.write(tex_content)
 
         # Try pdflatex first
-        import subprocess
 
         pdf_created = False
         try:

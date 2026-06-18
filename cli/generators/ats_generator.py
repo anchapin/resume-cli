@@ -37,6 +37,9 @@ except ImportError:
 
 console = Console()
 
+# Pre-compile regex for quantifiable metrics
+_QUANTIFIABLE_PATTERN = re.compile(r"\d+%|\$\d+|\d+\s*(users|customers|projects)")
+
 
 @dataclass
 class ATSCategoryScore:
@@ -407,7 +410,9 @@ class ATSGenerator:
             "improved",
             "achieved",
         ]
-        action_verb_count = sum(1 for verb in action_verbs if verb in all_text.lower())
+        # Cache lowercased text to prevent repeated string allocation in generator loop
+        all_text_lower = all_text.lower()
+        action_verb_count = sum(1 for verb in action_verbs if verb in all_text_lower)
 
         if action_verb_count >= 3:
             details.append(f"✓ Uses action verbs ({action_verb_count} found)")
@@ -416,7 +421,8 @@ class ATSGenerator:
             suggestions.append("Use more action verbs (e.g., developed, implemented)")
 
         # Check for quantifiable achievements
-        has_numbers = bool(re.search(r"\d+%|\$\d+|\d+\s*(users|customers|projects)", all_text))
+        # Use pre-compiled regex for quantifiable metrics
+        has_numbers = bool(_QUANTIFIABLE_PATTERN.search(all_text))
         if has_numbers:
             details.append("✓ Includes quantifiable achievements")
         else:

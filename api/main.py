@@ -1,7 +1,10 @@
+import functools
 import logging
 import os
 import tempfile
 from pathlib import Path
+
+import anyio
 
 import yaml
 from fastapi import FastAPI, HTTPException, Response, Security
@@ -171,13 +174,22 @@ async def render_pdf(request: ResumeRequest):
             # We output to a temp file
             output_pdf = temp_path / "output.pdf"
 
-            generator.generate(variant=request.variant, output_format="pdf", output_path=output_pdf)
+            # Optimization: Offload blocking PDF generation to worker thread
+            await anyio.to_thread.run_sync(
+                functools.partial(
+                    generator.generate,
+                    variant=request.variant,
+                    output_format="pdf",
+                    output_path=output_pdf,
+                )
+            )
 
             if not output_pdf.exists():
                 raise HTTPException(status_code=500, detail="PDF generation failed")
 
             # Read bytes
-            content = output_pdf.read_bytes()
+            # Optimization: Offload blocking file read to worker thread
+            content = await anyio.to_thread.run_sync(output_pdf.read_bytes)
 
             return Response(
                 content=content,
@@ -215,8 +227,13 @@ async def tailor_resume(request: TailorRequest):
         # We pass None for yaml_path as we use direct data
         generator = AIGenerator(yaml_path=None, config=config)
 
-        tailored_data = generator.tailor_data(
-            resume_data=request.resume_data, job_description=request.job_description
+        # Optimization: Offload blocking AI API calls to worker thread
+        tailored_data = await anyio.to_thread.run_sync(
+            functools.partial(
+                generator.tailor_data,
+                resume_data=request.resume_data,
+                job_description=request.job_description,
+            )
         )
 
         return tailored_data
@@ -300,11 +317,15 @@ async def generate_cover_letter(request: CoverLetterRequest):
 
         # Generate cover letter (always use non-interactive for API)
         # The provided answers will be used as context by the AI
-        outputs, job_details = generator.generate_non_interactive(
-            job_description=request.job_description,
-            company_name=request.company_name,
-            variant=request.variant,
-            output_formats=[request.format],
+        # Optimization: Offload blocking AI API calls and file operations to worker thread
+        outputs, job_details = await anyio.to_thread.run_sync(
+            functools.partial(
+                generator.generate_non_interactive,
+                job_description=request.job_description,
+                company_name=request.company_name,
+                variant=request.variant,
+                output_formats=[request.format],
+            )
         )
 
         # Return the generated content
@@ -323,11 +344,19 @@ async def generate_cover_letter(request: CoverLetterRequest):
 
                 # Compile LaTeX to PDF
                 pdf_path = temp_path / "cover-letter.pdf"
-                if generator._compile_pdf(pdf_path, outputs["pdf"]):
+                # Optimization: Offload blocking PDF compilation to worker thread
+                compile_success = await anyio.to_thread.run_sync(
+                    functools.partial(generator._compile_pdf, pdf_path, outputs["pdf"])
+                )
+                if compile_success:
                     import base64
 
-                    with open(pdf_path, "rb") as f:
-                        pdf_bytes = f.read()
+                    # Optimization: Offload blocking file read to worker thread
+                    def read_file():
+                        with open(pdf_path, "rb") as f:
+                            return f.read()
+
+                    pdf_bytes = await anyio.to_thread.run_sync(read_file)
                     return {
                         "content": base64.b64encode(pdf_bytes).decode("utf-8"),
                         "format": "pdf",
@@ -551,21 +580,35 @@ async def render_resume_pdf(resume_id: str, variant: str = "base"):
         from cli.utils.json_resume_converter import JSONResumeConverter
 
         converter = JSONResumeConverter()
-        yaml_data = converter.json_resume_to_yaml(_resume_storage[resume_id]["json_resume"])
+        # Optimization: Offload blocking processing and file generation
+        yaml_data = await anyio.to_thread.run_sync(
+            functools.partial(
+                converter.json_resume_to_yaml, _resume_storage[resume_id]["json_resume"]
+            )
+        )
 
-        with open(resume_yaml_path, "w", encoding="utf-8") as f:
-            yaml.dump(yaml_data, f, default_flow_style=False)
+        def write_yaml():
+            with open(resume_yaml_path, "w", encoding="utf-8") as f:
+                yaml.dump(yaml_data, f, default_flow_style=False)
+
+        await anyio.to_thread.run_sync(write_yaml)
 
         try:
             generator = TemplateGenerator(yaml_path=resume_yaml_path)
             output_pdf = temp_path / "output.pdf"
 
-            generator.generate(variant=variant, output_format="pdf", output_path=output_pdf)
+            # Optimization: Offload blocking PDF generation
+            await anyio.to_thread.run_sync(
+                functools.partial(
+                    generator.generate, variant=variant, output_format="pdf", output_path=output_pdf
+                )
+            )
 
             if not output_pdf.exists():
                 raise HTTPException(status_code=500, detail="PDF generation failed")
 
-            content = output_pdf.read_bytes()
+            # Optimization: Offload blocking file read
+            content = await anyio.to_thread.run_sync(output_pdf.read_bytes)
 
             return Response(
                 content=content,

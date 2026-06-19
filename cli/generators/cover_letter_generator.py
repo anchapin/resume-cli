@@ -5,8 +5,8 @@
 import hashlib
 import os
 import re
-import sys
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -759,8 +759,6 @@ Return ONLY valid JSON, nothing else."""
             output_path: Output PDF path
             tex_content: LaTeX content
         """
-        import subprocess
-
         # Create temporary .tex file
         tex_path = output_path.with_suffix(".tex")
 

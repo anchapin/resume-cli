@@ -13,3 +13,6 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+## 2024-05-24 - Case-sensitive text extraction masking bug
+**Learning:** Found a case where a helper method `_get_all_text()` aggressively transformed text to lowercase for one case (action verbs), which inadvertently broke case-sensitive regex checks (acronym detection) in downstream callers. Fixing this required preserving the original case in the helper and caching a `.lower()` call locally in the caller to avoid O(N) allocations in comprehensions.
+**Action:** When extracting data for multiple heuristic checks, preserve original formatting in the extraction layer, and apply and cache structural transformations like lowercasing locally only where needed.

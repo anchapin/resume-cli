@@ -686,6 +686,11 @@ class JobParser:
 
         # If no bullets found, try extracting lines that look like list items
         if not items:
+            # ⚡ Bolt Optimization: Use a pre-computed tuple with .startswith() instead of
+            # any() with a generator to push the iteration down to optimized C code.
+            header_prefixes = tuple(section_header_starts) + tuple(
+                h + ":" for h in section_header_starts
+            )
             lines = text.split("\n")
             for line in lines:
                 line = line.strip()
@@ -694,10 +699,7 @@ class JobParser:
                     continue
                 line_lower = line.lower()
                 # Skip lines that start with section header keywords
-                if any(
-                    line_lower.startswith(header) or line_lower.startswith(header + ":")
-                    for header in section_header_starts
-                ):
+                if line_lower.startswith(header_prefixes):
                     continue
                 # Skip lines that look like headers (all caps or very short)
                 if line.isupper() and len(line) < 50:

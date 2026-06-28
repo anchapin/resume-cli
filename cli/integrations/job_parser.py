@@ -672,6 +672,14 @@ class JobParser:
             "the company",
         ]
 
+        # Pre-compute a tuple of prefixes to optimize startswith checks.
+        # Passing a tuple directly to startswith pushes the iteration to fast C code,
+        # avoiding the overhead of a Python generator expression inside the loop.
+        section_header_starts_tuple = tuple(section_header_starts)
+        header_prefixes = section_header_starts_tuple + tuple(
+            h + ":" for h in section_header_starts_tuple
+        )
+
         # Match bullet points
         bullet_patterns = [
             r"[•\-\*]\s*([^\n]+)",  # Standard bullets
@@ -694,10 +702,7 @@ class JobParser:
                     continue
                 line_lower = line.lower()
                 # Skip lines that start with section header keywords
-                if any(
-                    line_lower.startswith(header) or line_lower.startswith(header + ":")
-                    for header in section_header_starts
-                ):
+                if line_lower.startswith(header_prefixes):
                     continue
                 # Skip lines that look like headers (all caps or very short)
                 if line.isupper() and len(line) < 50:

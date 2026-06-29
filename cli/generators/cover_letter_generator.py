@@ -770,13 +770,21 @@ Return ONLY valid JSON, nothing else."""
         pdf_created = False
         try:
             # Use Popen with explicit cleanup to avoid double-free issues
+            # SECURITY: Added -no-shell-escape to prevent RCE vulnerabilities from malicious LaTeX code
             process = subprocess.Popen(
-                ["pdflatex", "-interaction=nonstopmode", tex_path.name],
+                ["pdflatex", "-interaction=nonstopmode", "-no-shell-escape", tex_path.name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=tex_path.parent,
             )
-            stdout, stderr = process.communicate()
+            # SECURITY: Added timeout to prevent DoS attacks via infinite compilation loops
+            try:
+                stdout, stderr = process.communicate(timeout=30)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate()
+                return False
+
             if process.returncode == 0 or output_path.exists():
                 pdf_created = True
         except (subprocess.CalledProcessError, FileNotFoundError):
@@ -786,14 +794,29 @@ Return ONLY valid JSON, nothing else."""
             else:
                 # Fallback to pandoc
                 try:
+                    # SECURITY: Added --pdf-engine-opt=-no-shell-escape to prevent RCE vulnerabilities
                     process = subprocess.Popen(
-                        ["pandoc", str(tex_path), "-o", str(output_path), "--pdf-engine=xelatex"],
+                        [
+                            "pandoc",
+                            str(tex_path),
+                            "-o",
+                            str(output_path),
+                            "--pdf-engine=xelatex",
+                            "--pdf-engine-opt=-no-shell-escape",
+                        ],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                     )
-                    stdout, stderr = process.communicate()
-                    if process.returncode == 0 or output_path.exists():
-                        pdf_created = True
+                    # SECURITY: Added timeout to prevent DoS attacks via infinite compilation loops
+                    try:
+                        stdout, stderr = process.communicate(timeout=30)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.communicate()
+                        pdf_created = False
+                    else:
+                        if process.returncode == 0 or output_path.exists():
+                            pdf_created = True
                 except (subprocess.CalledProcessError, FileNotFoundError):
                     pass
 

@@ -407,7 +407,10 @@ class ATSGenerator:
             "improved",
             "achieved",
         ]
-        action_verb_count = sum(1 for verb in action_verbs if verb in all_text.lower())
+        # Bolt Performance Optimization:
+        # Cache lowered string to avoid re-allocating inside the generator comprehension
+        all_text_lower = all_text.lower()
+        action_verb_count = sum(1 for verb in action_verbs if verb in all_text_lower)
 
         if action_verb_count >= 3:
             details.append(f"✓ Uses action verbs ({action_verb_count} found)")

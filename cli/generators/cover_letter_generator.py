@@ -796,7 +796,14 @@ Return ONLY valid JSON, nothing else."""
                 try:
                     # Added --pdf-engine-opt=-no-shell-escape to prevent RCE
                     process = subprocess.Popen(
-                        ["pandoc", str(tex_path), "-o", str(output_path), "--pdf-engine=xelatex", "--pdf-engine-opt=-no-shell-escape"],
+                        [
+                            "pandoc",
+                            str(tex_path),
+                            "-o",
+                            str(output_path),
+                            "--pdf-engine=xelatex",
+                            "--pdf-engine-opt=-no-shell-escape",
+                        ],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                     )

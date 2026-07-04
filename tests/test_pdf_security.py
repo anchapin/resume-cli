@@ -3,7 +3,62 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import os
 from cli.generators.template import TemplateGenerator
+from cli.generators.cover_letter_generator import CoverLetterGenerator
+
+
+class MockConfig:
+    def __init__(self):
+        self.ai_provider = "anthropic"
+        self.anthropic_api_key = "mock_key"
+        self.ai_model = "mock_model"
+        self.output_dir = "mock_dir"
+
+    def get(self, *args, **kwargs):
+        return {}
+
+
+class TestCoverLetterPDFSecurity(unittest.TestCase):
+    @patch("subprocess.Popen")
+    def test_pdflatex_timeout_cover_letter(self, mock_popen):
+        # Setup mock
+        process_mock = MagicMock()
+        process_mock.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="pdflatex", timeout=30),
+            (b"", b""),
+        ]
+        mock_popen.return_value = process_mock
+
+        with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "mock"}):
+            generator = CoverLetterGenerator(config=MockConfig(), resume_data={})
+
+        result = generator._compile_pdf(Path("output.pdf"), "content")
+
+        self.assertFalse(result)
+        process_mock.kill.assert_called_once()
+        process_mock.communicate.assert_any_call(timeout=30)
+
+    @patch("subprocess.Popen")
+    def test_pdflatex_arguments_cover_letter(self, mock_popen):
+        # Setup mock
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"")
+        process_mock.returncode = 0
+        mock_popen.return_value = process_mock
+
+        with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "mock"}):
+            generator = CoverLetterGenerator(config=MockConfig(), resume_data={})
+
+        with patch.object(Path, "exists", return_value=True):
+            result = generator._compile_pdf(Path("output.pdf"), "content")
+
+        self.assertTrue(result)
+        args, _ = mock_popen.call_args
+        command = args[0]
+        self.assertIn("-no-shell-escape", command)
+        self.assertIn("-interaction=nonstopmode", command)
+        self.assertIn("pdflatex", command)
 
 
 class TestPDFSecurity(unittest.TestCase):

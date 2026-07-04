@@ -638,6 +638,28 @@ class JobParser:
 
         return requirements[:15], responsibilities[:15]
 
+    # Section header keywords to exclude - only match when line STARTS with these
+    # (not when they appear in the middle of a sentence)
+    _SECTION_HEADER_STARTS = (
+        "requirements",
+        "qualifications",
+        "responsibilities",
+        "duties",
+        "what you",
+        "what we",
+        "your impact",
+        "key responsibilities",
+        "benefits",
+        "compensation",
+        "perks",
+        "about the",
+        "about us",
+        "company",
+        "team",
+        "our team",
+        "the company",
+    )
+
     def _extract_items_from_text(self, text: str) -> List[str]:
         """
         Extract list items from text.
@@ -649,28 +671,6 @@ class JobParser:
             List of extracted items
         """
         items = []
-
-        # Section header keywords to exclude - only match when line STARTS with these
-        # (not when they appear in the middle of a sentence)
-        section_header_starts = [
-            "requirements",
-            "qualifications",
-            "responsibilities",
-            "duties",
-            "what you",
-            "what we",
-            "your impact",
-            "key responsibilities",
-            "benefits",
-            "compensation",
-            "perks",
-            "about the",
-            "about us",
-            "company",
-            "team",
-            "our team",
-            "the company",
-        ]
 
         # Match bullet points
         bullet_patterns = [
@@ -694,10 +694,8 @@ class JobParser:
                     continue
                 line_lower = line.lower()
                 # Skip lines that start with section header keywords
-                if any(
-                    line_lower.startswith(header) or line_lower.startswith(header + ":")
-                    for header in section_header_starts
-                ):
+                # Bolt: Using a tuple with startswith is significantly faster than a generator expression
+                if line_lower.startswith(self._SECTION_HEADER_STARTS):
                     continue
                 # Skip lines that look like headers (all caps or very short)
                 if line.isupper() and len(line) < 50:

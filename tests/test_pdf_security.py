@@ -4,9 +4,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from cli.generators.cover_letter_generator import CoverLetterGenerator
 from cli.generators.template import TemplateGenerator
 from cli.pdf.converter import PDFConverter
-from cli.generators.cover_letter_generator import CoverLetterGenerator
 
 
 class MockConfig:
@@ -137,7 +137,6 @@ class TestPDFSecurity(unittest.TestCase):
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "mock"})
     def test_coverletter_pandoc_security(self, mock_popen):
         # We need to test the fallback, so make the first call raise FileNotFoundError
-        process_mock_pdflatex = MagicMock()
         process_mock_pandoc = MagicMock()
 
         process_mock_pandoc.communicate.side_effect = [

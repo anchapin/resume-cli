@@ -13,6 +13,21 @@ from rich.text import Text
 from ..utils.config import Config
 from ..utils.yaml_parser import ResumeYAML
 
+# Pre-compiled static variables for performance optimization
+_ACTION_VERBS = (
+    "developed",
+    "implemented",
+    "built",
+    "created",
+    "designed",
+    "managed",
+    "led",
+    "increased",
+    "decreased",
+    "improved",
+    "achieved",
+)
+
 # Load environment variables from .env file if present
 try:
     from dotenv import load_dotenv
@@ -393,21 +408,12 @@ class ATSGenerator:
 
         all_text = self._get_all_text(resume_data)
 
+        # Performance optimization: cache lowercased string to avoid
+        # redundant memory allocations inside the generator loop below
+        all_text_lower = all_text.lower()
+
         # Check for action verbs in experience bullets
-        action_verbs = [
-            "developed",
-            "implemented",
-            "built",
-            "created",
-            "designed",
-            "managed",
-            "led",
-            "increased",
-            "decreased",
-            "improved",
-            "achieved",
-        ]
-        action_verb_count = sum(1 for verb in action_verbs if verb in all_text.lower())
+        action_verb_count = sum(1 for verb in _ACTION_VERBS if verb in all_text_lower)
 
         if action_verb_count >= 3:
             details.append(f"✓ Uses action verbs ({action_verb_count} found)")

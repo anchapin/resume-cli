@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Caching string transformations outside generator iterations
+**Learning:** In cli/generators/ats_generator.py, evaluating a generator expression that executed `all_text.lower()` repeatedly for every element in an array resulted in redundant string allocations and measurable performance overhead.
+**Action:** Always cache string transformations like `.lower()` to a local variable outside the loop before comprehensions to avoid repeated executions.

@@ -85,13 +85,21 @@ class PDFConverter:
             True if PDF was created successfully
         """
         try:
+            # 🛡️ Sentinel: Prevent Remote Code Execution (RCE) by disabling \write18 shell execution
             process = subprocess.Popen(
-                ["pdflatex", "-interaction=nonstopmode", tex_path.name],
+                ["pdflatex", "-interaction=nonstopmode", "-no-shell-escape", tex_path.name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=working_dir,
             )
-            stdout, stderr = process.communicate()
+            try:
+                # 🛡️ Sentinel: Prevent Denial of Service (DoS) from infinite compilation loops
+                stdout, stderr = process.communicate(timeout=30)
+            except subprocess.TimeoutExpired:
+                # 🛡️ Sentinel: Clean up process to prevent zombies if timeout occurs
+                process.kill()
+                stdout, stderr = process.communicate()
+                return False
 
             if process.returncode == 0 or output_path.exists():
                 return True
@@ -120,13 +128,28 @@ class PDFConverter:
             True if PDF was created successfully
         """
         try:
+            # 🛡️ Sentinel: Prevent RCE when using pandoc fallback by passing restricted opt
             process = subprocess.Popen(
-                ["pandoc", str(tex_path), "-o", str(output_path), "--pdf-engine=xelatex"],
+                [
+                    "pandoc",
+                    str(tex_path),
+                    "-o",
+                    str(output_path),
+                    "--pdf-engine=xelatex",
+                    "--pdf-engine-opt=-no-shell-escape",
+                ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=working_dir,
             )
-            stdout, stderr = process.communicate()
+            try:
+                # 🛡️ Sentinel: Prevent Denial of Service (DoS) from infinite compilation loops
+                stdout, stderr = process.communicate(timeout=30)
+            except subprocess.TimeoutExpired:
+                # 🛡️ Sentinel: Clean up process to prevent zombies if timeout occurs
+                process.kill()
+                stdout, stderr = process.communicate()
+                return False
 
             if process.returncode == 0 or output_path.exists():
                 return True

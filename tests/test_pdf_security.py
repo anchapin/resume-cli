@@ -1,12 +1,12 @@
+import os
 import subprocess
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from cli.generators.cover_letter_generator import CoverLetterGenerator
 from cli.generators.template import TemplateGenerator
 from cli.pdf.converter import PDFConverter
-from cli.generators.cover_letter_generator import CoverLetterGenerator
-import os
 
 
 class MockConfig:

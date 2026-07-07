@@ -7,3 +7,8 @@
 **Vulnerability:** The `CoverLetterGenerator` used a standard Jinja2 environment (intended for HTML/XML or plain text) to render LaTeX templates. This allowed malicious user input (or AI hallucinations) containing LaTeX control characters (e.g., `\input{...}`) to be injected directly into the LaTeX source, leading to potential Local File Inclusion (LFI) or other exploits.
 **Learning:** Jinja2's default `autoescape` is context-aware based on file extensions, but usually only for HTML/XML. It does NOT automatically escape LaTeX special characters. Relying on manual filters (like `| latex_escape`) in templates is error-prone and brittle, as developers might forget to apply them to every variable.
 **Prevention:** Always use a dedicated Jinja2 environment for LaTeX generation that enforces auto-escaping via a `finalize` hook (e.g., `tex_env.finalize = latex_escape`). This ensures *all* variable output is sanitized by default, providing defense-in-depth even if the template author forgets explicit filters.
+
+## 2025-02-24 - [High] Inconsistent LaTeX RCE Mitigation
+**Vulnerability:** The `CoverLetterGenerator` and `PDFConverter` failed to apply `-no-shell-escape` and compilation timeouts, which were previously added to `TemplateGenerator`. This left these components vulnerable to LaTeX-based Remote Code Execution (RCE) and Denial of Service (DoS) via malicious user input or AI hallucinations.
+**Learning:** Security fixes applied to one component must be systematically applied to all similar components to prevent incomplete mitigations.
+**Prevention:** Centralize sensitive operations (like subprocess invocations) into a single module, or enforce global security policies during code review to ensure consistent application across all classes.

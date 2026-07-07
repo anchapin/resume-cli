@@ -37,6 +37,14 @@ except ImportError:
 
 console = Console()
 
+# Pre-compile regex patterns for performance optimization
+_TABLE_PATTERN = re.compile(r"\|[^\n]+\|")
+_SPECIAL_CHARS_PATTERN = re.compile(r"[^a-zA-Z0-9\s\-\.\,\@\(\)\#\/]")
+_QUANTIFIABLE_PATTERN = re.compile(r"\d+%|\$\d+|\d+\s*(users|customers|projects)")
+_ACRONYM_PATTERN = re.compile(r"\b[A-Z]{2,4}\b")
+_COMMON_TECH_PATTERN = re.compile(r"\b[a-z]+(?:\s+[a-z]+)?\b")
+_SUMMARY_KEYWORD_PATTERN = re.compile(r"\b[a-z]{2,}\b")
+
 
 @dataclass
 class ATSCategoryScore:
@@ -214,8 +222,8 @@ class ATSGenerator:
 
         # Check for complex formatting indicators
         all_text = self._get_all_text(resume_data)
-        has_tables = bool(re.search(r"\|[^\n]+\|", all_text))
-        has_special_chars = len(re.findall(r"[^a-zA-Z0-9\s\-\.\,\@\(\)\#\/]", all_text))
+        has_tables = bool(_TABLE_PATTERN.search(all_text))
+        has_special_chars = len(_SPECIAL_CHARS_PATTERN.findall(all_text))
 
         if not has_tables:
             details.append("No tables detected (ATS-friendly)")
@@ -407,7 +415,9 @@ class ATSGenerator:
             "improved",
             "achieved",
         ]
-        action_verb_count = sum(1 for verb in action_verbs if verb in all_text.lower())
+        # Performance optimization: cache all_text.lower() to prevent repeated string allocation inside the loop
+        all_text_lower = all_text.lower()
+        action_verb_count = sum(1 for verb in action_verbs if verb in all_text_lower)
 
         if action_verb_count >= 3:
             details.append(f"✓ Uses action verbs ({action_verb_count} found)")
@@ -416,7 +426,7 @@ class ATSGenerator:
             suggestions.append("Use more action verbs (e.g., developed, implemented)")
 
         # Check for quantifiable achievements
-        has_numbers = bool(re.search(r"\d+%|\$\d+|\d+\s*(users|customers|projects)", all_text))
+        has_numbers = bool(_QUANTIFIABLE_PATTERN.search(all_text))
         if has_numbers:
             details.append("✓ Includes quantifiable achievements")
         else:
@@ -425,8 +435,7 @@ class ATSGenerator:
 
         # Check for acronyms (should be minimal or defined)
         # This is a simple heuristic
-        acronym_pattern = r"\b[A-Z]{2,4}\b"
-        acronyms = re.findall(acronym_pattern, all_text)
+        acronyms = _ACRONYM_PATTERN.findall(all_text)
         if len(acronyms) < 10:
             details.append(f"✓ Minimal acronyms ({len(acronyms)} found)")
         else:
@@ -547,12 +556,12 @@ Please extract the keywords:"""
                     text = bullet.get("text", "").lower()
                     # Extract common tech terms from text
                     # This is a simple heuristic - AI could do better
-                    keywords.extend(re.findall(r"\b[a-z]+(?:\s+[a-z]+)?\b", text))
+                    keywords.extend(_COMMON_TECH_PATTERN.findall(text))
 
         # Extract from summary
         summary = resume_data.get("summary", "")
         if summary:
-            keywords.extend(re.findall(r"\b[a-z]{2,}\b", summary.lower()))
+            keywords.extend(_SUMMARY_KEYWORD_PATTERN.findall(summary.lower()))
 
         return list(set(k.strip() for k in keywords if len(k) > 2))
 

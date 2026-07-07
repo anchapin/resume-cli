@@ -110,7 +110,7 @@ class TestPDFSecurity(unittest.TestCase):
 
     @patch("subprocess.Popen")
     def test_coverletter_pdflatex_timeout_and_args(self, mock_popen):
-        os.environ['ANTHROPIC_API_KEY'] = 'mock'
+        os.environ["ANTHROPIC_API_KEY"] = "mock"
         process_mock = MagicMock()
         process_mock.communicate.side_effect = [
             subprocess.TimeoutExpired(cmd="pdflatex", timeout=30),

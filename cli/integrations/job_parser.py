@@ -113,6 +113,27 @@ class JobParser:
         ],
     }
 
+    # Section header keywords to exclude when extracting items
+    _SECTION_HEADER_STARTS = (
+        "requirements",
+        "qualifications",
+        "responsibilities",
+        "duties",
+        "what you",
+        "what we",
+        "your impact",
+        "key responsibilities",
+        "benefits",
+        "compensation",
+        "perks",
+        "about the",
+        "about us",
+        "company",
+        "team",
+        "our team",
+        "the company",
+    )
+
     # Indeed-specific selectors and patterns
     INDEED_SELECTORS = {
         "company": [
@@ -650,28 +671,6 @@ class JobParser:
         """
         items = []
 
-        # Section header keywords to exclude - only match when line STARTS with these
-        # (not when they appear in the middle of a sentence)
-        section_header_starts = [
-            "requirements",
-            "qualifications",
-            "responsibilities",
-            "duties",
-            "what you",
-            "what we",
-            "your impact",
-            "key responsibilities",
-            "benefits",
-            "compensation",
-            "perks",
-            "about the",
-            "about us",
-            "company",
-            "team",
-            "our team",
-            "the company",
-        ]
-
         # Match bullet points
         bullet_patterns = [
             r"[•\-\*]\s*([^\n]+)",  # Standard bullets
@@ -693,12 +692,13 @@ class JobParser:
                 if not line or len(line) < 5:
                     continue
                 line_lower = line.lower()
-                # Skip lines that start with section header keywords
-                if any(
-                    line_lower.startswith(header) or line_lower.startswith(header + ":")
-                    for header in section_header_starts
-                ):
+
+                # ⚡ Bolt Optimization:
+                # 1. Pass `tuple` to `.startswith()` to push loop iteration down to optimized C code.
+                # 2. Eliminated redundant `header + ":"` check since `startswith(header)` inherently covers it.
+                if line_lower.startswith(self._SECTION_HEADER_STARTS):
                     continue
+
                 # Skip lines that look like headers (all caps or very short)
                 if line.isupper() and len(line) < 50:
                     continue

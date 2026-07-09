@@ -116,6 +116,7 @@ class TestPDFSecurity(unittest.TestCase):
 
         import os
         from cli.utils.config import Config
+
         config = MagicMock(spec=Config)
         config.ai_provider = "openai"
         config.get.return_value = ""
@@ -143,6 +144,7 @@ class TestPDFSecurity(unittest.TestCase):
 
         import os
         from cli.utils.config import Config
+
         config = MagicMock(spec=Config)
         config.ai_provider = "openai"
         config.get.return_value = ""

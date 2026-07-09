@@ -802,7 +802,7 @@ Return ONLY valid JSON, nothing else."""
                             str(output_path),
                             "--pdf-engine=xelatex",
                             # SECURITY: Added --pdf-engine-opt=-no-shell-escape to prevent RCE from malicious LaTeX
-                            "--pdf-engine-opt=-no-shell-escape"
+                            "--pdf-engine-opt=-no-shell-escape",
                         ],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,

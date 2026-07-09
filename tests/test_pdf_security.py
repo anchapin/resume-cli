@@ -3,9 +3,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from cli.generators.cover_letter_generator import CoverLetterGenerator
 from cli.generators.template import TemplateGenerator
 from cli.pdf.converter import PDFConverter
-from cli.generators.cover_letter_generator import CoverLetterGenerator
 
 
 class TestPDFSecurity(unittest.TestCase):
@@ -115,6 +115,7 @@ class TestPDFSecurity(unittest.TestCase):
         mock_popen.return_value = process_mock
 
         import os
+
         from cli.utils.config import Config
 
         config = MagicMock(spec=Config)
@@ -143,6 +144,7 @@ class TestPDFSecurity(unittest.TestCase):
         mock_popen.return_value = process_mock
 
         import os
+
         from cli.utils.config import Config
 
         config = MagicMock(spec=Config)

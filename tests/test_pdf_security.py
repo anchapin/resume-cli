@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from cli.generators.template import TemplateGenerator
+from cli.pdf.converter import PDFConverter
 
 
 class TestPDFSecurity(unittest.TestCase):
@@ -54,6 +55,100 @@ class TestPDFSecurity(unittest.TestCase):
         self.assertIn("-no-shell-escape", command)
         self.assertIn("-interaction=nonstopmode", command)
         self.assertIn("pdflatex", command)
+
+    @patch("cli.pdf.converter.subprocess.Popen")
+    def test_pdfconverter_pdflatex_timeout(self, mock_popen):
+        # Setup mock
+        process_mock = MagicMock()
+        # Raise TimeoutExpired on first call, return empty bytes on second call (cleanup)
+        process_mock.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="pdflatex", timeout=30),
+            (b"", b""),
+        ]
+        mock_popen.return_value = process_mock
+
+        converter = PDFConverter()
+
+        # Test timeout handling
+        result = converter._compile_pdflatex(Path("test.tex"), Path("output.pdf"), Path("."))
+
+        # Verify it returns False on timeout
+        self.assertFalse(result)
+
+        # Verify process was killed
+        process_mock.kill.assert_called_once()
+
+        # Verify timeout was passed to communicate
+        process_mock.communicate.assert_any_call(timeout=30)
+
+    @patch("cli.pdf.converter.subprocess.Popen")
+    def test_pdfconverter_pandoc_timeout(self, mock_popen):
+        # Setup mock
+        process_mock = MagicMock()
+        # Raise TimeoutExpired on first call, return empty bytes on second call (cleanup)
+        process_mock.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="pandoc", timeout=30),
+            (b"", b""),
+        ]
+        mock_popen.return_value = process_mock
+
+        converter = PDFConverter()
+
+        # Test timeout handling
+        result = converter._compile_pandoc(Path("test.tex"), Path("output.pdf"), Path("."))
+
+        # Verify it returns False on timeout
+        self.assertFalse(result)
+
+        # Verify process was killed
+        process_mock.kill.assert_called_once()
+
+        # Verify timeout was passed to communicate
+        process_mock.communicate.assert_any_call(timeout=30)
+
+    @patch("cli.pdf.converter.subprocess.Popen")
+    def test_pdfconverter_pdflatex_arguments(self, mock_popen):
+        # Setup mock
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"")
+        process_mock.returncode = 0
+        mock_popen.return_value = process_mock
+
+        converter = PDFConverter()
+
+        # Run compilation
+        with patch.object(Path, "exists", return_value=True):
+            converter._compile_pdflatex(Path("test.tex"), Path("output.pdf"), Path("."))
+
+        # Verify arguments
+        args, _ = mock_popen.call_args
+        command = args[0]
+
+        self.assertIn("-no-shell-escape", command)
+        self.assertIn("-interaction=nonstopmode", command)
+        self.assertIn("pdflatex", command)
+
+    @patch("cli.pdf.converter.subprocess.Popen")
+    def test_pdfconverter_pandoc_arguments(self, mock_popen):
+        # Setup mock
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"")
+        process_mock.returncode = 0
+        mock_popen.return_value = process_mock
+
+        converter = PDFConverter()
+
+        # Run compilation
+        with patch.object(Path, "exists", return_value=True):
+            converter._compile_pandoc(Path("test.tex"), Path("output.pdf"), Path("."))
+
+        # Verify arguments
+        args, _ = mock_popen.call_args
+        command = args[0]
+
+        self.assertIn("--pdf-engine-opt=-no-shell-escape", command)
+        self.assertIn("--pdf-engine=xelatex", command)
+        self.assertIn("pandoc", command)
 
 
 if __name__ == "__main__":

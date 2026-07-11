@@ -172,6 +172,27 @@ class JobParser:
         "remote available",
     ]
 
+    # Section header keywords to exclude - tuple used for fast prefix matching
+    SECTION_HEADER_STARTS = (
+        "requirements",
+        "qualifications",
+        "responsibilities",
+        "duties",
+        "what you",
+        "what we",
+        "your impact",
+        "key responsibilities",
+        "benefits",
+        "compensation",
+        "perks",
+        "about the",
+        "about us",
+        "company",
+        "team",
+        "our team",
+        "the company",
+    )
+
     def __init__(self, cache_dir: Optional[Path] = None):
         """
         Initialize job parser.
@@ -650,28 +671,6 @@ class JobParser:
         """
         items = []
 
-        # Section header keywords to exclude - only match when line STARTS with these
-        # (not when they appear in the middle of a sentence)
-        section_header_starts = [
-            "requirements",
-            "qualifications",
-            "responsibilities",
-            "duties",
-            "what you",
-            "what we",
-            "your impact",
-            "key responsibilities",
-            "benefits",
-            "compensation",
-            "perks",
-            "about the",
-            "about us",
-            "company",
-            "team",
-            "our team",
-            "the company",
-        ]
-
         # Match bullet points
         bullet_patterns = [
             r"[•\-\*]\s*([^\n]+)",  # Standard bullets
@@ -693,11 +692,11 @@ class JobParser:
                 if not line or len(line) < 5:
                     continue
                 line_lower = line.lower()
-                # Skip lines that start with section header keywords
-                if any(
-                    line_lower.startswith(header) or line_lower.startswith(header + ":")
-                    for header in section_header_starts
-                ):
+                # Skip lines that start with section header keywords.
+                # Optimization: passing a tuple directly to startswith is significantly faster
+                # than a generator expression. The `header + ":"` derivative check is also
+                # removed since the base string match implies the derivative match.
+                if line_lower.startswith(self.SECTION_HEADER_STARTS):
                     continue
                 # Skip lines that look like headers (all caps or very short)
                 if line.isupper() and len(line) < 50:

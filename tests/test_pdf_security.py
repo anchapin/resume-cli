@@ -4,6 +4,8 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from cli.generators.template import TemplateGenerator
+from cli.pdf.converter import PDFConverter
+from cli.generators.cover_letter_generator import CoverLetterGenerator
 
 
 class TestPDFSecurity(unittest.TestCase):
@@ -53,6 +55,60 @@ class TestPDFSecurity(unittest.TestCase):
 
         self.assertIn("-no-shell-escape", command)
         self.assertIn("-interaction=nonstopmode", command)
+        self.assertIn("pdflatex", command)
+
+    @patch("cli.pdf.converter.subprocess.Popen")
+    def test_pdfconverter_pdflatex_security(self, mock_popen):
+        # Setup mock for TimeoutExpired
+        process_mock = MagicMock()
+        process_mock.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="pdflatex", timeout=30),
+            (b"", b""),
+        ]
+        mock_popen.return_value = process_mock
+
+        converter = PDFConverter()
+
+        with patch.object(Path, "exists", return_value=True):
+            result = converter._compile_pdflatex(Path("output.tex"), Path("output.pdf"), Path("."))
+
+        # Verify it handled timeout and returned False
+        self.assertFalse(result)
+        process_mock.kill.assert_called_once()
+        process_mock.communicate.assert_any_call(timeout=30)
+
+        # Verify arguments
+        args, _ = mock_popen.call_args
+        command = args[0]
+        self.assertIn("-no-shell-escape", command)
+        self.assertIn("pdflatex", command)
+
+    @patch("subprocess.Popen")
+    @patch("cli.generators.cover_letter_generator.CoverLetterGenerator.__init__", return_value=None)
+    def test_coverletter_pdflatex_security(self, mock_init, mock_popen):
+        # Setup mock for TimeoutExpired
+        process_mock = MagicMock()
+        process_mock.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="pdflatex", timeout=30),
+            (b"", b""),
+        ]
+        mock_popen.return_value = process_mock
+
+        # Instantiating a dummy CoverLetterGenerator
+        generator = CoverLetterGenerator()
+
+        with patch.object(Path, "exists", return_value=True):
+            result = generator._compile_pdf(Path("output.pdf"), "content")
+
+        # Verify it handled timeout and returned False
+        self.assertFalse(result)
+        process_mock.kill.assert_called_once()
+        process_mock.communicate.assert_any_call(timeout=30)
+
+        # Verify arguments
+        args, _ = mock_popen.call_args
+        command = args[0]
+        self.assertIn("-no-shell-escape", command)
         self.assertIn("pdflatex", command)
 
 

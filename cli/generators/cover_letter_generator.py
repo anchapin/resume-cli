@@ -770,13 +770,21 @@ Return ONLY valid JSON, nothing else."""
         pdf_created = False
         try:
             # Use Popen with explicit cleanup to avoid double-free issues
+            # SECURITY: Added -no-shell-escape to prevent Remote Code Execution (RCE) via \write18 commands
             process = subprocess.Popen(
-                ["pdflatex", "-interaction=nonstopmode", tex_path.name],
+                ["pdflatex", "-interaction=nonstopmode", "-no-shell-escape", tex_path.name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=tex_path.parent,
             )
-            stdout, stderr = process.communicate()
+            try:
+                # SECURITY: Added timeout to prevent Denial of Service (DoS) if compilation hangs
+                stdout, stderr = process.communicate(timeout=30)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate()
+                return False
+
             if process.returncode == 0 or output_path.exists():
                 pdf_created = True
         except (subprocess.CalledProcessError, FileNotFoundError):

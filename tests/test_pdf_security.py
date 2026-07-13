@@ -191,5 +191,6 @@ class TestCoverLetterGeneratorSecurity(unittest.TestCase):
         self.assertIn("-interaction=nonstopmode", command)
         self.assertIn("pdflatex", command)
 
+
 if __name__ == "__main__":
     unittest.main()

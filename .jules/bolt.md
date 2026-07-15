@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2026-07-15 - Tuple Optimization for startswith
+**Learning:** Checking string prefixes inside loops using `any(string.startswith(p) for p in prefixes)` creates massive O(N*M) overhead by constantly recreating generator expressions. Python's native `str.startswith()` executes purely in optimized C when directly passed a tuple of strings.
+**Action:** Always refactor multiple prefix checks by passing a `tuple` directly to `.startswith()` (e.g. `line.startswith(tuple_of_prefixes)`) to push the iteration down to C level.

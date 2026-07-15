@@ -85,13 +85,20 @@ class PDFConverter:
             True if PDF was created successfully
         """
         try:
+            # 🛡️ Sentinel: Enforce -no-shell-escape to prevent RCE via LaTeX \write18
             process = subprocess.Popen(
-                ["pdflatex", "-interaction=nonstopmode", tex_path.name],
+                ["pdflatex", "-interaction=nonstopmode", "-no-shell-escape", tex_path.name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=working_dir,
             )
-            stdout, stderr = process.communicate()
+            try:
+                # 🛡️ Sentinel: Enforce 30-second timeout to prevent DoS via infinite loops
+                stdout, stderr = process.communicate(timeout=30)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                stdout, stderr = process.communicate()
+                raise RuntimeError("PDF compilation timed out")
 
             if process.returncode == 0 or output_path.exists():
                 return True
@@ -120,13 +127,27 @@ class PDFConverter:
             True if PDF was created successfully
         """
         try:
+            # 🛡️ Sentinel: Pass -no-shell-escape to pandoc's PDF engine to prevent RCE
             process = subprocess.Popen(
-                ["pandoc", str(tex_path), "-o", str(output_path), "--pdf-engine=xelatex"],
+                [
+                    "pandoc",
+                    str(tex_path),
+                    "-o",
+                    str(output_path),
+                    "--pdf-engine=xelatex",
+                    "--pdf-engine-opt=-no-shell-escape",
+                ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=working_dir,
             )
-            stdout, stderr = process.communicate()
+            try:
+                # 🛡️ Sentinel: Enforce 30-second timeout to prevent DoS via infinite loops
+                stdout, stderr = process.communicate(timeout=30)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                stdout, stderr = process.communicate()
+                raise RuntimeError("PDF compilation timed out")
 
             if process.returncode == 0 or output_path.exists():
                 return True

@@ -1,9 +1,20 @@
+import os
 import subprocess
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from cli.generators.cover_letter_generator import CoverLetterGenerator
 from cli.generators.template import TemplateGenerator
+from cli.pdf.converter import PDFConverter
+
+
+class MockConfig:
+    def __init__(self):
+        self.ai_provider = "anthropic"
+
+    def get(self, *args, **kwargs):
+        return {}
 
 
 class TestPDFSecurity(unittest.TestCase):
@@ -54,6 +65,159 @@ class TestPDFSecurity(unittest.TestCase):
         self.assertIn("-no-shell-escape", command)
         self.assertIn("-interaction=nonstopmode", command)
         self.assertIn("pdflatex", command)
+
+    @patch("subprocess.Popen")
+    def test_pdflatex_timeout_converter(self, mock_popen):
+        process_mock = MagicMock()
+        process_mock.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="pdflatex", timeout=30),
+            (b"", b""),
+        ]
+        mock_popen.return_value = process_mock
+        converter = PDFConverter()
+
+        result = converter._compile_pdflatex(Path("test.tex"), Path("output.pdf"), Path("."))
+        self.assertFalse(result)
+        process_mock.kill.assert_called_once()
+        process_mock.communicate.assert_any_call(timeout=30)
+
+    @patch("subprocess.Popen")
+    def test_pandoc_timeout_converter(self, mock_popen):
+        process_mock = MagicMock()
+        process_mock.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="pandoc", timeout=30),
+            (b"", b""),
+        ]
+        mock_popen.return_value = process_mock
+        converter = PDFConverter()
+
+        result = converter._compile_pandoc(Path("test.tex"), Path("output.pdf"), Path("."))
+        self.assertFalse(result)
+        process_mock.kill.assert_called_once()
+        process_mock.communicate.assert_any_call(timeout=30)
+
+    @patch("subprocess.Popen")
+    def test_pdflatex_arguments_converter(self, mock_popen):
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"")
+        process_mock.returncode = 0
+        mock_popen.return_value = process_mock
+        converter = PDFConverter()
+
+        with patch.object(Path, "exists", return_value=True):
+            converter._compile_pdflatex(Path("test.tex"), Path("output.pdf"), Path("."))
+
+        args, _ = mock_popen.call_args
+        command = args[0]
+        self.assertIn("-no-shell-escape", command)
+        self.assertIn("-interaction=nonstopmode", command)
+        self.assertIn("pdflatex", command)
+
+    @patch("subprocess.Popen")
+    def test_pandoc_arguments_converter(self, mock_popen):
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"")
+        process_mock.returncode = 0
+        mock_popen.return_value = process_mock
+        converter = PDFConverter()
+
+        with patch.object(Path, "exists", return_value=True):
+            converter._compile_pandoc(Path("test.tex"), Path("output.pdf"), Path("."))
+
+        args, _ = mock_popen.call_args
+        command = args[0]
+        self.assertIn("--pdf-engine-opt=-no-shell-escape", command)
+        self.assertIn("pandoc", command)
+
+    @patch("subprocess.Popen")
+    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "mock"})
+    def test_pdflatex_timeout_cover_letter(self, mock_popen):
+        process_mock = MagicMock()
+        process_mock.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="pdflatex", timeout=30),
+            (b"", b""),
+        ]
+        mock_popen.return_value = process_mock
+
+        generator = CoverLetterGenerator(config=MockConfig(), resume_data={})
+
+        result = generator._compile_pdf(Path("output.pdf"), "content")
+        self.assertFalse(result)
+        process_mock.kill.assert_called_once()
+        process_mock.communicate.assert_any_call(timeout=30)
+
+    @patch("subprocess.Popen")
+    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "mock"})
+    def test_pandoc_timeout_cover_letter(self, mock_popen):
+        process_mock = MagicMock()
+        process_mock.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="pandoc", timeout=30),
+            (b"", b""),
+        ]
+
+        # First call pdflatex fails with FileNotFoundError so it falls back to pandoc
+        def popen_side_effect(args, **kwargs):
+            if "pdflatex" in args:
+                raise FileNotFoundError("executable not found")
+            return process_mock
+
+        mock_popen.side_effect = popen_side_effect
+
+        generator = CoverLetterGenerator(config=MockConfig(), resume_data={})
+
+        result = generator._compile_pdf(Path("output.pdf"), "content")
+        self.assertFalse(result)
+        process_mock.kill.assert_called_once()
+        process_mock.communicate.assert_any_call(timeout=30)
+
+    @patch("subprocess.Popen")
+    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "mock"})
+    def test_pdflatex_arguments_cover_letter(self, mock_popen):
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"")
+        process_mock.returncode = 0
+        mock_popen.return_value = process_mock
+
+        generator = CoverLetterGenerator(config=MockConfig(), resume_data={})
+
+        with patch.object(Path, "exists", return_value=False):
+            generator._compile_pdf(Path("output.pdf"), "content")
+
+        args, _ = mock_popen.call_args
+        command = args[0]
+        self.assertIn("-no-shell-escape", command)
+        self.assertIn("-interaction=nonstopmode", command)
+        self.assertIn("pdflatex", command)
+
+    @patch("subprocess.Popen")
+    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "mock"})
+    def test_pandoc_arguments_cover_letter(self, mock_popen):
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"")
+        process_mock.returncode = 0
+
+        def popen_side_effect(args, **kwargs):
+            if "pdflatex" in args:
+                raise FileNotFoundError("executable not found")
+            return process_mock
+
+        mock_popen.side_effect = popen_side_effect
+
+        generator = CoverLetterGenerator(config=MockConfig(), resume_data={})
+
+        with patch.object(Path, "exists", return_value=False):
+            generator._compile_pdf(Path("output.pdf"), "content")
+
+        # The mock is called twice (first pdflatex which raises, then pandoc)
+        # Check all calls for the pandoc command
+        found_pandoc = False
+        for call in mock_popen.call_args_list:
+            args, _ = call
+            command = args[0]
+            if "pandoc" in command:
+                found_pandoc = True
+                self.assertIn("--pdf-engine-opt=-no-shell-escape", command)
+        self.assertTrue(found_pandoc)
 
 
 if __name__ == "__main__":

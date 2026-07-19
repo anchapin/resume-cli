@@ -130,7 +130,9 @@ class OfferComparison:
     def remove_offer(self, company: str) -> bool:
         """Remove an offer by company name."""
         initial_len = len(self.offers)
-        self.offers = [o for o in self.offers if o.company.lower() != company.lower()]
+        # Cache string operation outside the loop comprehension for O(N) performance optimization
+        company_lower = company.lower()
+        self.offers = [o for o in self.offers if o.company.lower() != company_lower]
         if len(self.offers) < initial_len:
             self._save_offers()
             return True

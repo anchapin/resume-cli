@@ -7,3 +7,8 @@
 **Vulnerability:** The `CoverLetterGenerator` used a standard Jinja2 environment (intended for HTML/XML or plain text) to render LaTeX templates. This allowed malicious user input (or AI hallucinations) containing LaTeX control characters (e.g., `\input{...}`) to be injected directly into the LaTeX source, leading to potential Local File Inclusion (LFI) or other exploits.
 **Learning:** Jinja2's default `autoescape` is context-aware based on file extensions, but usually only for HTML/XML. It does NOT automatically escape LaTeX special characters. Relying on manual filters (like `| latex_escape`) in templates is error-prone and brittle, as developers might forget to apply them to every variable.
 **Prevention:** Always use a dedicated Jinja2 environment for LaTeX generation that enforces auto-escaping via a `finalize` hook (e.g., `tex_env.finalize = latex_escape`). This ensures *all* variable output is sanitized by default, providing defense-in-depth even if the template author forgets explicit filters.
+
+## 2025-02-19 - [CRITICAL] PDF Compilation RCE and DoS
+**Vulnerability:** PDF compilation via pdflatex and pandoc lacked -no-shell-escape constraints, enabling RCE. Furthermore, missing timeouts allowed maliciously crafted LaTeX files to cause infinite compilation loops (DoS).
+**Learning:** Always restrict shell execution (-no-shell-escape) and enforce strict timeouts for any subprocess dealing with untrusted user or AI-generated input.
+**Prevention:** Apply -no-shell-escape and communicate(timeout=30) consistently to subprocess.Popen calls for LaTeX compilation.

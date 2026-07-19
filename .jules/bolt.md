@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2025-02-18 - Caching method results outside comprehensions
+**Learning:** Calling methods like `.lower()` on the right side of a comprehension condition (e.g. `any(kw.lower() in text.lower() for kw in emphasize_keywords)`) executes the method for every iteration, causing redundant allocations and slowing down performance significantly.
+**Action:** Always cache string operations and method results outside the loop or comprehension to prevent O(N) redundant allocations.

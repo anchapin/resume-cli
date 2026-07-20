@@ -182,9 +182,14 @@ class ResumeYAML:
             for skill in section_skills:
                 skill_name = skill if isinstance(skill, str) else skill.get("name", "")
 
-                # Check if skill matches any of the technologies
-                if any(tech in skill_name.lower() for tech in tech_lower):
-                    matching.append(skill)
+                if tech_lower:
+                    # Cache skill_name.lower() outside generator expression to stop redundant O(N) string memory allocations
+                    skill_name_lower = skill_name.lower()
+                    # Check if skill matches any of the technologies
+                    if any(tech in skill_name_lower for tech in tech_lower):
+                        matching.append(skill)
+                    else:
+                        non_matching.append(skill)
                 else:
                     non_matching.append(skill)
 
@@ -216,6 +221,10 @@ class ResumeYAML:
         emphasize_keywords = variant_config.get("emphasize_keywords", [])
 
         filtered_exp = []
+
+        # Pre-lowercase keywords outside the loop for faster matching
+        emphasize_keywords_lower = [kw.lower() for kw in emphasize_keywords]
+
         for job in experience:
             if not isinstance(job, dict):
                 continue
@@ -230,11 +239,17 @@ class ResumeYAML:
                 emphasize_for = bullet.get("emphasize_for", [])
                 text = bullet.get("text", "")
 
-                # Include if variant is emphasized or keywords match
-                if variant in emphasize_for or any(
-                    kw.lower() in text.lower() for kw in emphasize_keywords
-                ):
+                # Include if variant is explicitly emphasized
+                if variant in emphasize_for:
                     filtered_bullets.append(bullet)
+                    continue
+
+                # Check keyword matches
+                if emphasize_keywords_lower:
+                    # Cache text.lower() outside generator expression to stop redundant O(N) string memory allocations
+                    text_lower = text.lower()
+                    if any(kw in text_lower for kw in emphasize_keywords_lower):
+                        filtered_bullets.append(bullet)
 
             # Limit bullets and preserve order
             if len(filtered_bullets) > max_bullets:

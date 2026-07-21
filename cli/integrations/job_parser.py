@@ -652,7 +652,7 @@ class JobParser:
 
         # Section header keywords to exclude - only match when line STARTS with these
         # (not when they appear in the middle of a sentence)
-        section_header_starts = [
+        section_header_starts = (
             "requirements",
             "qualifications",
             "responsibilities",
@@ -670,7 +670,7 @@ class JobParser:
             "team",
             "our team",
             "the company",
-        ]
+        )
 
         # Match bullet points
         bullet_patterns = [
@@ -694,10 +694,8 @@ class JobParser:
                     continue
                 line_lower = line.lower()
                 # Skip lines that start with section header keywords
-                if any(
-                    line_lower.startswith(header) or line_lower.startswith(header + ":")
-                    for header in section_header_starts
-                ):
+                # Use a tuple for optimized C-level iteration and remove redundant derivative checks
+                if line_lower.startswith(section_header_starts):
                     continue
                 # Skip lines that look like headers (all caps or very short)
                 if line.isupper() and len(line) < 50:

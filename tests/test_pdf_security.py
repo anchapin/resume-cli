@@ -1,12 +1,12 @@
+import os
 import subprocess
 import unittest
 from pathlib import Path
-import os
 from unittest.mock import MagicMock, patch
 
+from cli.generators.cover_letter_generator import CoverLetterGenerator
 from cli.generators.template import TemplateGenerator
 from cli.pdf.converter import PDFConverter
-from cli.generators.cover_letter_generator import CoverLetterGenerator
 
 
 class TestPDFSecurity(unittest.TestCase):
@@ -147,7 +147,7 @@ class TestPDFSecurity(unittest.TestCase):
         # It's better to patch the config to avoid errors
         with patch("cli.generators.cover_letter_generator.Config") as mock_config, patch(
             "cli.generators.cover_letter_generator.ResumeYAML"
-        ) as mock_yaml:
+        ):
 
             mock_cfg_inst = mock_config.return_value
             mock_cfg_inst.ai_provider = "anthropic"
@@ -173,7 +173,7 @@ class TestPDFSecurity(unittest.TestCase):
         os.environ["ANTHROPIC_API_KEY"] = "mock"
         with patch("cli.generators.cover_letter_generator.Config") as mock_config, patch(
             "cli.generators.cover_letter_generator.ResumeYAML"
-        ) as mock_yaml:
+        ):
 
             mock_cfg_inst = mock_config.return_value
             mock_cfg_inst.ai_provider = "anthropic"

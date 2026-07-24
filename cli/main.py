@@ -573,7 +573,6 @@ def variants(ctx):
 @cli.group()
 def track():
     """Application tracking commands."""
-    pass
 
 
 @cli.command()
@@ -1785,7 +1784,6 @@ def salary_research(title: str, location: str, company: str, level: str, output:
 @cli.group()
 def offer():
     """Offer comparison commands."""
-    pass
 
 
 @offer.command("add")

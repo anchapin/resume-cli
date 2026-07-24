@@ -82,7 +82,7 @@ class AIJudge:
 
         except Exception as e:
             # On judge failure, return first version with note
-            return versions[0], f"Judge evaluation failed: {str(e)}. Using first version."
+            return versions[0], f"Judge evaluation failed: {e!s}. Using first version."
 
         # Fallback to first version
         return versions[0], "Judge unable to decide. Using first version."
@@ -136,7 +136,7 @@ class AIJudge:
 
         except Exception as e:
             # On judge failure, return first version
-            return versions[0], f"Judge evaluation failed: {str(e)}. Using first version."
+            return versions[0], f"Judge evaluation failed: {e!s}. Using first version."
 
         # Fallback to first version
         return versions[0], "Judge unable to decide. Using first version."
@@ -183,7 +183,7 @@ class AIJudge:
 
         except Exception as e:
             # On judge failure, return first version
-            return versions[0], f"Judge evaluation failed: {str(e)}. Using first version."
+            return versions[0], f"Judge evaluation failed: {e!s}. Using first version."
 
         # Fallback to first version
         return versions[0], "Judge unable to decide. Using first version."
@@ -231,7 +231,7 @@ class AIJudge:
         except Exception as e:
             # On judge failure, return first version
             console.print(
-                f"[yellow]Judge evaluation failed: {str(e)}. Using first version.[/yellow]"
+                f"[yellow]Judge evaluation failed: {e!s}. Using first version.[/yellow]"
             )
             return versions[0]
 

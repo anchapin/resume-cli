@@ -17,4 +17,4 @@ from .converter import PDFConverter
 from .renderer import PDFRenderer
 from .templates import TemplateOptions
 
-__all__ = ["PDFRenderer", "PDFConverter", "TemplateOptions"]
+__all__ = ["PDFConverter", "PDFRenderer", "TemplateOptions"]

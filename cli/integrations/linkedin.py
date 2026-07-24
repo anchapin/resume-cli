@@ -140,7 +140,7 @@ class LinkedInSync:
                 if summary_data and len(summary_data) > 0:
                     # The Profile Summary CSV typically has 'Summary' column
                     row = summary_data[0]
-                    if row.get("Summary"):
+                    if "Summary" in row and row["Summary"]:
                         linkedin_data["profile"]["summary"] = row["Summary"]
             except Exception:
                 pass
@@ -222,7 +222,7 @@ class LinkedInSync:
 
             # Map CSV columns to internal format using the field mapping
             for csv_field, internal_key in self._csv_field_mapping.items():
-                if row.get(csv_field):
+                if csv_field in row and row[csv_field]:
                     linkedin_data[internal_key] = row[csv_field]
 
             # Handle positions/experience if present in CSV

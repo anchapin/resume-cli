@@ -282,7 +282,7 @@ Please extract the keywords:"""
                         ][:20]
 
             except Exception as e:
-                console.print(f"[yellow]Warning:[/yellow] AI keyword extraction failed: {e!s}")
+                console.print(f"[yellow]Warning:[/yellow] AI keyword extraction failed: {str(e)}")
 
         # Fallback to simple extraction
         return self._simple_keyword_extraction(job_description)

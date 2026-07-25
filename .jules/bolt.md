@@ -13,3 +13,7 @@
 ## 2025-02-18 - Regex Pre-compilation in Hot Paths
 **Learning:** Re-compiling regexes inside a frequently called function (like `latex_escape` which runs for every string) creates significant overhead. Pre-compiling them at module level yielded a ~3.2x speedup.
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
+
+## 2026-07-25 - Redundant Lowercasing in Generator Expressions
+**Learning:** In Python, calling methods like `.lower()` on strings inside a comprehension or generator expression that iterates over the same text multiple times (e.g., `[kw for kw in items if kw in text.lower()]`) results in the `.lower()` operation being evaluated repeatedly for every iteration. This causes unnecessary $O(N)$ memory allocations and CPU overhead, especially on large strings.
+**Action:** Cache the result of such operations outside the loop or generator expression (e.g., `text_lower = text.lower()`) and use the cached variable inside the comprehension.

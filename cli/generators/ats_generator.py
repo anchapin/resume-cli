@@ -407,7 +407,9 @@ class ATSGenerator:
             "improved",
             "achieved",
         ]
-        action_verb_count = sum(1 for verb in action_verbs if verb in all_text.lower())
+        # Cache lowercased strings outside loops to prevent redundant O(N) allocations
+        # Note: all_text is already lowercased by _get_all_text
+        action_verb_count = sum(1 for verb in action_verbs if verb in all_text)
 
         if action_verb_count >= 3:
             details.append(f"✓ Uses action verbs ({action_verb_count} found)")

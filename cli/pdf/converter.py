@@ -85,8 +85,9 @@ class PDFConverter:
             True if PDF was created successfully
         """
         try:
+            # Prevent LaTeX shell escapes (RCE) by strictly disabling shell-escape
             process = subprocess.Popen(
-                ["pdflatex", "-interaction=nonstopmode", tex_path.name],
+                ["pdflatex", "-interaction=nonstopmode", "-no-shell-escape", tex_path.name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=working_dir,
@@ -120,8 +121,16 @@ class PDFConverter:
             True if PDF was created successfully
         """
         try:
+            # Prevent LaTeX shell escapes (RCE) via pandoc's pdf-engine
             process = subprocess.Popen(
-                ["pandoc", str(tex_path), "-o", str(output_path), "--pdf-engine=xelatex"],
+                [
+                    "pandoc",
+                    str(tex_path),
+                    "-o",
+                    str(output_path),
+                    "--pdf-engine=xelatex",
+                    "--pdf-engine-opt=-no-shell-escape",
+                ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=working_dir,

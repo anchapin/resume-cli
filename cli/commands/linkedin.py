@@ -313,9 +313,7 @@ def _merge_resume_data(existing: dict, imported: dict) -> dict:
         existing_skills = {}
 
     for category, skill_list in imported_skills.items():
-        if category not in existing_skills:
-            existing_skills[category] = []
-        elif not isinstance(existing_skills[category], list):
+        if category not in existing_skills or not isinstance(existing_skills[category], list):
             existing_skills[category] = []
 
         # Deduplicate and merge

@@ -514,7 +514,7 @@ Please extract the keywords:"""
                         return [str(k).lower().strip() for k in keywords if k][:20]
 
             except Exception as e:
-                console.print(f"[yellow]Warning:[/yellow] AI keyword extraction failed: {str(e)}")
+                console.print(f"[yellow]Warning:[/yellow] AI keyword extraction failed: {e!s}")
 
         # Fallback to simple keyword extraction
         return self._simple_keyword_extraction(job_description)

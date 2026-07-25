@@ -356,7 +356,7 @@ class MockInterviewGenerator:
             return evaluation
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] AI evaluation failed: {str(e)}")
+            console.print(f"[yellow]Warning:[/yellow] AI evaluation failed: {e!s}")
             return {
                 "rating": 3,
                 "strengths": ["Response provided"],

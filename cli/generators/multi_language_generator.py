@@ -209,7 +209,7 @@ Now translate to {lang_info['name']}:"""
             return response.strip()
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] AI translation failed: {e!s}")
+            console.print(f"[yellow]Warning:[/yellow] AI translation failed: {str(e)}")
             console.print("[dim]Returning original English content[/dim]")
             return content
 

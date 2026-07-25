@@ -21,6 +21,7 @@ class PDFConverter:
 
     def __init__(self):
         """Initialize the PDF converter."""
+        pass
 
     def compile(
         self,

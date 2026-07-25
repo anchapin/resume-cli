@@ -130,6 +130,7 @@ class SalaryResearch:
 
     def __init__(self):
         """Initialize salary research tool."""
+        pass
 
     def research(
         self,

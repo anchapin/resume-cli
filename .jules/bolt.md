@@ -15,5 +15,5 @@
 **Action:** Always look for regex compilations inside loops or frequently called functions and move them to module level constants.
 
 ## 2026-07-25 - Redundant Lowercasing in Generator Expressions
-**Learning:** In Python, calling methods like `.lower()` on strings inside a comprehension or generator expression that iterates over the same text multiple times (e.g., `[kw for kw in items if kw in text.lower()]`) results in the `.lower()` operation being evaluated repeatedly for every iteration. This causes unnecessary (N)$ memory allocations and CPU overhead, especially on large strings.
+**Learning:** In Python, calling methods like `.lower()` on strings inside a comprehension or generator expression that iterates over the same text multiple times (e.g., `[kw for kw in items if kw in text.lower()]`) results in the `.lower()` operation being evaluated repeatedly for every iteration. This causes unnecessary $O(N)$ memory allocations and CPU overhead, especially on large strings.
 **Action:** Cache the result of such operations outside the loop or generator expression (e.g., `text_lower = text.lower()`) and use the cached variable inside the comprehension.

@@ -867,7 +867,7 @@ class JobParser:
             try:
                 data = json.loads(cache_file.read_text(encoding="utf-8"))
                 return JobDetails.from_dict(data)
-            except (OSError, json.JSONDecodeError):
+            except (json.JSONDecodeError, IOError):
                 return None
         return None
 

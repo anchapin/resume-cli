@@ -218,7 +218,9 @@ class InterviewQuestionsGenerator:
                     if extracted_json:
                         versions.append(json.loads(extracted_json))
             except Exception as e:
-                console.print(f"[yellow]Warning:[/yellow] Question generation {i+1} failed: {e!s}")
+                console.print(
+                    f"[yellow]Warning:[/yellow] Question generation {i+1} failed: {str(e)}"
+                )
                 continue
 
         # If no successful generations, return empty structure
@@ -246,7 +248,7 @@ class InterviewQuestionsGenerator:
                 return selected
             except Exception as e:
                 console.print(
-                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {e!s}. Using first version."
+                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {str(e)}. Using first version."
                 )
                 return versions[0]
 

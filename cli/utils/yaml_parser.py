@@ -182,8 +182,10 @@ class ResumeYAML:
             for skill in section_skills:
                 skill_name = skill if isinstance(skill, str) else skill.get("name", "")
 
+                # Cache lowercased strings outside loops to prevent redundant O(N) allocations
+                skill_name_lower = skill_name.lower()
                 # Check if skill matches any of the technologies
-                if any(tech in skill_name.lower() for tech in tech_lower):
+                if any(tech in skill_name_lower for tech in tech_lower):
                     matching.append(skill)
                 else:
                     non_matching.append(skill)
@@ -216,6 +218,8 @@ class ResumeYAML:
         emphasize_keywords = variant_config.get("emphasize_keywords", [])
 
         filtered_exp = []
+        # Cache lowercased strings outside loops to prevent redundant O(N) allocations
+        emphasize_keywords_lower = [kw.lower() for kw in emphasize_keywords]
         for job in experience:
             if not isinstance(job, dict):
                 continue
@@ -230,9 +234,11 @@ class ResumeYAML:
                 emphasize_for = bullet.get("emphasize_for", [])
                 text = bullet.get("text", "")
 
+                # Cache lowercased strings outside loops to prevent redundant O(N) allocations
+                text_lower = text.lower()
                 # Include if variant is emphasized or keywords match
                 if variant in emphasize_for or any(
-                    kw.lower() in text.lower() for kw in emphasize_keywords
+                    kw in text_lower for kw in emphasize_keywords_lower
                 ):
                     filtered_bullets.append(bullet)
 

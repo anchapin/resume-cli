@@ -96,7 +96,7 @@ class PDFConverter:
                 stdout, stderr = process.communicate(timeout=30)
             except subprocess.TimeoutExpired:
                 process.kill()
-                process.communicate()
+                stdout, stderr = process.communicate()
                 return False
 
             if process.returncode == 0 or output_path.exists():
@@ -144,7 +144,7 @@ class PDFConverter:
                 stdout, stderr = process.communicate(timeout=30)
             except subprocess.TimeoutExpired:
                 process.kill()
-                process.communicate()
+                stdout, stderr = process.communicate()
                 return False
 
             if process.returncode == 0 or output_path.exists():

@@ -781,7 +781,7 @@ Return ONLY valid JSON, nothing else."""
                 stdout, stderr = process.communicate(timeout=30)
             except subprocess.TimeoutExpired:
                 process.kill()
-                process.communicate()
+                stdout, stderr = process.communicate()
                 return False
             if process.returncode == 0 or output_path.exists():
                 pdf_created = True
@@ -809,7 +809,7 @@ Return ONLY valid JSON, nothing else."""
                         stdout, stderr = process.communicate(timeout=30)
                     except subprocess.TimeoutExpired:
                         process.kill()
-                        process.communicate()
+                        stdout, stderr = process.communicate()
                         return False
                     if process.returncode == 0 or output_path.exists():
                         pdf_created = True

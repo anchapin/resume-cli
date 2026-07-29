@@ -770,8 +770,9 @@ Return ONLY valid JSON, nothing else."""
         pdf_created = False
         try:
             # Use Popen with explicit cleanup to avoid double-free issues
+            # Add -no-shell-escape to prevent RCE via \write18
             process = subprocess.Popen(
-                ["pdflatex", "-interaction=nonstopmode", tex_path.name],
+                ["pdflatex", "-interaction=nonstopmode", "-no-shell-escape", tex_path.name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=tex_path.parent,
@@ -786,8 +787,16 @@ Return ONLY valid JSON, nothing else."""
             else:
                 # Fallback to pandoc
                 try:
+                    # Add --pdf-engine-opt=-no-shell-escape to prevent RCE via \write18
                     process = subprocess.Popen(
-                        ["pandoc", str(tex_path), "-o", str(output_path), "--pdf-engine=xelatex"],
+                        [
+                            "pandoc",
+                            str(tex_path),
+                            "-o",
+                            str(output_path),
+                            "--pdf-engine=xelatex",
+                            "--pdf-engine-opt=-no-shell-escape",
+                        ],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                     )

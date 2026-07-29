@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -114,7 +114,7 @@ class CoverLetterRequest(BaseModel):
         description="Job description text for the position",
         examples=["Senior Backend Engineer at Tech Corp\\nRequirements:\\n- Python\\n- FastAPI"],
     )
-    company_name: str | None = Field(
+    company_name: Optional[str] = Field(
         default=None,
         description="Name of the company to generate cover letter for",
         examples=["Tech Corp", "Acme Inc"],
@@ -131,17 +131,17 @@ class CoverLetterRequest(BaseModel):
         default=False,
         description="Use non-interactive mode (AI-generated responses) instead of user prompts",
     )
-    motivation: str | None = Field(
+    motivation: Optional[str] = Field(
         default=None,
         description="User's motivation for applying to this role",
         examples=["Passion for building scalable systems"],
     )
-    company_resonance: str | None = Field(
+    company_resonance: Optional[str] = Field(
         default=None,
         description="Aspects of company mission or culture that resonate with user",
         examples=["Innovation in AI technology"],
     )
-    connections: str | None = Field(
+    connections: Optional[str] = Field(
         default=None,
         description="Any connections at the company (e.g., referrals)",
         examples=["Know someone on the engineering team"],

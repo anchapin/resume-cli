@@ -1,11 +1,13 @@
 """LinkedIn integration for importing/exporting profile data."""
 
+from __future__ import annotations
+
 import csv
 import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class LinkedInSync:
@@ -38,7 +40,7 @@ class LinkedInSync:
             "Instant Messengers": "instantMessengers",
         }
 
-    def import_from_url(self, url: str) -> Dict[str, Any]:
+    def import_from_url(self, url: str) -> dict[str, Any]:
         """
         Parse LinkedIn profile from URL.
 
@@ -62,7 +64,7 @@ class LinkedInSync:
             "3. Use the downloaded JSON file with --data-file"
         )
 
-    def import_from_json(self, json_path: Path) -> Dict[str, Any]:
+    def import_from_json(self, json_path: Path) -> dict[str, Any]:
         """
         Import LinkedIn profile data from JSON, CSV, or folder export.
 
@@ -96,7 +98,7 @@ class LinkedInSync:
             # Try to detect format by reading first character
             return self._import_from_json_file(json_path)
 
-    def _import_from_folder(self, folder_path: Path) -> Dict[str, Any]:
+    def _import_from_folder(self, folder_path: Path) -> dict[str, Any]:
         """
         Import LinkedIn profile data from a folder export.
 
@@ -140,7 +142,7 @@ class LinkedInSync:
                 if summary_data and len(summary_data) > 0:
                     # The Profile Summary CSV typically has 'Summary' column
                     row = summary_data[0]
-                    if "Summary" in row and row["Summary"]:
+                    if row.get("Summary"):
                         linkedin_data["profile"]["summary"] = row["Summary"]
             except Exception:
                 pass
@@ -150,7 +152,7 @@ class LinkedInSync:
 
         return resume_data
 
-    def _read_csv_file(self, csv_path: Path, file_name: str) -> List[Dict[str, Any]]:
+    def _read_csv_file(self, csv_path: Path, file_name: str) -> list[dict[str, Any]]:
         """
         Read a CSV file and return list of dictionaries.
 
@@ -170,7 +172,7 @@ class LinkedInSync:
                 rows.append(cleaned_row)
         return rows
 
-    def _import_from_json_file(self, json_path: Path) -> Dict[str, Any]:
+    def _import_from_json_file(self, json_path: Path) -> dict[str, Any]:
         """
         Import LinkedIn profile data from JSON file.
 
@@ -196,7 +198,7 @@ class LinkedInSync:
 
         return resume_data
 
-    def _import_from_csv(self, csv_path: Path) -> Dict[str, Any]:
+    def _import_from_csv(self, csv_path: Path) -> dict[str, Any]:
         """
         Import LinkedIn profile data from CSV file.
 
@@ -222,7 +224,7 @@ class LinkedInSync:
 
             # Map CSV columns to internal format using the field mapping
             for csv_field, internal_key in self._csv_field_mapping.items():
-                if csv_field in row and row[csv_field]:
+                if row.get(csv_field):
                     linkedin_data[internal_key] = row[csv_field]
 
             # Handle positions/experience if present in CSV
@@ -249,7 +251,7 @@ class LinkedInSync:
 
         return resume_data
 
-    def _map_linkedin_to_resume(self, linkedin_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _map_linkedin_to_resume(self, linkedin_data: dict[str, Any]) -> dict[str, Any]:
         """
         Map LinkedIn profile data to resume.yaml structure.
 
@@ -277,7 +279,7 @@ class LinkedInSync:
 
         return resume_data
 
-    def _extract_contact(self, linkedin_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_contact(self, linkedin_data: dict[str, Any]) -> dict[str, Any]:
         """Extract contact information from LinkedIn data."""
         contact = {}
 
@@ -372,7 +374,7 @@ class LinkedInSync:
 
         return contact
 
-    def _extract_summary(self, linkedin_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_summary(self, linkedin_data: dict[str, Any]) -> dict[str, Any]:
         """Extract professional summary from LinkedIn data."""
         profile_data = (
             linkedin_data.get("profile", {}) or linkedin_data.get("Profile", {}) or linkedin_data
@@ -392,7 +394,7 @@ class LinkedInSync:
 
         return {"base": summary, "variants": {}}
 
-    def _extract_skills(self, linkedin_data: Dict[str, Any]) -> Dict[str, List[str]]:
+    def _extract_skills(self, linkedin_data: dict[str, Any]) -> dict[str, list[str]]:
         """Extract skills from LinkedIn data."""
         skills_data = linkedin_data.get("skills") or linkedin_data.get("Skills") or []
 
@@ -423,7 +425,7 @@ class LinkedInSync:
 
         return categorized
 
-    def _categorize_skills(self, skills: List[str]) -> Dict[str, List[str]]:
+    def _categorize_skills(self, skills: list[str]) -> dict[str, list[str]]:
         """
         Categorize skills based on keywords.
 
@@ -549,7 +551,7 @@ class LinkedInSync:
         # Remove empty categories
         return {k: v for k, v in categories.items() if v}
 
-    def _extract_experience(self, linkedin_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_experience(self, linkedin_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Extract work experience from LinkedIn data."""
         experience_data = (
             linkedin_data.get("experience")
@@ -640,7 +642,7 @@ class LinkedInSync:
 
         return experience
 
-    def _parse_linkedin_date(self, date_str: Optional[str]) -> Optional[str]:
+    def _parse_linkedin_date(self, date_str: str | None) -> str | None:
         """
         Parse LinkedIn date to YYYY-MM format.
 
@@ -670,7 +672,7 @@ class LinkedInSync:
 
         return None
 
-    def _parse_description_to_bullets(self, description: str) -> List[Dict[str, Any]]:
+    def _parse_description_to_bullets(self, description: str) -> list[dict[str, Any]]:
         """
         Parse job description into bullet points.
 
@@ -699,7 +701,7 @@ class LinkedInSync:
 
         return bullets
 
-    def _extract_education(self, linkedin_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_education(self, linkedin_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Extract education from LinkedIn data."""
         education_data = linkedin_data.get("education") or linkedin_data.get("Education") or []
 
@@ -772,7 +774,7 @@ class LinkedInSync:
 
         return education
 
-    def _extract_certifications(self, linkedin_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_certifications(self, linkedin_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Extract certifications from LinkedIn data."""
         cert_data = (
             linkedin_data.get("certifications")
@@ -829,7 +831,7 @@ class LinkedInSync:
 
         return certifications
 
-    def export_to_linkedin_format(self, yaml_path: Path, output_path: Optional[Path] = None) -> str:
+    def export_to_linkedin_format(self, yaml_path: Path, output_path: Path | None = None) -> str:
         """
         Export resume.yaml data to LinkedIn-friendly format.
 

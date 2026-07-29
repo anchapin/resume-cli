@@ -267,7 +267,6 @@ def run_tutorial(tutorial_key: str):
 @click.group()
 def tutorial():
     """Interactive tutorials for Resume CLI commands."""
-    pass
 
 
 @tutorial.command("list")

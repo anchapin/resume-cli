@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Resume CLI Parallel Issues Planner - Analyzes GitHub issues and creates parallel work plans."""
+from __future__ import annotations
 
 import json
 import re
@@ -7,7 +8,6 @@ import subprocess
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 
 
 @dataclass
@@ -17,11 +17,11 @@ class Issue:
     number: int
     title: str
     body: str
-    labels: List[str]
-    priority: Optional[str] = None
-    category: Optional[str] = None
-    size: Optional[str] = None
-    issue_type: Optional[str] = None
+    labels: list[str]
+    priority: str | None = None
+    category: str | None = None
+    size: str | None = None
+    issue_type: str | None = None
 
     @property
     def priority_score(self) -> int:
@@ -125,7 +125,7 @@ class Issue:
         return "other"
 
 
-def parse_issue_labels(labels: List[str]) -> tuple:
+def parse_issue_labels(labels: list[str]) -> tuple:
     """Parse priority, category, size, and type from issue labels."""
     priority = None
     category = None
@@ -151,7 +151,7 @@ def parse_issue_labels(labels: List[str]) -> tuple:
     return priority, category, size, issue_type
 
 
-def fetch_issues(limit: int = 100) -> List[Issue]:
+def fetch_issues(limit: int = 100) -> list[Issue]:
     """Fetch open issues from GitHub."""
     print("Fetching open issues from GitHub...")
     result = subprocess.run(
@@ -194,8 +194,8 @@ def fetch_issues(limit: int = 100) -> List[Issue]:
 
 
 def group_by_parallel_workability(
-    issues: List[Issue], max_tracks: int = 4
-) -> Dict[str, List[Issue]]:
+    issues: list[Issue], max_tracks: int = 4
+) -> dict[str, list[Issue]]:
     """Group issues that can be worked on in parallel."""
 
     # Group by key area
@@ -234,7 +234,7 @@ def generate_branch_name(issue: Issue) -> str:
     return f"feature/issue-{issue.number}"
 
 
-def print_plan(tracks: Dict[str, List[Issue]], max_issues_per_track: int = 3):
+def print_plan(tracks: dict[str, list[Issue]], max_issues_per_track: int = 3):
     """Print the parallel work plan."""
 
     print("\n" + "=" * 80)
@@ -266,7 +266,7 @@ def print_plan(tracks: Dict[str, List[Issue]], max_issues_per_track: int = 3):
     print("\n" + "=" * 80)
 
 
-def print_git_commands(tracks: Dict[str, List[Issue]], max_issues_per_track: int = 1):
+def print_git_commands(tracks: dict[str, list[Issue]], max_issues_per_track: int = 1):
     """Print git commands to set up worktrees."""
 
     print("\n" + "=" * 80)
@@ -275,7 +275,7 @@ def print_git_commands(tracks: Dict[str, List[Issue]], max_issues_per_track: int
 
     all_commands = []
 
-    for area, issues in tracks.items():
+    for issues in tracks.values():
         for issue in issues[:max_issues_per_track]:
             worktree = generate_worktree_name(issue)
             branch = generate_branch_name(issue)
@@ -288,7 +288,7 @@ def print_git_commands(tracks: Dict[str, List[Issue]], max_issues_per_track: int
         print()
 
 
-def print_agent_commands(tracks: Dict[str, List[Issue]], max_issues_per_track: int = 1):
+def print_agent_commands(tracks: dict[str, list[Issue]], max_issues_per_track: int = 1):
     """Print commands to launch parallel agents."""
 
     print("\n" + "=" * 80)
@@ -307,7 +307,7 @@ def print_agent_commands(tracks: Dict[str, List[Issue]], max_issues_per_track: i
             print("# Read the issue and implement the feature")
 
 
-def print_summary(tracks: Dict[str, List[Issue]], issues: List[Issue]):
+def print_summary(tracks: dict[str, list[Issue]], issues: list[Issue]):
     """Print execution summary."""
 
     print("\n" + "=" * 80)

@@ -1,8 +1,10 @@
 """Multi-language resume generation using AI translation."""
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.console import Console
 
@@ -63,7 +65,7 @@ LOCALE_FORMATS = {
 class MultiLanguageResumeGenerator:
     """Generate resumes in multiple languages using AI translation."""
 
-    def __init__(self, yaml_path: Optional[Path] = None, config: Optional[Config] = None):
+    def __init__(self, yaml_path: Path | None = None, config: Config | None = None):
         """
         Initialize multi-language resume generator.
 
@@ -173,10 +175,10 @@ class MultiLanguageResumeGenerator:
         self,
         content: str,
         target_language: str,
-        experience: List[Dict[str, Any]],
-        skills: Dict[str, List[str]],
-        education: List[Dict[str, Any]],
-        contact: Dict[str, Any],
+        experience: list[dict[str, Any]],
+        skills: dict[str, list[str]],
+        education: list[dict[str, Any]],
+        contact: dict[str, Any],
     ) -> str:
         """Translate resume content using AI."""
         lang_info = SUPPORTED_LANGUAGES[target_language]
@@ -209,15 +211,15 @@ Now translate to {lang_info['name']}:"""
             return response.strip()
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] AI translation failed: {str(e)}")
+            console.print(f"[yellow]Warning:[/yellow] AI translation failed: {e!s}")
             console.print("[dim]Returning original English content[/dim]")
             return content
 
-    def list_supported_languages(self) -> Dict[str, Dict[str, str]]:
+    def list_supported_languages(self) -> dict[str, dict[str, str]]:
         """List all supported languages."""
         return SUPPORTED_LANGUAGES.copy()
 
-    def detect_language_from_job_description(self, job_description: str) -> Optional[str]:
+    def detect_language_from_job_description(self, job_description: str) -> str | None:
         """
         Detect the target language from a job description.
 
@@ -283,8 +285,8 @@ Now translate to {lang_info['name']}:"""
 
 
 def generate_multi_language_resume(
-    yaml_path: Optional[Path] = None,
-    config: Optional[Config] = None,
+    yaml_path: Path | None = None,
+    config: Config | None = None,
     target_language: str = "es",
     variant: str = "base",
     output_format: str = "md",

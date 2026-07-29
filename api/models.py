@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -6,7 +8,7 @@ from pydantic import BaseModel, Field
 class ResumeRequest(BaseModel):
     """Request model for rendering a resume as PDF."""
 
-    resume_data: Dict[str, Any] = Field(
+    resume_data: dict[str, Any] = Field(
         ...,
         description="Resume data in YAML-compatible dictionary format",
         examples=[
@@ -28,7 +30,7 @@ class ResumeRequest(BaseModel):
 class TailorRequest(BaseModel):
     """Request model for AI-tailoring resume data to a job description."""
 
-    resume_data: Dict[str, Any] = Field(
+    resume_data: dict[str, Any] = Field(
         ...,
         description="Resume data in YAML-compatible dictionary format",
         examples=[
@@ -50,7 +52,7 @@ class TailorRequest(BaseModel):
 class ATSRequest(BaseModel):
     """Request model for ATS compatibility check."""
 
-    resume_data: Dict[str, Any] = Field(
+    resume_data: dict[str, Any] = Field(
         ...,
         description="Resume data in YAML-compatible dictionary format",
         examples=[
@@ -79,23 +81,23 @@ class ATSCategoryScore(BaseModel):
     score: float
     max_score: float
     percentage: float
-    details: Dict[str, Any] = {}
+    details: dict[str, Any] = {}
 
 
 class ATSReport(BaseModel):
     overall_score: float
     overall_max_score: float
     overall_percentage: float
-    categories: List[ATSCategoryScore]
-    suggestions: List[str] = []
-    missing_keywords: List[str] = []
-    matching_keywords: List[str] = []
+    categories: list[ATSCategoryScore]
+    suggestions: list[str] = []
+    missing_keywords: list[str] = []
+    matching_keywords: list[str] = []
 
 
 class CoverLetterRequest(BaseModel):
     """Request model for generating a cover letter."""
 
-    resume_data: Dict[str, Any] = Field(
+    resume_data: dict[str, Any] = Field(
         ...,
         description="Resume data in YAML-compatible dictionary format",
         examples=[
@@ -112,7 +114,7 @@ class CoverLetterRequest(BaseModel):
         description="Job description text for the position",
         examples=["Senior Backend Engineer at Tech Corp\\nRequirements:\\n- Python\\n- FastAPI"],
     )
-    company_name: Optional[str] = Field(
+    company_name: str | None = Field(
         default=None,
         description="Name of the company to generate cover letter for",
         examples=["Tech Corp", "Acme Inc"],
@@ -129,17 +131,17 @@ class CoverLetterRequest(BaseModel):
         default=False,
         description="Use non-interactive mode (AI-generated responses) instead of user prompts",
     )
-    motivation: Optional[str] = Field(
+    motivation: str | None = Field(
         default=None,
         description="User's motivation for applying to this role",
         examples=["Passion for building scalable systems"],
     )
-    company_resonance: Optional[str] = Field(
+    company_resonance: str | None = Field(
         default=None,
         description="Aspects of company mission or culture that resonate with user",
         examples=["Innovation in AI technology"],
     )
-    connections: Optional[str] = Field(
+    connections: str | None = Field(
         default=None,
         description="Any connections at the company (e.g., referrals)",
         examples=["Know someone on the engineering team"],
@@ -154,7 +156,7 @@ class CoverLetterRequest(BaseModel):
 class JSONResumeRequest(BaseModel):
     """Request model for creating/updating resume from JSON Resume format."""
 
-    json_resume: Dict[str, Any] = Field(
+    json_resume: dict[str, Any] = Field(
         ...,
         description="Resume data in JSON Resume format (https://jsonresume.org/schema/)",
         examples=[
@@ -204,7 +206,7 @@ class JSONResumeRequest(BaseModel):
 class JSONResumeResponse(BaseModel):
     """Response model for JSON Resume format."""
 
-    json_resume: Dict[str, Any] = Field(..., description="Resume data in JSON Resume format")
+    json_resume: dict[str, Any] = Field(..., description="Resume data in JSON Resume format")
     variant: str = Field(..., description="Resume variant used")
     created_at: str = Field(..., description="Timestamp of creation")
 
@@ -222,5 +224,5 @@ class ResumeMetadata(BaseModel):
 class ResumeListResponse(BaseModel):
     """Response model for listing resumes."""
 
-    resumes: List[ResumeMetadata] = Field(default_factory=list, description="List of resumes")
+    resumes: list[ResumeMetadata] = Field(default_factory=list, description="List of resumes")
     total: int = Field(..., description="Total number of resumes")

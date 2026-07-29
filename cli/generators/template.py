@@ -1,9 +1,11 @@
 """Template-based resume generator."""
 
+from __future__ import annotations
+
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..utils.config import Config
 from ..utils.template_utils import get_jinja_env, get_jinja_tex_env
@@ -23,10 +25,10 @@ class TemplateGenerator:
 
     def __init__(
         self,
-        yaml_path: Optional[Path] = None,
-        template_dir: Optional[Path] = None,
-        config: Optional[Config] = None,
-        resume_data: Optional[Dict[str, Any]] = None,
+        yaml_path: Path | None = None,
+        template_dir: Path | None = None,
+        config: Config | None = None,
+        resume_data: dict[str, Any] | None = None,
     ):
         """
         Initialize template generator.
@@ -58,10 +60,10 @@ class TemplateGenerator:
         self,
         variant: str,
         output_format: str = "md",
-        output_path: Optional[Path] = None,
-        enhanced_context: Optional[Dict[str, Any]] = None,
+        output_path: Path | None = None,
+        enhanced_context: dict[str, Any] | None = None,
         template: str = "base",
-        custom_template_path: Optional[Path] = None,
+        custom_template_path: Path | None = None,
         **kwargs,
     ) -> str:
         """
@@ -266,7 +268,7 @@ class TemplateGenerator:
                         stdout, stderr = process.communicate(timeout=30)
                     except subprocess.TimeoutExpired:
                         process.kill()
-                        stdout, stderr = process.communicate()
+                        _stdout, _stderr = process.communicate()
                         raise RuntimeError("PDF compilation timed out")
 
                     if process.returncode == 0 or output_path.exists():
@@ -286,8 +288,8 @@ class TemplateGenerator:
         self,
         company_name: str,
         position_name: str,
-        hiring_manager_name: Optional[str] = None,
-        output_path: Optional[Path] = None,
+        hiring_manager_name: str | None = None,
+        output_path: Path | None = None,
     ) -> str:
         """
         Generate cover letter/email.
@@ -323,7 +325,7 @@ class TemplateGenerator:
         return content
 
     def get_output_path(
-        self, variant: str, output_format: str, output_dir: Optional[Path] = None
+        self, variant: str, output_format: str, output_dir: Path | None = None
     ) -> Path:
         """
         Generate output file path based on config.
@@ -356,7 +358,7 @@ class TemplateGenerator:
             templates.append(template_file.stem)
         return templates
 
-    def get_pdf_generator(self) -> Optional["ResumePDFLibGenerator"]:
+    def get_pdf_generator(self) -> ResumePDFLibGenerator | None:
         """
         Get a PDFGenerator instance from resume-pdf-lib.
 
@@ -402,7 +404,7 @@ class TemplateGenerator:
         # Generate PDF
         pdf_gen.generate_pdf(resume_data, variant=variant, output_path=str(output_path))
 
-    def _prepare_json_resume_format(self, variant: str) -> Dict[str, Any]:
+    def _prepare_json_resume_format(self, variant: str) -> dict[str, Any]:
         """
         Prepare resume data in JSON Resume format for resume-pdf-lib.
 

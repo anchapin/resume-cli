@@ -10,10 +10,11 @@ Usage:
     python analyze_performance.py --csv tracking/resume_experiment.csv
     python analyze_performance.py --version v1.0.0-base
 """
+from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 
@@ -60,7 +61,7 @@ class ResumeAnalyzer:
 
         print(f"\n📬 Overall Response Rate: {response_rate:.1f}% ({len(responses)}/{total_apps})")
 
-    def analyze_by_version(self, version: Optional[str] = None):
+    def analyze_by_version(self, version: str | None = None):
         """Analyze performance metrics by resume version."""
         if version:
             df = self.df[self.df["resume_version"] == version]
@@ -239,7 +240,7 @@ class ResumeAnalyzer:
                     " or using it as template for variants."
                 )
 
-    def generate_report(self, version: Optional[str] = None):
+    def generate_report(self, version: str | None = None):
         """Generate complete performance report."""
         self.overview()
         self.analyze_by_version(version)
@@ -281,4 +282,4 @@ def main():
 
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

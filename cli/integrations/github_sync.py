@@ -1,11 +1,13 @@
 """GitHub integration for syncing projects."""
 
+from __future__ import annotations
+
 import json
 import subprocess
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class GitHubSync:
@@ -21,7 +23,7 @@ class GitHubSync:
         self.config = config
         self.username = config.github_username
 
-    def fetch_projects(self, months: int = 3) -> Dict[str, List[Dict[str, Any]]]:
+    def fetch_projects(self, months: int = 3) -> dict[str, list[dict[str, Any]]]:
         """
         Fetch recent projects from GitHub.
 
@@ -61,7 +63,7 @@ class GitHubSync:
             threshold = datetime.now() - timedelta(days=30 * months)
             return threshold.strftime("%Y-%m-%d")
 
-    def _fetch_repos(self, date_threshold: str) -> List[Dict[str, Any]]:
+    def _fetch_repos(self, date_threshold: str) -> list[dict[str, Any]]:
         """Fetch repositories from GitHub using gh CLI."""
         # Use secure temp file instead of hardcoded /tmp path
         temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
@@ -104,7 +106,7 @@ class GitHubSync:
         except json.JSONDecodeError as e:
             raise RuntimeError(f"Failed to parse GitHub response: {e}")
 
-    def _categorize_repos(self, repos: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    def _categorize_repos(self, repos: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
         """
         Categorize repositories by type.
 
@@ -181,7 +183,7 @@ class GitHubSync:
 
         return categories
 
-    def _format_repo(self, repo: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_repo(self, repo: dict[str, Any]) -> dict[str, Any]:
         """Format repo dict for resume."""
         return {
             "name": repo.get("name", ""),
@@ -193,7 +195,7 @@ class GitHubSync:
         }
 
     def _fetch_readme(
-        self, repo_owner: str, repo_name: str, repos: Optional[Dict[str, Any]] = None
+        self, repo_owner: str, repo_name: str, repos: dict[str, Any] | None = None
     ) -> str:
         """
         Fetch README content for a repository.
@@ -250,7 +252,7 @@ class GitHubSync:
         except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError):
             return ""
 
-    def _fetch_repo_topics(self, repo_owner: str, repo_name: str) -> List[str]:
+    def _fetch_repo_topics(self, repo_owner: str, repo_name: str) -> list[str]:
         """
         Fetch topics for a repository.
 
@@ -289,7 +291,7 @@ class GitHubSync:
 
     def _fetch_repos_with_details(
         self, date_threshold: str, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Fetch repositories from GitHub with enhanced details (topics and README).
         Only includes public repositories that are not forks.
@@ -354,8 +356,8 @@ class GitHubSync:
             raise RuntimeError(f"Failed to parse GitHub response: {e}")
 
     def _search_code_in_org(
-        self, technologies: List[str], limit_per_tech: int = 10
-    ) -> Dict[str, List[Dict[str, Any]]]:
+        self, technologies: list[str], limit_per_tech: int = 10
+    ) -> dict[str, list[dict[str, Any]]]:
         """
         Search for code within the user's organization matching the technologies.
 
@@ -456,9 +458,9 @@ class GitHubSync:
 
     def calculate_tech_match_score(
         self,
-        repo: Dict[str, Any],
-        technologies: List[str],
-        code_matches: Optional[Dict[str, Any]] = None,
+        repo: dict[str, Any],
+        technologies: list[str],
+        code_matches: dict[str, Any] | None = None,
     ) -> int:
         """
         Calculate a match score for a repo against the target technologies.
@@ -553,8 +555,8 @@ class GitHubSync:
         return score
 
     def select_matching_projects(
-        self, technologies: List[str], top_n: int = 3, months: int = 12
-    ) -> List[Dict[str, Any]]:
+        self, technologies: list[str], top_n: int = 3, months: int = 12
+    ) -> list[dict[str, Any]]:
         """
         Select top GitHub projects that match the target technologies.
 
@@ -634,7 +636,7 @@ class GitHubSync:
         return formatted_projects
 
     def update_resume_projects(
-        self, projects: List[Dict[str, Any]], yaml_path: Path, category: str = "featured"
+        self, projects: list[dict[str, Any]], yaml_path: Path, category: str = "featured"
     ) -> None:
         """
         Update resume.yaml with selected projects.
@@ -673,7 +675,7 @@ class GitHubSync:
         yaml_handler.save(data)
 
     def update_resume_yaml(
-        self, projects: Dict[str, List[Dict[str, Any]]], yaml_path: Path
+        self, projects: dict[str, list[dict[str, Any]]], yaml_path: Path
     ) -> None:
         """
         Update resume.yaml with fetched projects.

@@ -1,10 +1,12 @@
 """Template Marketplace - Browse, install, and manage resume templates."""
 
+from __future__ import annotations
+
 import json
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import click
 
@@ -28,15 +30,15 @@ class TemplateMetadata:
         category: str,
         author: str = "unknown",
         version: str = "1.0.0",
-        tags: Optional[List[str]] = None,
-        formats: Optional[List[str]] = None,
+        tags: list[str] | None = None,
+        formats: list[str] | None = None,
         rating: float = 0.0,
         reviews_count: int = 0,
         downloads: int = 0,
-        created_at: Optional[str] = None,
-        updated_at: Optional[str] = None,
+        created_at: str | None = None,
+        updated_at: str | None = None,
         source: str = "local",
-        source_url: Optional[str] = None,
+        source_url: str | None = None,
     ):
         self.name = name
         self.description = description
@@ -53,7 +55,7 @@ class TemplateMetadata:
         self.source = source
         self.source_url = source_url
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -73,7 +75,7 @@ class TemplateMetadata:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TemplateMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> TemplateMetadata:
         """Create from dictionary."""
         return cls(
             name=data.get("name", "unknown"),
@@ -109,9 +111,9 @@ class TemplateMarketplace:
 
     def __init__(
         self,
-        registry_path: Optional[Path] = None,
-        user_templates_dir: Optional[Path] = None,
-        config: Optional[Config] = None,
+        registry_path: Path | None = None,
+        user_templates_dir: Path | None = None,
+        config: Config | None = None,
     ):
         """
         Initialize template marketplace.
@@ -132,20 +134,20 @@ class TemplateMarketplace:
         # Load registry
         self.registry = self._load_registry()
 
-    def _load_registry(self) -> Dict[str, Any]:
+    def _load_registry(self) -> dict[str, Any]:
         """Load template registry from file."""
         if self.registry_path.exists():
             try:
                 with open(self.registry_path, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 # Return default registry if file is corrupted
                 pass
 
         # Return default registry with built-in templates
         return self._create_default_registry()
 
-    def _create_default_registry(self) -> Dict[str, Any]:
+    def _create_default_registry(self) -> dict[str, Any]:
         """Create default registry with built-in templates."""
         return {
             "templates": {
@@ -226,8 +228,8 @@ class TemplateMarketplace:
             json.dump(self.registry, f, indent=2)
 
     def list_templates(
-        self, category: Optional[str] = None, tag: Optional[str] = None
-    ) -> List[TemplateMetadata]:
+        self, category: str | None = None, tag: str | None = None
+    ) -> list[TemplateMetadata]:
         """
         List available templates.
 
@@ -254,11 +256,11 @@ class TemplateMarketplace:
         templates.sort(key=lambda t: (t.rating, t.downloads), reverse=True)
         return templates
 
-    def get_categories(self) -> List[str]:
+    def get_categories(self) -> list[str]:
         """Get available template categories."""
         return self.registry.get("categories", self.CATEGORIES)
 
-    def get_template(self, name: str) -> Optional[TemplateMetadata]:
+    def get_template(self, name: str) -> TemplateMetadata | None:
         """
         Get template metadata by name.
 
@@ -273,7 +275,7 @@ class TemplateMarketplace:
             return TemplateMetadata.from_dict(template_data)
         return None
 
-    def preview_template(self, name: str, lines: int = 30) -> Optional[str]:
+    def preview_template(self, name: str, lines: int = 30) -> str | None:
         """
         Preview template content.
 
@@ -303,8 +305,8 @@ class TemplateMarketplace:
     def install_template(
         self,
         source_path: Path,
-        name: Optional[str] = None,
-        metadata: Optional[TemplateMetadata] = None,
+        name: str | None = None,
+        metadata: TemplateMetadata | None = None,
     ) -> Path:
         """
         Install a template from a file.
@@ -377,7 +379,7 @@ class TemplateMarketplace:
 
         return True
 
-    def rate_template(self, name: str, rating: float, review: Optional[str] = None) -> bool:
+    def rate_template(self, name: str, rating: float, review: str | None = None) -> bool:
         """
         Rate a template.
 
@@ -430,7 +432,7 @@ class TemplateMarketplace:
         )
         self._save_registry()
 
-    def get_reviews(self, name: str) -> List[Dict[str, Any]]:
+    def get_reviews(self, name: str) -> list[dict[str, Any]]:
         """
         Get reviews for a template.
 
@@ -483,7 +485,7 @@ class TemplateMarketplace:
 
         return output_path
 
-    def search_templates(self, query: str) -> List[TemplateMetadata]:
+    def search_templates(self, query: str) -> list[TemplateMetadata]:
         """
         Search templates by name, description, or tags.
 
@@ -515,7 +517,6 @@ class TemplateMarketplace:
 @click.group()
 def templates():
     """Template marketplace commands."""
-    pass
 
 
 @templates.command("list")
@@ -527,7 +528,7 @@ def templates():
 )
 @click.option("-t", "--tag", type=str, help="Filter by tag")
 @click.pass_context
-def list_templates(ctx, category: Optional[str], tag: Optional[str]):
+def list_templates(ctx, category: str | None, tag: str | None):
     """List available templates."""
     from rich.table import Table
 
@@ -623,9 +624,7 @@ def preview_template(ctx, name: str, lines: int):
     help="Template category",
 )
 @click.pass_context
-def install_template(
-    ctx, source: str, name: Optional[str], description: Optional[str], category: str
-):
+def install_template(ctx, source: str, name: str | None, description: str | None, category: str):
     """Install a template from a file."""
     marketplace = TemplateMarketplace()
 
@@ -685,7 +684,7 @@ def uninstall_template_cmd(ctx, name: str, yes: bool):
 @click.argument("name")
 @click.option("-o", "--output", type=click.Path(), help="Output file path")
 @click.pass_context
-def export_template(ctx, name: str, output: Optional[str]):
+def export_template(ctx, name: str, output: str | None):
     """Export a template to a file."""
     marketplace = TemplateMarketplace()
 
@@ -708,7 +707,7 @@ def export_template(ctx, name: str, output: Optional[str]):
 @click.argument("rating", type=click.FloatRange(1.0, 5.0))
 @click.option("-r", "--review", type=str, help="Review text")
 @click.pass_context
-def rate_template(ctx, name: str, rating: float, review: Optional[str]):
+def rate_template(ctx, name: str, rating: float, review: str | None):
     """Rate a template."""
     marketplace = TemplateMarketplace()
 

@@ -230,9 +230,7 @@ class AIJudge:
 
         except Exception as e:
             # On judge failure, return first version
-            console.print(
-                f"[yellow]Judge evaluation failed: {e!s}. Using first version.[/yellow]"
-            )
+            console.print(f"[yellow]Judge evaluation failed: {e!s}. Using first version.[/yellow]")
             return versions[0]
 
         # Fallback to first version

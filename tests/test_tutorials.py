@@ -19,7 +19,7 @@ class TestTutorialsModule:
         """Test that each tutorial has required keys."""
         from cli.commands.tutorials import TUTORIALS
 
-        for key, tutorial in TUTORIALS.items():
+        for tutorial in TUTORIALS.values():
             assert "title" in tutorial
             assert "description" in tutorial
             assert "steps" in tutorial
@@ -30,7 +30,7 @@ class TestTutorialsModule:
         """Test that each tutorial step has required keys."""
         from cli.commands.tutorials import TUTORIALS
 
-        for key, tutorial in TUTORIALS.items():
+        for tutorial in TUTORIALS.values():
             for step in tutorial["steps"]:
                 assert "title" in step
                 assert "content" in step

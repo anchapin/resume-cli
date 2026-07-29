@@ -1,16 +1,16 @@
 """YAML parser utility for resume data."""
 
+from __future__ import annotations
+
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class ResumeYAML:
     """Handler for reading and writing resume.yaml."""
 
-    def __init__(
-        self, yaml_path: Optional[Path] = None, resume_data: Optional[Dict[str, Any]] = None
-    ):
+    def __init__(self, yaml_path: Path | None = None, resume_data: dict[str, Any] | None = None):
         """
         Initialize YAML handler.
 
@@ -24,9 +24,9 @@ class ResumeYAML:
             yaml_path = Path(__file__).parent.parent.parent / "resume.yaml"
 
         self.yaml_path = Path(yaml_path)
-        self._data: Optional[Dict[str, Any]] = resume_data
+        self._data: dict[str, Any] | None = resume_data
 
-    def load(self) -> Dict[str, Any]:
+    def load(self) -> dict[str, Any]:
         """
         Load resume data from YAML file.
 
@@ -51,13 +51,13 @@ class ResumeYAML:
         return self._data
 
     @property
-    def data(self) -> Dict[str, Any]:
+    def data(self) -> dict[str, Any]:
         """Get cached data, loading if necessary."""
         if self._data is None:
             self.load()
         return self._data
 
-    def save(self, data: Optional[Dict[str, Any]] = None) -> None:
+    def save(self, data: dict[str, Any] | None = None) -> None:
         """
         Save resume data to YAML file.
 
@@ -81,7 +81,7 @@ class ResumeYAML:
         with open(self.yaml_path, "w", encoding="utf-8") as f:
             yaml.dump(self._data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
 
-    def get_contact(self) -> Dict[str, Any]:
+    def get_contact(self) -> dict[str, Any]:
         """Get contact information."""
         contact = self.data.get("contact", {})
         return contact if isinstance(contact, dict) else {}
@@ -107,8 +107,8 @@ class ResumeYAML:
         return str(summaries.get("base", ""))
 
     def get_skills(
-        self, variant: Optional[str] = None, prioritize_technologies: Optional[list] = None
-    ) -> Dict[str, list]:
+        self, variant: str | None = None, prioritize_technologies: list | None = None
+    ) -> dict[str, list]:
         """
         Get skills, optionally filtered by variant.
 
@@ -123,7 +123,7 @@ class ResumeYAML:
         if not isinstance(all_skills, dict):
             return {}
 
-        filtered_skills: Dict[str, list]
+        filtered_skills: dict[str, list]
         if variant is None:
             filtered_skills = all_skills
         else:
@@ -156,7 +156,7 @@ class ResumeYAML:
 
         return filtered_skills
 
-    def _prioritize_skills(self, skills: Dict[str, list], technologies: list) -> Dict[str, list]:
+    def _prioritize_skills(self, skills: dict[str, list], technologies: list) -> dict[str, list]:
         """
         Reorder skills within categories to prioritize highlighted technologies.
 
@@ -182,8 +182,11 @@ class ResumeYAML:
             for skill in section_skills:
                 skill_name = skill if isinstance(skill, str) else skill.get("name", "")
 
+                # Cache lowercased strings outside loops to prevent redundant O(N) allocations
+                skill_name_lower = skill_name.lower()
+
                 # Check if skill matches any of the technologies
-                if any(tech in skill_name.lower() for tech in tech_lower):
+                if any(tech in skill_name_lower for tech in tech_lower):
                     matching.append(skill)
                 else:
                     non_matching.append(skill)
@@ -193,7 +196,7 @@ class ResumeYAML:
 
         return prioritized
 
-    def get_experience(self, variant: Optional[str] = None) -> list:
+    def get_experience(self, variant: str | None = None) -> list:
         """
         Get experience entries, optionally filtered by variant.
 
@@ -215,6 +218,9 @@ class ResumeYAML:
         max_bullets = variant_config.get("max_bullets_per_job", 4)
         emphasize_keywords = variant_config.get("emphasize_keywords", [])
 
+        # Cache lowercased strings outside loops to prevent redundant O(N) allocations
+        emphasize_keywords_lower = [kw.lower() for kw in emphasize_keywords]
+
         filtered_exp = []
         for job in experience:
             if not isinstance(job, dict):
@@ -229,10 +235,11 @@ class ResumeYAML:
                     continue
                 emphasize_for = bullet.get("emphasize_for", [])
                 text = bullet.get("text", "")
+                text_lower = text.lower()
 
                 # Include if variant is emphasized or keywords match
                 if variant in emphasize_for or any(
-                    kw.lower() in text.lower() for kw in emphasize_keywords
+                    kw in text_lower for kw in emphasize_keywords_lower
                 ):
                     filtered_bullets.append(bullet)
 
@@ -249,7 +256,7 @@ class ResumeYAML:
 
         return filtered_exp
 
-    def get_education(self, variant: Optional[str] = None) -> list:
+    def get_education(self, variant: str | None = None) -> list:
         """
         Get education entries.
 
@@ -268,7 +275,7 @@ class ResumeYAML:
 
         return education
 
-    def get_projects(self, variant: Optional[str] = None) -> Dict[str, list]:
+    def get_projects(self, variant: str | None = None) -> dict[str, list]:
         """
         Get projects by category.
 
@@ -296,12 +303,12 @@ class ResumeYAML:
 
         return filtered_projects
 
-    def get_variants(self) -> Dict[str, Dict[str, Any]]:
+    def get_variants(self) -> dict[str, dict[str, Any]]:
         """Get all available variants."""
         variants = self.data.get("variants", {})
         return variants if isinstance(variants, dict) else {}
 
-    def get_variant(self, variant_name: str) -> Optional[Dict[str, Any]]:
+    def get_variant(self, variant_name: str) -> dict[str, Any] | None:
         """Get specific variant configuration."""
         variants = self.data.get("variants", {})
         if isinstance(variants, dict):

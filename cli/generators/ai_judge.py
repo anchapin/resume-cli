@@ -1,8 +1,10 @@
 """AI Judge agent for evaluating and selecting the best AI-generated content."""
 
+from __future__ import annotations
+
 import json
 import re
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from rich.console import Console
 
@@ -28,11 +30,11 @@ class AIJudge:
 
     def judge_cover_letter(
         self,
-        versions: List[Dict[str, Any]],
+        versions: list[dict[str, Any]],
         job_description: str,
-        job_details: Dict[str, Any],
+        job_details: dict[str, Any],
         resume_context: str,
-    ) -> Tuple[Dict[str, Any], str]:
+    ) -> tuple[dict[str, Any], str]:
         """
         Evaluate and select best cover letter version.
 
@@ -82,14 +84,14 @@ class AIJudge:
 
         except Exception as e:
             # On judge failure, return first version with note
-            return versions[0], f"Judge evaluation failed: {str(e)}. Using first version."
+            return versions[0], f"Judge evaluation failed: {e!s}. Using first version."
 
         # Fallback to first version
         return versions[0], "Judge unable to decide. Using first version."
 
     def judge_resume_customization(
-        self, versions: List[Dict[str, Any]], job_description: str, resume_context: str
-    ) -> Tuple[Dict[str, Any], str]:
+        self, versions: list[dict[str, Any]], job_description: str, resume_context: str
+    ) -> tuple[dict[str, Any], str]:
         """
         Evaluate and select best resume customization (structured data).
 
@@ -136,14 +138,14 @@ class AIJudge:
 
         except Exception as e:
             # On judge failure, return first version
-            return versions[0], f"Judge evaluation failed: {str(e)}. Using first version."
+            return versions[0], f"Judge evaluation failed: {e!s}. Using first version."
 
         # Fallback to first version
         return versions[0], "Judge unable to decide. Using first version."
 
     def judge_resume_text(
-        self, versions: List[str], job_description: str, base_resume: str
-    ) -> Tuple[str, str]:
+        self, versions: list[str], job_description: str, base_resume: str
+    ) -> tuple[str, str]:
         """
         Evaluate and select best full resume text version.
 
@@ -183,14 +185,14 @@ class AIJudge:
 
         except Exception as e:
             # On judge failure, return first version
-            return versions[0], f"Judge evaluation failed: {str(e)}. Using first version."
+            return versions[0], f"Judge evaluation failed: {e!s}. Using first version."
 
         # Fallback to first version
         return versions[0], "Judge unable to decide. Using first version."
 
     def judge_interview_questions(
-        self, versions: List[Dict[str, Any]], job_description: str, resume_context: str
-    ) -> Dict[str, Any]:
+        self, versions: list[dict[str, Any]], job_description: str, resume_context: str
+    ) -> dict[str, Any]:
         """
         Evaluate and select best interview questions generation.
 
@@ -230,9 +232,7 @@ class AIJudge:
 
         except Exception as e:
             # On judge failure, return first version
-            console.print(
-                f"[yellow]Judge evaluation failed: {str(e)}. Using first version.[/yellow]"
-            )
+            console.print(f"[yellow]Judge evaluation failed: {e!s}. Using first version.[/yellow]")
             return versions[0]
 
         # Fallback to first version
@@ -240,9 +240,9 @@ class AIJudge:
 
     def _create_cover_letter_judge_prompt(
         self,
-        versions: List[Dict[str, Any]],
+        versions: list[dict[str, Any]],
         job_description: str,
-        job_details: Dict[str, Any],
+        job_details: dict[str, Any],
         resume_context: str,
     ) -> str:
         """Create prompt for judging cover letter versions."""
@@ -304,7 +304,7 @@ Return ONLY valid JSON, nothing else."""
         return prompt
 
     def _create_resume_judge_prompt(
-        self, versions: List[Dict[str, Any]], job_description: str, resume_context: str
+        self, versions: list[dict[str, Any]], job_description: str, resume_context: str
     ) -> str:
         """Create prompt for judging resume customization versions."""
         prompt = f"""You are an expert technical recruiter and hiring manager. Your task is to judge which of 3 AI-generated resume customizations is the best.
@@ -356,7 +356,7 @@ Return ONLY valid JSON, nothing else."""
         return prompt
 
     def _create_resume_text_judge_prompt(
-        self, versions: List[str], job_description: str, base_resume: str
+        self, versions: list[str], job_description: str, base_resume: str
     ) -> str:
         """Create prompt for judging full resume text versions."""
         prompt = f"""You are an expert technical recruiter and hiring manager. Your task is to judge which of 3 AI-generated resume versions is the best.
@@ -403,7 +403,7 @@ Return ONLY valid JSON, nothing else."""
         return prompt
 
     def _create_interview_questions_judge_prompt(
-        self, versions: List[Dict[str, Any]], job_description: str, resume_context: str
+        self, versions: list[dict[str, Any]], job_description: str, resume_context: str
     ) -> str:
         """Create prompt for judging interview questions generation versions."""
         prompt = f"""You are an expert technical interviewer and career coach. Your task is to judge which of 3 AI-generated interview question sets is best.
@@ -464,7 +464,7 @@ Return ONLY valid JSON, nothing else."""
 
         return prompt
 
-    def _parse_judge_response(self, response: str) -> Dict[str, Any]:
+    def _parse_judge_response(self, response: str) -> dict[str, Any]:
         """Parse the judge's JSON response."""
         json_match = re.search(r"\{.*\}", response, re.DOTALL)
         if json_match:
@@ -479,8 +479,8 @@ Return ONLY valid JSON, nothing else."""
         }
 
     def _combine_versions(
-        self, versions: List[Dict[str, Any]], selection: Dict[str, int]
-    ) -> Dict[str, Any]:
+        self, versions: list[dict[str, Any]], selection: dict[str, int]
+    ) -> dict[str, Any]:
         """Combine elements from multiple versions based on judge's selection."""
         combined = {}
         for key, version_idx in selection.items():

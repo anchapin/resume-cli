@@ -5,12 +5,13 @@ This module provides the 'preview' command that starts a local web server
 to visualize generated resumes directly in the browser.
 """
 
+from __future__ import annotations
+
 import os
 import tempfile
 import webbrowser
 from pathlib import Path
 from threading import Timer
-from typing import Optional
 
 import click
 import yaml as yaml_module
@@ -51,7 +52,7 @@ import yaml as yaml_module
     help="Preview format (default: html)",
 )
 def preview(
-    yaml: Optional[Path],
+    yaml: Path | None,
     variant: str,
     port: int,
     no_open: bool,

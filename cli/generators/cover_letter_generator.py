@@ -491,7 +491,7 @@ Return ONLY valid JSON, nothing else."""
         """
         # Create cache key from inputs
         qa = job_details.get("question_answers", {})
-        cache_key_input = f"{job_description[:500]}{str(qa)}{variant}"
+        cache_key_input = f"{job_description[:500]}{qa!s}{variant}"
         # usedforsecurity argument only available in Python 3.9+
         if sys.version_info >= (3, 9):
             cache_key = _sha256(cache_key_input.encode(), usedforsecurity=False).hexdigest()
@@ -542,7 +542,7 @@ Return ONLY valid JSON, nothing else."""
                     versions.append(version)
             except Exception as e:
                 # Log error but continue trying other generations
-                console.print(f"[yellow]Warning:[/yellow] Generation {i+1} failed: {str(e)}")
+                console.print(f"[yellow]Warning:[/yellow] Generation {i+1} failed: {e!s}")
                 continue
 
         # If no successful generations, use fallback
@@ -568,7 +568,7 @@ Return ONLY valid JSON, nothing else."""
                 return selected
             except Exception as e:
                 console.print(
-                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {str(e)}. Using first version."
+                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {e!s}. Using first version."
                 )
                 result = versions[0]
                 self._content_cache[cache_key] = result
@@ -770,8 +770,9 @@ Return ONLY valid JSON, nothing else."""
         pdf_created = False
         try:
             # Use Popen with explicit cleanup to avoid double-free issues
+            # Add -no-shell-escape to prevent RCE via \write18
             process = subprocess.Popen(
-                ["pdflatex", "-interaction=nonstopmode", tex_path.name],
+                ["pdflatex", "-interaction=nonstopmode", "-no-shell-escape", tex_path.name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=tex_path.parent,
@@ -786,8 +787,16 @@ Return ONLY valid JSON, nothing else."""
             else:
                 # Fallback to pandoc
                 try:
+                    # Add --pdf-engine-opt=-no-shell-escape to prevent RCE via \write18
                     process = subprocess.Popen(
-                        ["pandoc", str(tex_path), "-o", str(output_path), "--pdf-engine=xelatex"],
+                        [
+                            "pandoc",
+                            str(tex_path),
+                            "-o",
+                            str(output_path),
+                            "--pdf-engine=xelatex",
+                            "--pdf-engine-opt=-no-shell-escape",
+                        ],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                     )

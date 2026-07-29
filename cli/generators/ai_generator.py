@@ -239,7 +239,7 @@ Please generate the enhanced project descriptions:"""
             return enhanced_projects
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] Project enhancement failed: {str(e)}")
+            console.print(f"[yellow]Warning:[/yellow] Project enhancement failed: {e!s}")
             console.print("[dim]Using original project descriptions.[/dim]")
             return projects
 
@@ -324,7 +324,7 @@ Please generate the enhanced professional summary:"""
                 return base_summary
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] Summary enhancement failed: {str(e)}")
+            console.print(f"[yellow]Warning:[/yellow] Summary enhancement failed: {e!s}")
             console.print("[dim]Using original professional summary.[/dim]")
             return base_summary
 
@@ -392,7 +392,7 @@ Return ONLY valid JSON, nothing else."""
             return []
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] Technology extraction failed: {str(e)}")
+            console.print(f"[yellow]Warning:[/yellow] Technology extraction failed: {e!s}")
             return []
 
     def generate(
@@ -527,7 +527,7 @@ Return ONLY valid JSON, nothing else."""
                     versions.append(cleaned_response)
             except Exception as e:
                 # Log error but continue trying other generations
-                console.print(f"[yellow]Warning:[/yellow] Resume generation {i+1} failed: {str(e)}")
+                console.print(f"[yellow]Warning:[/yellow] Resume generation {i+1} failed: {e!s}")
                 continue
 
         # If no successful generations, return base resume
@@ -552,7 +552,7 @@ Return ONLY valid JSON, nothing else."""
                 return selected
             except Exception as e:
                 console.print(
-                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {str(e)}. Using first version."
+                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {e!s}. Using first version."
                 )
                 result = versions[0]
                 self._content_cache[cache_key] = result
@@ -815,7 +815,7 @@ Return ONLY valid JSON, nothing else."""
             raise ValueError("Could not extract valid JSON from response")
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] Data tailoring failed: {str(e)}")
+            console.print(f"[yellow]Warning:[/yellow] Data tailoring failed: {e!s}")
             return resume_data
 
 

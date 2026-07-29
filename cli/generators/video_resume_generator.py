@@ -238,7 +238,7 @@ class VideoResumeGenerator:
             return script
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] AI generation failed: {str(e)}")
+            console.print(f"[yellow]Warning:[/yellow] AI generation failed: {e!s}")
             console.print("[dim]Falling back to template-based script...[/dim]")
             return self._generate_fallback_script(
                 contact=contact,

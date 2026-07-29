@@ -138,7 +138,7 @@ class TemplateMarketplace:
             try:
                 with open(self.registry_path, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 # Return default registry if file is corrupted
                 pass
 
@@ -515,7 +515,6 @@ class TemplateMarketplace:
 @click.group()
 def templates():
     """Template marketplace commands."""
-    pass
 
 
 @templates.command("list")

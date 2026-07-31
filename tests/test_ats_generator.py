@@ -267,7 +267,7 @@ class TestGenerateSummary:
             "test": ATSCategoryScore("Test", 20, 20, [], []),
         }
 
-        summary, recommendations = ats_generator._generate_summary(categories, 95, 100)
+        summary, _ = ats_generator._generate_summary(categories, 95, 100)
 
         assert "Excellent" in summary
 
@@ -277,7 +277,7 @@ class TestGenerateSummary:
             "test": ATSCategoryScore("Test", 5, 20, [], []),
         }
 
-        summary, recommendations = ats_generator._generate_summary(categories, 25, 100)
+        summary, _ = ats_generator._generate_summary(categories, 25, 100)
 
         assert "Poor" in summary or "Fair" in summary
 

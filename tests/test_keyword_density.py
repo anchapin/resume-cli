@@ -71,7 +71,7 @@ class TestExtractJobDetails:
         We are looking for a developer.
         """
 
-        title, company = keyword_generator._extract_job_details(job_desc)
+        title, _ = keyword_generator._extract_job_details(job_desc)
 
         assert title
 
@@ -79,7 +79,7 @@ class TestExtractJobDetails:
         """Test extracting company from description."""
         job_desc = "Software Engineer\nCompany: Acme Corp\nWe need a developer."
 
-        title, company = keyword_generator._extract_job_details(job_desc)
+        _, company = keyword_generator._extract_job_details(job_desc)
 
         assert company
 

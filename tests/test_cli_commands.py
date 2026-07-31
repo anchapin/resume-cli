@@ -15,6 +15,7 @@ class TestCLIValidate:
         result = subprocess.run(
             [sys.executable, "-m", "cli.main", "--yaml-path", str(sample_yaml_file), "validate"],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -34,6 +35,7 @@ class TestCLIValidate:
                 "validate",
             ],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -50,6 +52,7 @@ class TestCLIVariants:
         result = subprocess.run(
             [sys.executable, "-m", "cli.main", "--yaml-path", str(sample_yaml_file), "variants"],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -83,6 +86,7 @@ class TestCLIGenerate:
                 str(output_file),
             ],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -113,6 +117,7 @@ class TestCLIGenerate:
                 str(output_file),
             ],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -139,6 +144,7 @@ class TestCLIGenerate:
                 "--no-save",
             ],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -180,6 +186,7 @@ class TestCLIApply:
                 "Software Engineer",
             ],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -218,6 +225,7 @@ class TestCLIAnalyze:
                 "analyze",
             ],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -258,6 +266,7 @@ Requirements:
                 str(job_desc),
             ],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -279,6 +288,7 @@ Requirements:
                 "v1.0.0-base",
             ],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -321,6 +331,7 @@ Requirements:
                 str(job_desc),
             ],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -342,6 +353,7 @@ Requirements:
                 "v1.0.0-base",
             ],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -359,6 +371,7 @@ class TestCLIHelp:
         result = subprocess.run(
             [sys.executable, "-m", "cli.main", "--help"],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -373,6 +386,7 @@ class TestCLIHelp:
         result = subprocess.run(
             [sys.executable, "-m", "cli.main", "generate", "--help"],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -390,6 +404,7 @@ class TestCLIErrorHandling:
         result = subprocess.run(
             [sys.executable, "-m", "cli.main", "--yaml-path", "/nonexistent/path.yaml", "validate"],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
@@ -413,6 +428,7 @@ class TestCLIErrorHandling:
                 "md",
             ],
             capture_output=True,
+            check=False,
             text=True,
             cwd=Path(__file__).parent.parent,
         )

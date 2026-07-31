@@ -2,7 +2,7 @@
 
 import json
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -32,8 +32,8 @@ class TestCalculateDateThreshold:
         threshold = sync._calculate_date_threshold(3)
 
         # Should be approximately 3 months ago
-        threshold_date = datetime.strptime(threshold, "%Y-%m-%d")
-        now = datetime.now()
+        threshold_date = datetime.strptime(threshold, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
         diff = (now - threshold_date).days
 
         # Should be roughly 90 days (3 months)
@@ -45,8 +45,8 @@ class TestCalculateDateThreshold:
         threshold = sync._calculate_date_threshold(12)
 
         # Should be approximately 12 months ago
-        threshold_date = datetime.strptime(threshold, "%Y-%m-%d")
-        now = datetime.now()
+        threshold_date = datetime.strptime(threshold, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
         diff = (now - threshold_date).days
 
         # Should be roughly 365 days (12 months)

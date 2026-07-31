@@ -124,7 +124,7 @@ class TestLogApplication:
         # Read CSV
         with open(csv_path, newline="") as f:
             reader = csv.DictReader(f)
-            entry = list(reader)[0]
+            entry = next(iter(reader))
 
         assert entry["source"] == "LinkedIn"
         assert entry["url"] == "https://example.com/job"
@@ -506,9 +506,9 @@ class TestGetApplicationsTimeline:
         tracking = TrackingIntegration(config)
 
         # Add application with today's date
-        from datetime import datetime
+        from datetime import datetime, timezone
 
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
         tracking.log_application(company="A", role="R1", status="applied")
 

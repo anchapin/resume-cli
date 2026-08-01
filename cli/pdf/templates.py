@@ -4,9 +4,9 @@ Template Options Module
 Provides template customization options for PDF generation.
 This module defines configuration options for resume templates.
 """
+from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
 
 
 @dataclass
@@ -22,7 +22,7 @@ class TemplateOptions:
     style: str = "base"  # base, modern, minimalist, academic, tech
 
     # Font options
-    font_family: Optional[str] = None  # e.g., "Times New Roman", "Latin Modern"
+    font_family: str | None = None  # e.g., "Times New Roman", "Latin Modern"
     font_size: int = 11  # Base font size in points
 
     # Layout options
@@ -34,17 +34,17 @@ class TemplateOptions:
 
     # Content options
     include_photo: bool = False
-    photo_path: Optional[str] = None
+    photo_path: str | None = None
     include_references: bool = False
 
     # Section options
-    sections_order: Optional[List[str]] = None  # Custom section order
+    sections_order: list[str] | None = None  # Custom section order
 
     # PDF-specific options
-    pdf_title: Optional[str] = None
-    pdf_author: Optional[str] = None
-    pdf_subject: Optional[str] = None
-    pdf_keywords: Optional[str] = None
+    pdf_title: str | None = None
+    pdf_author: str | None = None
+    pdf_subject: str | None = None
+    pdf_keywords: str | None = None
 
     def __post_init__(self):
         """Validate options after initialization."""
@@ -80,22 +80,22 @@ class TemplateOptions:
         return options
 
     @classmethod
-    def modern(cls) -> "TemplateOptions":
+    def modern(cls) -> TemplateOptions:
         """Create options for modern style template."""
         return cls(style="modern", font_size=10)
 
     @classmethod
-    def minimalist(cls) -> "TemplateOptions":
+    def minimalist(cls) -> TemplateOptions:
         """Create options for minimalist style template."""
         return cls(style="minimalist", font_size=11)
 
     @classmethod
-    def academic(cls) -> "TemplateOptions":
+    def academic(cls) -> TemplateOptions:
         """Create options for academic style template."""
         return cls(style="academic", font_size=12, include_references=True)
 
     @classmethod
-    def tech(cls) -> "TemplateOptions":
+    def tech(cls) -> TemplateOptions:
         """Create options for tech style template."""
         return cls(style="tech", font_size=10)
 

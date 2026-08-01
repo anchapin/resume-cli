@@ -2,13 +2,15 @@
 
 # Import hashlib before kubernetes_asyncio can patch it
 # Use sha256 instead of md5 to avoid kubernetes_asyncio patching
+from __future__ import annotations
+
 import hashlib
 import json
 import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.console import Console
 
@@ -47,7 +49,7 @@ console = Console()
 class AIGenerator:
     """Generate resumes using AI for customization."""
 
-    def __init__(self, yaml_path: Optional[Path] = None, config: Optional[Config] = None):
+    def __init__(self, yaml_path: Path | None = None, config: Config | None = None):
         """
         Initialize AI generator.
 
@@ -75,7 +77,7 @@ class AIGenerator:
                 )
             # Check env var first, then config file
             base_url = os.getenv("ANTHROPIC_BASE_URL") or self.config.anthropic_base_url
-            client_kwargs: Dict[str, Any] = {"api_key": api_key}
+            client_kwargs: dict[str, Any] = {"api_key": api_key}
             if base_url:
                 client_kwargs["base_url"] = base_url
             self.client = anthropic.Anthropic(**client_kwargs)
@@ -108,15 +110,15 @@ class AIGenerator:
         self.judge_enabled = self.config.get("ai.judge_enabled", True)
 
         # Cache to avoid regenerating content for same inputs
-        self._content_cache: Dict[str, str] = {}
+        self._content_cache: dict[str, str] = {}
 
     def clear_cache(self):
         """Clear the content cache. Useful when generating for different jobs."""
         self._content_cache.clear()
 
     def enhance_project_descriptions(
-        self, projects: List[Dict[str, Any]], job_description: str, technologies: List[str]
-    ) -> List[Dict[str, Any]]:
+        self, projects: list[dict[str, Any]], job_description: str, technologies: list[str]
+    ) -> list[dict[str, Any]]:
         """
         Generate job-tailored project descriptions with technology highlights.
 
@@ -239,12 +241,12 @@ Please generate the enhanced project descriptions:"""
             return enhanced_projects
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] Project enhancement failed: {str(e)}")
+            console.print(f"[yellow]Warning:[/yellow] Project enhancement failed: {e!s}")
             console.print("[dim]Using original project descriptions.[/dim]")
             return projects
 
     def generate_project_summary(
-        self, enhanced_projects: List[Dict[str, Any]], base_summary: str, variant: str
+        self, enhanced_projects: list[dict[str, Any]], base_summary: str, variant: str
     ) -> str:
         """
         Seamlessly integrate relevant projects into professional summary.
@@ -324,11 +326,11 @@ Please generate the enhanced professional summary:"""
                 return base_summary
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] Summary enhancement failed: {str(e)}")
+            console.print(f"[yellow]Warning:[/yellow] Summary enhancement failed: {e!s}")
             console.print("[dim]Using original professional summary.[/dim]")
             return base_summary
 
-    def _projects_to_json(self, projects: List[Dict[str, Any]]) -> str:
+    def _projects_to_json(self, projects: list[dict[str, Any]]) -> str:
         """Convert projects list to JSON string for AI prompt."""
         import json
 
@@ -346,7 +348,7 @@ Please generate the enhanced professional summary:"""
             )
         return json.dumps(simplified, indent=2)
 
-    def extract_technologies(self, job_description: str) -> List[str]:
+    def extract_technologies(self, job_description: str) -> list[str]:
         """
         Extract technologies from job description using AI.
 
@@ -392,18 +394,18 @@ Return ONLY valid JSON, nothing else."""
             return []
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] Technology extraction failed: {str(e)}")
+            console.print(f"[yellow]Warning:[/yellow] Technology extraction failed: {e!s}")
             return []
 
     def generate(
         self,
         variant: str,
-        job_description: Optional[str] = None,
+        job_description: str | None = None,
         output_format: str = "md",
-        output_path: Optional[Path] = None,
+        output_path: Path | None = None,
         fallback: bool = True,
-        enhanced_context: Optional[Dict[str, Any]] = None,
-        custom_template_path: Optional[Path] = None,
+        enhanced_context: dict[str, Any] | None = None,
+        custom_template_path: Path | None = None,
     ) -> str:
         """
         Generate AI-customized resume.
@@ -527,7 +529,7 @@ Return ONLY valid JSON, nothing else."""
                     versions.append(cleaned_response)
             except Exception as e:
                 # Log error but continue trying other generations
-                console.print(f"[yellow]Warning:[/yellow] Resume generation {i+1} failed: {str(e)}")
+                console.print(f"[yellow]Warning:[/yellow] Resume generation {i+1} failed: {e!s}")
                 continue
 
         # If no successful generations, return base resume
@@ -552,7 +554,7 @@ Return ONLY valid JSON, nothing else."""
                 return selected
             except Exception as e:
                 console.print(
-                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {str(e)}. Using first version."
+                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {e!s}. Using first version."
                 )
                 result = versions[0]
                 self._content_cache[cache_key] = result
@@ -703,7 +705,7 @@ Please return the customized resume in the same format as the base resume:"""
         if code_block_content and code_block_content != response:
             # If we successfully extracted from code blocks, validate it's JSON-like
             stripped = code_block_content.strip()
-            if stripped.startswith("[") or stripped.startswith("{"):
+            if stripped.startswith(("[", "{")):
                 return stripped
 
         # If code block extraction didn't work or returned same response,
@@ -720,7 +722,7 @@ Please return the customized resume in the same format as the base resume:"""
 
         # Fallback: return the original response stripped
         stripped = response.strip()
-        if stripped.startswith("[") or stripped.startswith("{"):
+        if stripped.startswith(("[", "{")):
             return stripped
 
         # No valid JSON found
@@ -752,7 +754,7 @@ Please return the customized resume in the same format as the base resume:"""
 
         return response.choices[0].message.content
 
-    def tailor_data(self, resume_data: Dict[str, Any], job_description: str) -> Dict[str, Any]:
+    def tailor_data(self, resume_data: dict[str, Any], job_description: str) -> dict[str, Any]:
         """
         Tailor resume data (dict) to job description.
 
@@ -815,15 +817,15 @@ Return ONLY valid JSON, nothing else."""
             raise ValueError("Could not extract valid JSON from response")
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] Data tailoring failed: {str(e)}")
+            console.print(f"[yellow]Warning:[/yellow] Data tailoring failed: {e!s}")
             return resume_data
 
 
 def generate_with_ai(
     variant: str,
-    job_description: Optional[str] = None,
-    yaml_path: Optional[Path] = None,
-    config: Optional[Config] = None,
+    job_description: str | None = None,
+    yaml_path: Path | None = None,
+    config: Config | None = None,
     **kwargs,
 ) -> str:
     """

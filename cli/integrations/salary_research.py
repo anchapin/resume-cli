@@ -1,4 +1,5 @@
 """Salary research and market data integration."""
+from __future__ import annotations
 
 import json
 from dataclasses import dataclass
@@ -130,7 +131,6 @@ class SalaryResearch:
 
     def __init__(self):
         """Initialize salary research tool."""
-        pass
 
     def research(
         self,

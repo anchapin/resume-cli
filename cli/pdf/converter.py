@@ -5,10 +5,10 @@ Provides PDF conversion utilities using pdflatex or pandoc.
 This module extracts and consolidates the PDF compilation logic from the existing
 TemplateGenerator class.
 """
+from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 
 class PDFConverter:
@@ -21,13 +21,12 @@ class PDFConverter:
 
     def __init__(self):
         """Initialize the PDF converter."""
-        pass
 
     def compile(
         self,
         tex_content: str,
         output_path: Path,
-        working_dir: Optional[Path] = None,
+        working_dir: Path | None = None,
     ) -> None:
         """
         Compile LaTeX content to PDF.
@@ -91,7 +90,7 @@ class PDFConverter:
                 stderr=subprocess.PIPE,
                 cwd=working_dir,
             )
-            stdout, stderr = process.communicate()
+            _stdout, _stderr = process.communicate()
 
             if process.returncode == 0 or output_path.exists():
                 return True
@@ -126,7 +125,7 @@ class PDFConverter:
                 stderr=subprocess.PIPE,
                 cwd=working_dir,
             )
-            stdout, stderr = process.communicate()
+            _stdout, _stderr = process.communicate()
 
             if process.returncode == 0 or output_path.exists():
                 return True
@@ -171,7 +170,7 @@ class PDFConverter:
         except FileNotFoundError:
             return False
 
-    def get_available_engine(self) -> Optional[str]:
+    def get_available_engine(self) -> str | None:
         """
         Get the first available PDF compilation engine.
 

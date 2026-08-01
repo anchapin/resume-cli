@@ -2,13 +2,15 @@
 
 # Import hashlib before kubernetes_asyncio can patch it
 # Use sha256 instead of md5 to avoid kubernetes_asyncio patching
+from __future__ import annotations
+
 import hashlib
 import os
 import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from rich.console import Console
 
@@ -50,9 +52,9 @@ class CoverLetterGenerator:
 
     def __init__(
         self,
-        yaml_path: Optional[Path] = None,
-        config: Optional[Config] = None,
-        resume_data: Optional[Dict[str, Any]] = None,
+        yaml_path: Path | None = None,
+        config: Config | None = None,
+        resume_data: dict[str, Any] | None = None,
     ):
         """
         Initialize cover letter generator.
@@ -131,11 +133,11 @@ class CoverLetterGenerator:
     def generate_interactive(
         self,
         job_description: str,
-        company_name: Optional[str] = None,
+        company_name: str | None = None,
         variant: str = "base",
-        output_formats: List[str] = None,
-        output_dir: Optional[Path] = None,
-    ) -> Tuple[Dict[str, str], Dict[str, Any]]:
+        output_formats: list[str] | None = None,
+        output_dir: Path | None = None,
+    ) -> tuple[dict[str, str], dict[str, Any]]:
         """
         Generate cover letter interactively, asking questions as needed.
 
@@ -194,11 +196,11 @@ class CoverLetterGenerator:
     def generate_non_interactive(
         self,
         job_description: str,
-        company_name: Optional[str] = None,
+        company_name: str | None = None,
         variant: str = "base",
-        output_formats: List[str] = None,
-        output_dir: Optional[Path] = None,
-    ) -> Tuple[Dict[str, str], Dict[str, Any]]:
+        output_formats: list[str] | None = None,
+        output_dir: Path | None = None,
+    ) -> tuple[dict[str, str], dict[str, Any]]:
         """
         Generate cover letter non-interactively using AI smart guesses.
 
@@ -243,8 +245,8 @@ class CoverLetterGenerator:
         return results, job_details
 
     def _extract_job_details(
-        self, job_description: str, company_name: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, job_description: str, company_name: str | None = None
+    ) -> dict[str, Any]:
         """
         Extract key details from job description using AI.
 
@@ -331,7 +333,7 @@ Job posting:
 
         return "the company"
 
-    def _determine_questions(self, job_details: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _determine_questions(self, job_details: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Decide what questions to ask based on job details.
 
@@ -401,8 +403,8 @@ Job posting:
                 raise
 
     def _generate_smart_guesses(
-        self, job_description: str, job_details: Dict[str, Any], variant: str
-    ) -> Dict[str, str]:
+        self, job_description: str, job_details: dict[str, Any], variant: str
+    ) -> dict[str, str]:
         """
         Generate AI-based smart guesses for cover letter questions.
 
@@ -473,8 +475,8 @@ Return ONLY valid JSON, nothing else."""
         }
 
     def _generate_with_ai(
-        self, job_description: str, job_details: Dict[str, Any], variant: str
-    ) -> Dict[str, Any]:
+        self, job_description: str, job_details: dict[str, Any], variant: str
+    ) -> dict[str, Any]:
         """
         Generate cover letter sections using AI with multi-generation and judge.
 
@@ -491,7 +493,7 @@ Return ONLY valid JSON, nothing else."""
         """
         # Create cache key from inputs
         qa = job_details.get("question_answers", {})
-        cache_key_input = f"{job_description[:500]}{str(qa)}{variant}"
+        cache_key_input = f"{job_description[:500]}{qa!s}{variant}"
         # usedforsecurity argument only available in Python 3.9+
         if sys.version_info >= (3, 9):
             cache_key = _sha256(cache_key_input.encode(), usedforsecurity=False).hexdigest()
@@ -542,7 +544,7 @@ Return ONLY valid JSON, nothing else."""
                     versions.append(version)
             except Exception as e:
                 # Log error but continue trying other generations
-                console.print(f"[yellow]Warning:[/yellow] Generation {i+1} failed: {str(e)}")
+                console.print(f"[yellow]Warning:[/yellow] Generation {i+1} failed: {e!s}")
                 continue
 
         # If no successful generations, use fallback
@@ -568,7 +570,7 @@ Return ONLY valid JSON, nothing else."""
                 return selected
             except Exception as e:
                 console.print(
-                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {str(e)}. Using first version."
+                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {e!s}. Using first version."
                 )
                 result = versions[0]
                 self._content_cache[cache_key] = result
@@ -582,9 +584,9 @@ Return ONLY valid JSON, nothing else."""
     def _build_cover_letter_prompt(
         self,
         job_description: str,
-        job_details: Dict[str, Any],
+        job_details: dict[str, Any],
         resume_context: str,
-        qa: Dict[str, Any],
+        qa: dict[str, Any],
     ) -> str:
         """Build the cover letter generation prompt."""
         return f"""You are an expert cover letter writer. Generate a professional cover letter based on the information below.
@@ -617,7 +619,7 @@ Return ONLY a JSON object with these keys:
 
 Return ONLY valid JSON, nothing else."""
 
-    def _generate_single_version(self, prompt: str) -> Optional[Dict[str, Any]]:
+    def _generate_single_version(self, prompt: str) -> dict[str, Any] | None:
         """
         Generate a single cover letter version.
 
@@ -642,7 +644,7 @@ Return ONLY valid JSON, nothing else."""
             pass
         return None
 
-    def _get_fallback_content(self, job_details: Dict[str, Any], summary: str) -> Dict[str, Any]:
+    def _get_fallback_content(self, job_details: dict[str, Any], summary: str) -> dict[str, Any]:
         """Get fallback cover letter content when AI generation fails."""
         company = job_details.get("company", "your company")
         position = job_details.get("position", "this position")
@@ -659,7 +661,7 @@ Return ONLY valid JSON, nothing else."""
             "connection": None,
         }
 
-    def _render_template(self, content: Dict[str, Any], job_details: Dict[str, Any]) -> str:
+    def _render_template(self, content: dict[str, Any], job_details: dict[str, Any]) -> str:
         """Render Markdown cover letter template."""
         contact = self.yaml_handler.get_contact()
 
@@ -681,7 +683,7 @@ Return ONLY valid JSON, nothing else."""
 
         return template.render(**context)
 
-    def _render_latex(self, content: Dict[str, Any], job_details: Dict[str, Any]) -> str:
+    def _render_latex(self, content: dict[str, Any], job_details: dict[str, Any]) -> str:
         """Render LaTeX cover letter template."""
         contact = self.yaml_handler.get_contact()
 
@@ -704,8 +706,8 @@ Return ONLY valid JSON, nothing else."""
         return template.render(**context)
 
     def save_outputs(
-        self, outputs: Dict[str, str], company_name: str, output_dir: Optional[Path] = None
-    ) -> Dict[str, Path]:
+        self, outputs: dict[str, str], company_name: str, output_dir: Path | None = None
+    ) -> dict[str, Path]:
         """
         Save cover letter outputs to files.
 
@@ -791,7 +793,7 @@ Return ONLY valid JSON, nothing else."""
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                     )
-                    stdout, stderr = process.communicate()
+                    _stdout, _stderr = process.communicate()
                     if process.returncode == 0 or output_path.exists():
                         pdf_created = True
                 except (subprocess.CalledProcessError, FileNotFoundError):
@@ -832,13 +834,13 @@ Return ONLY valid JSON, nothing else."""
 
 def generate_cover_letter(
     job_description: str,
-    company_name: Optional[str] = None,
+    company_name: str | None = None,
     variant: str = "base",
-    yaml_path: Optional[Path] = None,
-    config: Optional[Config] = None,
+    yaml_path: Path | None = None,
+    config: Config | None = None,
     interactive: bool = True,
     **kwargs,
-) -> Tuple[Dict[str, str], Dict[str, Any]]:
+) -> tuple[dict[str, str], dict[str, Any]]:
     """
     Convenience function to generate cover letter.
 

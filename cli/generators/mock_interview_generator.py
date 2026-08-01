@@ -1,4 +1,5 @@
 """AI-powered mock interview mode with interactive questioning and response evaluation."""
+from __future__ import annotations
 
 import json
 import os
@@ -6,7 +7,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.console import Console
 
@@ -48,8 +49,8 @@ class InterviewResponse:
     question: str
     question_type: str  # technical, behavioral, system_design
     response: str
-    evaluation: Optional[Dict[str, Any]] = None
-    rating: Optional[int] = None  # 1-5 scale
+    evaluation: dict[str, Any] | None = None
+    rating: int | None = None  # 1-5 scale
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
@@ -59,14 +60,14 @@ class InterviewSession:
 
     session_id: str
     job_description: str
-    questions: List[Dict[str, Any]]
-    responses: List[InterviewResponse] = field(default_factory=list)
+    questions: list[dict[str, Any]]
+    responses: list[InterviewResponse] = field(default_factory=list)
     category: str = "mixed"  # technical, behavioral, mixed
     started_at: str = field(default_factory=lambda: datetime.now().isoformat())
-    completed_at: Optional[str] = None
-    overall_score: Optional[float] = None
+    completed_at: str | None = None
+    overall_score: float | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "session_id": self.session_id,
@@ -90,7 +91,7 @@ class InterviewSession:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "InterviewSession":
+    def from_dict(cls, data: dict[str, Any]) -> InterviewSession:
         """Create from dictionary."""
         responses = [
             InterviewResponse(
@@ -118,7 +119,7 @@ class InterviewSession:
 class MockInterviewGenerator:
     """Interactive mock interview with AI evaluation."""
 
-    def __init__(self, yaml_path: Optional[Path] = None, config: Optional[Config] = None):
+    def __init__(self, yaml_path: Path | None = None, config: Config | None = None):
         """
         Initialize mock interview generator.
 
@@ -155,7 +156,7 @@ class MockInterviewGenerator:
             base_url = os.getenv("ANTHROPIC_BASE_URL") or self.config.get(
                 "ai.anthropic_base_url", ""
             )
-            client_kwargs: Dict[str, Any] = {"api_key": api_key}
+            client_kwargs: dict[str, Any] = {"api_key": api_key}
             if base_url:
                 client_kwargs["base_url"] = base_url
             self.client = anthropic.Anthropic(**client_kwargs)
@@ -338,10 +339,10 @@ class MockInterviewGenerator:
 
     def _evaluate_with_ai(
         self,
-        question: Dict[str, Any],
+        question: dict[str, Any],
         user_response: str,
         question_type: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Evaluate response using AI."""
         prompt = self._build_evaluation_prompt(question, user_response, question_type)
 
@@ -356,7 +357,7 @@ class MockInterviewGenerator:
             return evaluation
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] AI evaluation failed: {str(e)}")
+            console.print(f"[yellow]Warning:[/yellow] AI evaluation failed: {e!s}")
             return {
                 "rating": 3,
                 "strengths": ["Response provided"],
@@ -372,7 +373,7 @@ class MockInterviewGenerator:
 
     def _build_evaluation_prompt(
         self,
-        question: Dict[str, Any],
+        question: dict[str, Any],
         user_response: str,
         question_type: str,
     ) -> str:
@@ -498,7 +499,7 @@ Return ONLY the JSON:"""
 
         return prompt
 
-    def _parse_evaluation(self, response: str) -> Dict[str, Any]:
+    def _parse_evaluation(self, response: str) -> dict[str, Any]:
         """Parse AI evaluation response."""
         import re
 
@@ -527,7 +528,7 @@ Return ONLY the JSON:"""
             "score_breakdown": {"correctness": 3, "depth": 3, "examples": 3, "clarity": 3},
         }
 
-    def complete_session(self, session: InterviewSession) -> Dict[str, Any]:
+    def complete_session(self, session: InterviewSession) -> dict[str, Any]:
         """
         Complete an interview session and generate summary.
 
@@ -552,7 +553,7 @@ Return ONLY the JSON:"""
 
         return summary
 
-    def generate_session_summary(self, session: InterviewSession) -> Dict[str, Any]:
+    def generate_session_summary(self, session: InterviewSession) -> dict[str, Any]:
         """Generate summary statistics for a session."""
         total_questions = len(session.questions)
         answered = len(session.responses)
@@ -676,7 +677,7 @@ Return ONLY the JSON:"""
 
         return "\n".join(lines)
 
-    def list_sessions(self) -> List[Dict[str, Any]]:
+    def list_sessions(self) -> list[dict[str, Any]]:
         """List all saved interview sessions."""
         sessions = []
 
@@ -701,7 +702,7 @@ Return ONLY the JSON:"""
 
         return sessions
 
-    def load_session(self, session_id: str) -> Optional[InterviewSession]:
+    def load_session(self, session_id: str) -> InterviewSession | None:
         """Load a specific session by ID."""
         session_file = self.sessions_dir / f"{session_id}.json"
 
@@ -747,8 +748,8 @@ Return ONLY the JSON:"""
 
 
 def start_mock_interview(
-    yaml_path: Optional[Path] = None,
-    config: Optional[Config] = None,
+    yaml_path: Path | None = None,
+    config: Config | None = None,
     job_description: str = "",
     variant: str = "base",
     category: str = "mixed",

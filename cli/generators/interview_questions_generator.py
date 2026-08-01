@@ -1,9 +1,10 @@
 """AI-powered interview questions generator using Claude or OpenAI."""
+from __future__ import annotations
 
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.console import Console
 
@@ -41,7 +42,7 @@ from .template import TemplateGenerator
 class InterviewQuestionsGenerator:
     """Generate personalized interview questions based on job description and resume."""
 
-    def __init__(self, yaml_path: Optional[Path] = None, config: Optional[Config] = None):
+    def __init__(self, yaml_path: Path | None = None, config: Config | None = None):
         """
         Initialize interview questions generator.
 
@@ -117,7 +118,7 @@ class InterviewQuestionsGenerator:
         num_behavioral: int = 5,
         include_system_design: bool = True,
         flashcard_mode: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate interview questions based on job description.
 
@@ -165,13 +166,13 @@ class InterviewQuestionsGenerator:
         self,
         job_description: str,
         resume_content: str,
-        experience: List[Dict[str, Any]],
-        skills: Dict[str, List[str]],
+        experience: list[dict[str, Any]],
+        skills: dict[str, list[str]],
         num_technical: int,
         num_behavioral: int,
         include_system_design: bool,
         flashcard_mode: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate questions using AI with multi-generation and judge selection.
 
@@ -219,7 +220,7 @@ class InterviewQuestionsGenerator:
                         versions.append(json.loads(extracted_json))
             except Exception as e:
                 console.print(
-                    f"[yellow]Warning:[/yellow] Question generation {i+1} failed: {str(e)}"
+                    f"[yellow]Warning:[/yellow] Question generation {i+1} failed: {e!s}"
                 )
                 continue
 
@@ -248,7 +249,7 @@ class InterviewQuestionsGenerator:
                 return selected
             except Exception as e:
                 console.print(
-                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {str(e)}. Using first version."
+                    f"[yellow]Warning:[/yellow] Judge evaluation failed: {e!s}. Using first version."
                 )
                 return versions[0]
 
@@ -259,8 +260,8 @@ class InterviewQuestionsGenerator:
         self,
         job_description: str,
         resume_content: str,
-        experience: List[Dict[str, Any]],
-        skills: Dict[str, List[str]],
+        experience: list[dict[str, Any]],
+        skills: dict[str, list[str]],
         num_technical: int,
         num_behavioral: int,
         include_system_design: bool,
@@ -416,7 +417,7 @@ Please generate the interview questions JSON:"""
 
         return prompt
 
-    def render_to_markdown(self, questions_data: Dict[str, Any]) -> str:
+    def render_to_markdown(self, questions_data: dict[str, Any]) -> str:
         """
         Render questions to Markdown format.
 
@@ -501,7 +502,7 @@ Please generate the interview questions JSON:"""
 
         return "\n".join(lines)
 
-    def render_to_flashcards(self, questions_data: Dict[str, Any]) -> str:
+    def render_to_flashcards(self, questions_data: dict[str, Any]) -> str:
         """
         Render questions to flashcard format (question only, optimized for studying).
 
@@ -589,8 +590,8 @@ Please generate the interview questions JSON:"""
         return "\n".join(lines)
 
     def _format_question(
-        self, question: Dict[str, Any], include_answer: bool = True, is_behavioral: bool = False
-    ) -> List[str]:
+        self, question: dict[str, Any], include_answer: bool = True, is_behavioral: bool = False
+    ) -> list[str]:
         """Format a single question for Markdown output."""
         lines = []
 
@@ -627,7 +628,7 @@ Please generate the interview questions JSON:"""
 
         return lines
 
-    def _format_system_design_question(self, question: Dict[str, Any]) -> List[str]:
+    def _format_system_design_question(self, question: dict[str, Any]) -> list[str]:
         """Format a system design question for Markdown output."""
         lines = []
 

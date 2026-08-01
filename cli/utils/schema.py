@@ -1,8 +1,10 @@
 """Schema validation for resume.yaml."""
 
+from __future__ import annotations
+
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar
 
 import yaml
 
@@ -102,7 +104,7 @@ class ValidationError:
     """Represents a validation error with actionable guidance."""
 
     # Error message templates with "What to do" guidance
-    ERROR_GUIDANCE = {
+    ERROR_GUIDANCE: ClassVar[dict[str, dict[str, str]]] = {
         "contact.email": {
             "invalid": 'The email "{value}" is not a valid format.\n\nWhat to do:\n  • Check your email in resume.yaml\n  • Format should be: user@domain.com\n  • Example: john@example.com',
         },
@@ -127,7 +129,7 @@ class ValidationError:
         },
     }
 
-    def __init__(self, path: str, message: str, level: str = "error", guidance: str = None):
+    def __init__(self, path: str, message: str, level: str = "error", guidance: str | None = None):
         """
         Initialize validation error.
 
@@ -158,7 +160,7 @@ class ValidationError:
 class ResumeValidator:
     """Validator for resume.yaml schema."""
 
-    def __init__(self, yaml_path: Optional[Path] = None):
+    def __init__(self, yaml_path: Path | None = None):
         """
         Initialize validator.
 
@@ -168,8 +170,8 @@ class ResumeValidator:
         from .yaml_parser import ResumeYAML
 
         self.yaml_handler = ResumeYAML(yaml_path)
-        self.errors: List[ValidationError] = []
-        self.warnings: List[ValidationError] = []
+        self.errors: list[ValidationError] = []
+        self.warnings: list[ValidationError] = []
 
     def validate_all(self) -> bool:
         """
@@ -200,7 +202,7 @@ class ResumeValidator:
 
         return len(self.errors) == 0
 
-    def _validate_structure(self, data: Dict[str, Any]) -> None:
+    def _validate_structure(self, data: dict[str, Any]) -> None:
         """Validate top-level structure."""
         # Check required top-level keys
         for key, spec in RESUME_SCHEMA.items():
@@ -237,7 +239,9 @@ class ResumeValidator:
         # Validate skills with support for multiple formats
         self._validate_skills(data)
 
-    def _get_guidance(self, path: str, error_type: str = "missing", value: str = None) -> str:
+    def _get_guidance(
+        self, path: str, error_type: str = "missing", value: str | None = None
+    ) -> str:
         """Get actionable guidance for an error."""
         key = path
         # Try to get guidance for this path and error type
@@ -260,7 +264,7 @@ class ResumeValidator:
 
         return ""
 
-    def _validate_contact(self, data: Dict[str, Any]) -> None:
+    def _validate_contact(self, data: dict[str, Any]) -> None:
         """Validate contact information."""
         contact = data.get("contact", {})
 
@@ -286,7 +290,7 @@ class ResumeValidator:
                 ValidationError("contact.email", "Invalid email format", "error", guidance)
             )
 
-    def _validate_experience(self, data: Dict[str, Any]) -> None:
+    def _validate_experience(self, data: dict[str, Any]) -> None:
         """Validate experience entries."""
         experience = data.get("experience", [])
 
@@ -317,7 +321,7 @@ class ResumeValidator:
                             )
                         )
 
-    def _validate_education(self, data: Dict[str, Any]) -> None:
+    def _validate_education(self, data: dict[str, Any]) -> None:
         """Validate education entries."""
         education = data.get("education", [])
 
@@ -343,7 +347,7 @@ class ResumeValidator:
                     )
                 )
 
-    def _validate_variants(self, data: Dict[str, Any]) -> None:
+    def _validate_variants(self, data: dict[str, Any]) -> None:
         """Validate variant configurations."""
         variants = data.get("variants", {})
 
@@ -374,15 +378,15 @@ class ResumeValidator:
                         )
                     )
 
-    def _validate_dates(self, data: Dict[str, Any]) -> None:
+    def _validate_dates(self, data: dict[str, Any]) -> None:
         """Validate date formats."""
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         # Check meta.last_updated
         last_updated = data.get("meta", {}).get("last_updated", "")
         if last_updated:
             try:
-                datetime.strptime(last_updated, "%Y-%m-%d")
+                datetime.strptime(last_updated, "%Y-%m-%d").replace(tzinfo=timezone.utc)
             except ValueError:
                 self.errors.append(
                     ValidationError(
@@ -399,9 +403,9 @@ class ResumeValidator:
                     try:
                         # Accept YYYY-MM or YYYY-MM-DD
                         if len(date_val) == 7:
-                            datetime.strptime(date_val, "%Y-%m")
+                            datetime.strptime(date_val, "%Y-%m").replace(tzinfo=timezone.utc)
                         elif len(date_val) == 10:
-                            datetime.strptime(date_val, "%Y-%m-%d")
+                            datetime.strptime(date_val, "%Y-%m-%d").replace(tzinfo=timezone.utc)
                         else:
                             self.errors.append(
                                 ValidationError(
@@ -417,20 +421,19 @@ class ResumeValidator:
                             )
                         )
 
-    def _validate_email_format(self, data: Dict[str, Any]) -> None:
+    def _validate_email_format(self, data: dict[str, Any]) -> None:
         """Validate email formats."""
         contact = data.get("contact")
         if not isinstance(contact, dict):
             return
         email = contact.get("email", "")
-        if email:
+        if email and ("@" not in email or "." not in email.split("@")[-1]):
             # Basic email validation
-            if "@" not in email or "." not in email.split("@")[-1]:
-                self.errors.append(
-                    ValidationError("contact.email", "Invalid email format", "error")
-                )
+            self.errors.append(
+                ValidationError("contact.email", "Invalid email format", "error")
+            )
 
-    def _validate_skills(self, data: Dict[str, Any]) -> None:
+    def _validate_skills(self, data: dict[str, Any]) -> None:
         """
         Validate skills section with support for multiple formats.
 
@@ -538,7 +541,7 @@ class ResumeValidator:
             print(f"\n✅ Validation passed with {len(self.warnings)} warning(s)")
 
 
-def validate_resume(yaml_path: Optional[Path] = None) -> bool:
+def validate_resume(yaml_path: Path | None = None) -> bool:
     """
     Validate resume.yaml.
 

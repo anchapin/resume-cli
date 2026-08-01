@@ -1,7 +1,9 @@
 """Shared fixtures and test configuration for pytest."""
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 import yaml
@@ -32,7 +34,7 @@ def temp_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def sample_resume_data() -> Dict[str, Any]:
+def sample_resume_data() -> dict[str, Any]:
     """Sample resume data for testing."""
     return {
         "meta": {"version": "2.0.0", "last_updated": "2024-01-15", "author": "Test Author"},
@@ -301,7 +303,7 @@ def sample_resume_data() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_yaml_file(temp_dir: Path, sample_resume_data: Dict[str, Any]) -> Path:
+def sample_yaml_file(temp_dir: Path, sample_resume_data: dict[str, Any]) -> Path:
     """Create a sample resume.yaml file for testing."""
     yaml_path = temp_dir / "resume.yaml"
     with open(yaml_path, "w") as f:

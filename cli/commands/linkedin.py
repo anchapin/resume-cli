@@ -1,8 +1,9 @@
 """LinkedIn import/export commands."""
 
+from __future__ import annotations
+
 import sys
 from pathlib import Path
-from typing import Optional
 
 import click
 
@@ -24,9 +25,9 @@ console = LazyConsole()
 @click.pass_context
 def linkedin_import(
     ctx,
-    url: Optional[str],
-    data_file: Optional[str],
-    output: Optional[str],
+    url: str | None,
+    data_file: str | None,
+    output: str | None,
     merge: bool,
     dry_run: bool,
 ):
@@ -161,7 +162,7 @@ def linkedin_import(
     "--format", type=click.Choice(["linkedin", "plain"]), default="linkedin", help="Output format"
 )
 @click.pass_context
-def linkedin_export(ctx, variant: str, output: Optional[str], format: str):
+def linkedin_export(ctx, variant: str, output: str | None, format: str):
     """
     Export resume.yaml data to LinkedIn-friendly format.
 
@@ -313,9 +314,7 @@ def _merge_resume_data(existing: dict, imported: dict) -> dict:
         existing_skills = {}
 
     for category, skill_list in imported_skills.items():
-        if category not in existing_skills:
-            existing_skills[category] = []
-        elif not isinstance(existing_skills[category], list):
+        if category not in existing_skills or not isinstance(existing_skills[category], list):
             existing_skills[category] = []
 
         # Deduplicate and merge

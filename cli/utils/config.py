@@ -1,8 +1,10 @@
 """Configuration management for resume CLI."""
 
+from __future__ import annotations
+
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class Config:
@@ -57,7 +59,7 @@ class Config:
         },
     }
 
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(self, config_path: Path | None = None):
         """
         Initialize configuration.
 
@@ -65,7 +67,7 @@ class Config:
             config_path: Path to config.yaml. If None, uses default config.
         """
         self.config_path = config_path
-        self._config: Optional[Dict[str, Any]] = None
+        self._config: dict[str, Any] | None = None
 
     def _ensure_loaded(self) -> None:
         """Ensure configuration is loaded from defaults and file."""
@@ -91,13 +93,13 @@ class Config:
             user_config = yaml.safe_load(f) or {}
             self._merge_config(user_config)
 
-    def _merge_config(self, user_config: Dict[str, Any]) -> None:
+    def _merge_config(self, user_config: dict[str, Any]) -> None:
         """Merge user config with defaults (deep merge)."""
         # Ensure config is initialized before merging
         if self._config is None:
             self._config = deepcopy(self.DEFAULT_CONFIG)
 
-        def deep_merge(base: Dict, update: Dict) -> Dict:
+        def deep_merge(base: dict, update: dict) -> dict:
             result = base.copy()
             for key, value in update.items():
                 if key in result and isinstance(result[key], dict) and isinstance(value, dict):
@@ -153,7 +155,7 @@ class Config:
 
         config[keys[-1]] = value
 
-    def save(self, path: Optional[Path] = None) -> None:
+    def save(self, path: Path | None = None) -> None:
         """Save configuration to file."""
         import yaml
 
@@ -219,13 +221,13 @@ class Config:
         return int(self.get("github.sync_months", 3))
 
     @property
-    def anthropic_base_url(self) -> Optional[str]:
+    def anthropic_base_url(self) -> str | None:
         """Get Anthropic API base URL (None if not set)."""
         url = self.get("ai.anthropic_base_url", "")
         return str(url) if url else None
 
     @property
-    def openai_base_url(self) -> Optional[str]:
+    def openai_base_url(self) -> str | None:
         """Get OpenAI API base URL (None if not set)."""
         url = self.get("ai.openai_base_url", "")
         return str(url) if url else None

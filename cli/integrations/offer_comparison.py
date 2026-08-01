@@ -1,9 +1,11 @@
 """Offer comparison and decision tool for job offers."""
 
+from __future__ import annotations
+
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.console import Console
 from rich.table import Table
@@ -31,12 +33,12 @@ class Offer:
         """Calculate total compensation."""
         self.total_compensation = self.base_salary + self.bonus + (self.equity / self.equity_years)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Offer":
+    def from_dict(cls, data: dict[str, Any]) -> Offer:
         """Create from dictionary."""
         return cls(**data)
 
@@ -54,7 +56,7 @@ class UserPriorities:
         """Return total weight."""
         return self.salary_weight + self.growth_weight + self.wlb_weight + self.benefits_weight
 
-    def normalize(self) -> Dict[str, float]:
+    def normalize(self) -> dict[str, float]:
         """Return normalized weights (0-1)."""
         total = self.total()
         if total == 0:
@@ -82,7 +84,7 @@ class OfferScores:
 class OfferComparison:
     """Compare and analyze job offers."""
 
-    def __init__(self, storage_path: Optional[Path] = None):
+    def __init__(self, storage_path: Path | None = None):
         """
         Initialize offer comparison.
 
@@ -94,7 +96,7 @@ class OfferComparison:
 
         self.storage_path = storage_path
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
-        self.offers: List[Offer] = []
+        self.offers: list[Offer] = []
         self.priorities = UserPriorities()
         self._load_offers()
 
@@ -141,7 +143,7 @@ class OfferComparison:
         self.priorities = priorities
         self._save_offers()
 
-    def compare_offers(self) -> List[OfferScores]:
+    def compare_offers(self) -> list[OfferScores]:
         """
         Compare all offers and return scored results.
 
@@ -278,7 +280,7 @@ class OfferComparison:
 
         return "\n".join(lines)
 
-    def list_offers(self) -> List[Offer]:
+    def list_offers(self) -> list[Offer]:
         """List all offers."""
         return self.offers
 
@@ -337,7 +339,7 @@ def add_offer(
     return offer
 
 
-def compare_offers() -> List[OfferScores]:
+def compare_offers() -> list[OfferScores]:
     """
     Compare all stored offers.
 

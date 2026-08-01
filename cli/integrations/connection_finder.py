@@ -1,9 +1,10 @@
 """Connection finder for finding alumni/connections at target companies."""
 
+from __future__ import annotations
+
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
 
 from rich.console import Console
 from rich.table import Table
@@ -29,12 +30,12 @@ class Connection:
     company: str
     connection_degree: str  # 1st, 2nd, alumni
     connection_type: str  # linkedin, github, school, previous_company
-    common_interests: List[str] = field(default_factory=list)
+    common_interests: list[str] = field(default_factory=list)
     profile_url: str = ""
     github_username: str = ""
     school: str = ""
-    previous_companies: List[str] = field(default_factory=list)
-    skills: List[str] = field(default_factory=list)
+    previous_companies: list[str] = field(default_factory=list)
+    skills: list[str] = field(default_factory=list)
     message_suggestion: str = ""
 
 
@@ -44,7 +45,7 @@ class OutreachSuggestion:
 
     connection: Connection
     message_template: str
-    talking_points: List[str] = field(default_factory=list)
+    talking_points: list[str] = field(default_factory=list)
     common_ground: str = ""
 
 
@@ -53,7 +54,7 @@ class ConnectionFinder:
 
     def __init__(self):
         """Initialize connection finder."""
-        self.connections: List[Connection] = []
+        self.connections: list[Connection] = []
 
         # Get user profile info from environment or config
         self.user_school = os.getenv("LINKEDIN_SCHOOL", "")
@@ -65,7 +66,7 @@ class ConnectionFinder:
         role: str = "",
         use_linkedin: bool = True,
         use_github: bool = True,
-    ) -> List[Connection]:
+    ) -> list[Connection]:
         """
         Find connections at a target company.
 
@@ -100,7 +101,7 @@ class ConnectionFinder:
         self.connections = connections
         return connections
 
-    def _search_github_org(self, company: str, role: str = "") -> List[Connection]:
+    def _search_github_org(self, company: str, role: str = "") -> list[Connection]:
         """Search GitHub for company organization members."""
         connections = []
 
@@ -169,7 +170,7 @@ class ConnectionFinder:
 
         return connections
 
-    def find_alumni(self, company: str) -> List[Connection]:
+    def find_alumni(self, company: str) -> list[Connection]:
         """Find alumni (same school) at a company."""
         if not self.user_school:
             console.print("[yellow]No school configured.[/yellow]")
@@ -198,7 +199,7 @@ class ConnectionFinder:
 
         return connections
 
-    def find_previous_company_connections(self, company: str) -> List[Connection]:
+    def find_previous_company_connections(self, company: str) -> list[Connection]:
         """Find people who worked at your previous companies at the target company."""
         if not self.user_previous_companies:
             console.print("[yellow]No previous companies configured.[/yellow]")
@@ -233,8 +234,8 @@ class ConnectionFinder:
 
     def generate_outreach_suggestions(
         self,
-        connections: List[Connection],
-    ) -> List[OutreachSuggestion]:
+        connections: list[Connection],
+    ) -> list[OutreachSuggestion]:
         """Generate outreach message suggestions for connections."""
         suggestions = []
 
@@ -306,7 +307,7 @@ Thank you!"""
 
         return suggestions
 
-    def export_to_csv(self, connections: List[Connection], output_path: Path) -> None:
+    def export_to_csv(self, connections: list[Connection], output_path: Path) -> None:
         """Export connections to CSV file."""
         import csv
 
@@ -330,7 +331,7 @@ Thank you!"""
 
         console.print(f"[green]✓[/green] Exported {len(connections)} connections to {output_path}")
 
-    def print_connections_table(self, connections: List[Connection]) -> None:
+    def print_connections_table(self, connections: list[Connection]) -> None:
         """Print connections in a rich table."""
         if not connections:
             console.print("[yellow]No connections found.[/yellow]")
@@ -358,7 +359,7 @@ def find_connections_at_company(
     role: str = "",
     use_linkedin: bool = True,
     use_github: bool = True,
-) -> List[Connection]:
+) -> list[Connection]:
     """
     Find connections at a target company.
 

@@ -4,11 +4,13 @@ Job Posting Parser
 Parses job postings from LinkedIn, Indeed, and other sources to extract structured data.
 """
 
+from __future__ import annotations
+
 import json
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.console import Console
 
@@ -21,16 +23,16 @@ class JobDetails:
 
     company: str
     position: str
-    requirements: List[str]
-    responsibilities: List[str]
-    salary: Optional[str] = None
-    remote: Optional[bool] = None
-    location: Optional[str] = None
-    url: Optional[str] = None
-    job_type: Optional[str] = None
-    experience_level: Optional[str] = None
+    requirements: list[str]
+    responsibilities: list[str]
+    salary: str | None = None
+    remote: bool | None = None
+    location: str | None = None
+    url: str | None = None
+    job_type: str | None = None
+    experience_level: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
@@ -42,7 +44,7 @@ class JobDetails:
 class JobParser:
     """Parse job postings from various sources."""
 
-    def __init__(self, cache_dir: Optional[Path] = None):
+    def __init__(self, cache_dir: Path | None = None):
         """Initialize job parser with optional cache directory."""
         self.cache_dir = cache_dir or Path.home() / ".resume-cli" / "cache"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -237,7 +239,7 @@ class JobParser:
             return match.group(1).strip()
         return default
 
-    def _extract_list(self, text: str, pattern: str, max_items: int = 10) -> List[str]:
+    def _extract_list(self, text: str, pattern: str, max_items: int = 10) -> list[str]:
         """Extract list of items using regex pattern."""
         matches = re.findall(pattern, text, re.IGNORECASE)
         # Deduplicate and limit
@@ -252,7 +254,7 @@ class JobParser:
                     break
         return items
 
-    def _extract_items_from_text(self, text: str) -> List[str]:
+    def _extract_items_from_text(self, text: str) -> list[str]:
         """Extract list items from text (bullets, numbered lists, etc.)."""
         items = []
         # Match bullet points, numbered lists, or comma-separated items
@@ -276,7 +278,7 @@ class JobParser:
 
         return hashlib.sha256(url.encode()).hexdigest()
 
-    def _get_from_cache(self, cache_key: str) -> Optional[JobDetails]:
+    def _get_from_cache(self, cache_key: str) -> JobDetails | None:
         """Get cached job details."""
         cache_file = self.cache_dir / f"{cache_key}.json"
         if cache_file.exists():
@@ -294,9 +296,9 @@ class JobParser:
 
 
 def parse_job_posting(
-    file_path: Optional[Path] = None,
-    url: Optional[str] = None,
-    output: Optional[Path] = None,
+    file_path: Path | None = None,
+    url: str | None = None,
+    output: Path | None = None,
     use_cache: bool = True,
 ) -> JobDetails:
     """Parse job posting from file or URL."""

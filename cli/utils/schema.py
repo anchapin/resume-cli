@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import yaml
 
@@ -104,7 +104,7 @@ class ValidationError:
     """Represents a validation error with actionable guidance."""
 
     # Error message templates with "What to do" guidance
-    ERROR_GUIDANCE = {
+    ERROR_GUIDANCE: ClassVar[dict[str, dict[str, str]]] = {
         "contact.email": {
             "invalid": 'The email "{value}" is not a valid format.\n\nWhat to do:\n  • Check your email in resume.yaml\n  • Format should be: user@domain.com\n  • Example: john@example.com',
         },
@@ -380,13 +380,13 @@ class ResumeValidator:
 
     def _validate_dates(self, data: dict[str, Any]) -> None:
         """Validate date formats."""
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         # Check meta.last_updated
         last_updated = data.get("meta", {}).get("last_updated", "")
         if last_updated:
             try:
-                datetime.strptime(last_updated, "%Y-%m-%d")
+                datetime.strptime(last_updated, "%Y-%m-%d").replace(tzinfo=timezone.utc)
             except ValueError:
                 self.errors.append(
                     ValidationError(
@@ -403,9 +403,9 @@ class ResumeValidator:
                     try:
                         # Accept YYYY-MM or YYYY-MM-DD
                         if len(date_val) == 7:
-                            datetime.strptime(date_val, "%Y-%m")
+                            datetime.strptime(date_val, "%Y-%m").replace(tzinfo=timezone.utc)
                         elif len(date_val) == 10:
-                            datetime.strptime(date_val, "%Y-%m-%d")
+                            datetime.strptime(date_val, "%Y-%m-%d").replace(tzinfo=timezone.utc)
                         else:
                             self.errors.append(
                                 ValidationError(
@@ -427,12 +427,11 @@ class ResumeValidator:
         if not isinstance(contact, dict):
             return
         email = contact.get("email", "")
-        if email:
+        if email and ("@" not in email or "." not in email.split("@")[-1]):
             # Basic email validation
-            if "@" not in email or "." not in email.split("@")[-1]:
-                self.errors.append(
-                    ValidationError("contact.email", "Invalid email format", "error")
-                )
+            self.errors.append(
+                ValidationError("contact.email", "Invalid email format", "error")
+            )
 
     def _validate_skills(self, data: dict[str, Any]) -> None:
         """

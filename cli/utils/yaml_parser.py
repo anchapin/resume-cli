@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -71,7 +71,7 @@ class ResumeYAML:
 
         # Update last_updated timestamp
         if "meta" in self._data:
-            self._data["meta"]["last_updated"] = datetime.now().strftime("%Y-%m-%d")
+            self._data["meta"]["last_updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
         # Create parent directories if needed
         self.yaml_path.parent.mkdir(parents=True, exist_ok=True)

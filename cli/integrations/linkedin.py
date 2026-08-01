@@ -1,4 +1,5 @@
 """LinkedIn integration for importing/exporting profile data."""
+
 from __future__ import annotations
 
 import csv

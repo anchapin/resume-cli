@@ -1,4 +1,5 @@
 """Integration with CSV-based application tracking."""
+
 from __future__ import annotations
 
 import csv

@@ -1,4 +1,5 @@
 """AI-powered video resume script generator using Claude or OpenAI."""
+
 from __future__ import annotations
 
 import json

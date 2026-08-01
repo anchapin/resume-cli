@@ -3,6 +3,7 @@
 Job Posting Parser
 Parses job postings from LinkedIn, Indeed, and other sources to extract structured data.
 """
+
 from __future__ import annotations
 
 import json

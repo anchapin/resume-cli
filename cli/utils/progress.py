@@ -1,4 +1,5 @@
 """Progress indicator utilities for long-running operations."""
+
 from __future__ import annotations
 
 from rich.console import Console

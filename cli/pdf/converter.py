@@ -5,6 +5,7 @@ Provides PDF conversion utilities using pdflatex or pandoc.
 This module extracts and consolidates the PDF compilation logic from the existing
 TemplateGenerator class.
 """
+
 from __future__ import annotations
 
 import subprocess

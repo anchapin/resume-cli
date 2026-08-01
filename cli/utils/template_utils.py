@@ -1,4 +1,5 @@
 """Utility functions for Jinja2 template environment management."""
+
 from __future__ import annotations
 
 from datetime import datetime

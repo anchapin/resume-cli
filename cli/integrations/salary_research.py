@@ -1,4 +1,5 @@
 """Salary research and market data integration."""
+
 from __future__ import annotations
 
 import json

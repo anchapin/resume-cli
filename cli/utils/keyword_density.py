@@ -1,4 +1,5 @@
 """Keyword density analysis for resumes."""
+
 from __future__ import annotations
 
 import json

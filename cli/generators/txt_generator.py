@@ -1,4 +1,5 @@
 """TXT resume generator for ATS-friendly plain text output."""
+
 from __future__ import annotations
 
 from pathlib import Path

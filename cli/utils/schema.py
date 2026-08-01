@@ -1,4 +1,5 @@
 """Schema validation for resume.yaml."""
+
 from __future__ import annotations
 
 import sys
@@ -238,7 +239,9 @@ class ResumeValidator:
         # Validate skills with support for multiple formats
         self._validate_skills(data)
 
-    def _get_guidance(self, path: str, error_type: str = "missing", value: str | None = None) -> str:
+    def _get_guidance(
+        self, path: str, error_type: str = "missing", value: str | None = None
+    ) -> str:
         """Get actionable guidance for an error."""
         key = path
         # Try to get guidance for this path and error type

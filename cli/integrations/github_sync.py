@@ -1,4 +1,5 @@
 """GitHub integration for syncing projects."""
+
 from __future__ import annotations
 
 import json

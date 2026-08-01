@@ -4,6 +4,7 @@ Template Options Module
 Provides template customization options for PDF generation.
 This module defines configuration options for resume templates.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -4,6 +4,7 @@ CLI command for previewing generated resumes in a web browser.
 This module provides the 'preview' command that starts a local web server
 to visualize generated resumes directly in the browser.
 """
+
 from __future__ import annotations
 
 import os

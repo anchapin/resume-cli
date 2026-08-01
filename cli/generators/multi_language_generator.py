@@ -1,4 +1,5 @@
 """Multi-language resume generation using AI translation."""
+
 from __future__ import annotations
 
 import os

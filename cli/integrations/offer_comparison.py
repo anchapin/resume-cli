@@ -1,4 +1,5 @@
 """Offer comparison and decision tool for job offers."""
+
 from __future__ import annotations
 
 import json

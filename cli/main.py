@@ -3,6 +3,7 @@
 Resume CLI System
 A unified command-line interface for generating and managing job-specific resumes.
 """
+
 from __future__ import annotations
 
 import sys

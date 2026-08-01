@@ -1,4 +1,5 @@
 """Connection finder for finding alumni/connections at target companies."""
+
 from __future__ import annotations
 
 import os

@@ -4,6 +4,7 @@ CLI command for converting between resume formats.
 This module provides the 'convert', 'import', and 'export' commands for
 bidirectional conversion between resume-cli YAML format and JSON Resume format.
 """
+
 from __future__ import annotations
 
 import json

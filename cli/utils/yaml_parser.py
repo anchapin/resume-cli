@@ -1,4 +1,5 @@
 """YAML parser utility for resume data."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -9,9 +10,7 @@ from typing import Any
 class ResumeYAML:
     """Handler for reading and writing resume.yaml."""
 
-    def __init__(
-        self, yaml_path: Path | None = None, resume_data: dict[str, Any] | None = None
-    ):
+    def __init__(self, yaml_path: Path | None = None, resume_data: dict[str, Any] | None = None):
         """
         Initialize YAML handler.
 

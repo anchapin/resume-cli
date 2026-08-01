@@ -1,4 +1,5 @@
 """DOCX resume generator using python-docx."""
+
 from __future__ import annotations
 
 from pathlib import Path

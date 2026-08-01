@@ -1,4 +1,5 @@
 """Template Marketplace - Browse, install, and manage resume templates."""
+
 from __future__ import annotations
 
 import json
@@ -623,9 +624,7 @@ def preview_template(ctx, name: str, lines: int):
     help="Template category",
 )
 @click.pass_context
-def install_template(
-    ctx, source: str, name: str | None, description: str | None, category: str
-):
+def install_template(ctx, source: str, name: str | None, description: str | None, category: str):
     """Install a template from a file."""
     marketplace = TemplateMarketplace()
 

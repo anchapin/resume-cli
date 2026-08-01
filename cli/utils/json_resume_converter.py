@@ -8,6 +8,7 @@ This module provides bidirectional conversion between:
 The JSON Resume format is used by ResumeAI, allowing interoperability
 between the two projects.
 """
+
 from __future__ import annotations
 
 from datetime import datetime

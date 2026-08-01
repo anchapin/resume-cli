@@ -13,6 +13,7 @@ Parses job postings from HTML files or URLs and extracts structured data:
 
 Outputs structured JSON for use with AI resume tailoring.
 """
+
 from __future__ import annotations
 
 import hashlib

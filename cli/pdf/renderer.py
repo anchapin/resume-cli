@@ -5,6 +5,7 @@ Provides LaTeX template rendering functionality for PDF generation.
 This module extracts and consolidates the rendering logic from the existing
 TemplateGenerator class.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

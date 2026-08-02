@@ -22,12 +22,12 @@ from .generator import PDFGenerator, get_generator, latex_escape, proper_title
 __version__ = "0.1.0"
 
 __all__ = [
-    "PDFGenerator",
-    "latex_escape",
-    "proper_title",
-    "get_generator",
-    "PDFGenerationError",
-    "TemplateNotFoundError",
     "InvalidVariantError",
     "LaTeXCompilationError",
+    "PDFGenerationError",
+    "PDFGenerator",
+    "TemplateNotFoundError",
+    "get_generator",
+    "latex_escape",
+    "proper_title",
 ]

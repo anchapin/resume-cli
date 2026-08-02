@@ -1,9 +1,10 @@
 """Integration with CSV-based application tracking."""
+from __future__ import annotations
 
 import csv
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class TrackingIntegration:
@@ -26,10 +27,10 @@ class TrackingIntegration:
         status: str,
         variant: str = "v1.0.0-base",
         source: str = "manual",
-        url: Optional[str] = None,
-        notes: Optional[str] = None,
+        url: str | None = None,
+        notes: str | None = None,
         cover_letter_generated: bool = False,
-        package_path: Optional[str] = None,
+        package_path: str | None = None,
     ) -> None:
         """
         Log a job application to CSV.
@@ -117,7 +118,7 @@ class TrackingIntegration:
             writer.writeheader()
             writer.writerows(entries)
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """
         Calculate application statistics.
 
@@ -164,7 +165,7 @@ class TrackingIntegration:
         entries.sort(key=lambda e: e.get("date", ""), reverse=True)
         return entries[:limit]
 
-    def update_status(self, company: str, new_status: str, role: Optional[str] = None) -> bool:
+    def update_status(self, company: str, new_status: str, role: str | None = None) -> bool:
         """
         Update application status.
 
@@ -200,7 +201,7 @@ class TrackingIntegration:
     # Analytics Methods for Dashboard
     # =========================================================================
 
-    def get_applications_by_status(self) -> Dict[str, int]:
+    def get_applications_by_status(self) -> dict[str, int]:
         """
         Get application counts grouped by status.
 
@@ -216,7 +217,7 @@ class TrackingIntegration:
 
         return dict(status_counts)
 
-    def get_applications_timeline(self, days: int = 90) -> List[Dict[str, Any]]:
+    def get_applications_timeline(self, days: int = 90) -> list[dict[str, Any]]:
         """
         Get application counts over time (daily).
 
@@ -249,7 +250,7 @@ class TrackingIntegration:
 
         return timeline
 
-    def get_variant_performance(self) -> List[Dict[str, Any]]:
+    def get_variant_performance(self) -> list[dict[str, Any]]:
         """
         Get performance metrics by resume variant.
 
@@ -311,7 +312,7 @@ class TrackingIntegration:
         result.sort(key=lambda x: x["total_applications"], reverse=True)
         return result
 
-    def get_company_analytics(self) -> List[Dict[str, Any]]:
+    def get_company_analytics(self) -> list[dict[str, Any]]:
         """
         Get analytics grouped by company.
 
@@ -335,14 +336,14 @@ class TrackingIntegration:
             statuses = data["statuses"]
 
             # Get unique roles
-            roles = list(set(app.get("role", "") for app in apps))
+            roles = list({app.get("role", "") for app in apps})
 
             # Get latest application date
             dates = [app.get("date", "") for app in apps if app.get("date")]
             latest_date = max(dates) if dates else ""
 
             # Get sources
-            sources = list(set(app.get("source", "") for app in apps))
+            sources = list({app.get("source", "") for app in apps})
 
             result.append(
                 {
@@ -360,7 +361,7 @@ class TrackingIntegration:
         result.sort(key=lambda x: x["total_applications"], reverse=True)
         return result
 
-    def get_response_rate_gauge(self) -> Dict[str, Any]:
+    def get_response_rate_gauge(self) -> dict[str, Any]:
         """
         Get overall response rate for gauge display.
 
@@ -385,7 +386,7 @@ class TrackingIntegration:
             "offers": stats.get("offer", 0),
         }
 
-    def get_source_breakdown(self) -> List[Dict[str, Any]]:
+    def get_source_breakdown(self) -> list[dict[str, Any]]:
         """
         Get application counts by source.
 
@@ -403,7 +404,7 @@ class TrackingIntegration:
         result.sort(key=lambda x: x["count"], reverse=True)
         return result
 
-    def get_dashboard_data(self) -> Dict[str, Any]:
+    def get_dashboard_data(self) -> dict[str, Any]:
         """
         Get comprehensive dashboard data for analytics.
 

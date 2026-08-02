@@ -8,10 +8,11 @@ This module provides bidirectional conversion between:
 The JSON Resume format is used by ResumeAI, allowing interoperability
 between the two projects.
 """
+from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 
 class JSONResumeConverter:
@@ -27,7 +28,7 @@ class JSONResumeConverter:
     # JSON Resume uses: {name: string, keywords: string[]}
 
     @staticmethod
-    def convert_skills_to_json_resume_format(skills: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def convert_skills_to_json_resume_format(skills: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Convert resume-cli skills to JSON Resume format.
 
@@ -67,7 +68,7 @@ class JSONResumeConverter:
         return skill_list
 
     @staticmethod
-    def convert_skills_to_extended_format(skills: List[Dict[str, Any]]) -> Dict[str, List[Any]]:
+    def convert_skills_to_extended_format(skills: list[dict[str, Any]]) -> dict[str, list[Any]]:
         """
         Convert JSON Resume skills format to resume-cli extended format.
 
@@ -95,7 +96,7 @@ class JSONResumeConverter:
         return skill_dict
 
     @staticmethod
-    def yaml_to_json_resume(yaml_data: Dict[str, Any]) -> Dict[str, Any]:
+    def yaml_to_json_resume(yaml_data: dict[str, Any]) -> dict[str, Any]:
         """
         Convert resume-cli YAML format to JSON Resume format.
 
@@ -105,7 +106,7 @@ class JSONResumeConverter:
         Returns:
             Resume data in JSON Resume format
         """
-        json_resume: Dict[str, Any] = {}
+        json_resume: dict[str, Any] = {}
 
         # Convert contact -> basics
         contact = yaml_data.get("contact", {})
@@ -162,8 +163,8 @@ class JSONResumeConverter:
 
     @staticmethod
     def json_resume_to_yaml(
-        json_data: Dict[str, Any], include_variants: bool = True
-    ) -> Dict[str, Any]:
+        json_data: dict[str, Any], include_variants: bool = True
+    ) -> dict[str, Any]:
         """
         Convert JSON Resume format to resume-cli YAML format.
 
@@ -174,7 +175,7 @@ class JSONResumeConverter:
         Returns:
             Resume data in resume-cli YAML format
         """
-        yaml_data: Dict[str, Any] = {
+        yaml_data: dict[str, Any] = {
             "meta": {
                 "version": "1.0.0",
                 "last_updated": datetime.now().strftime("%Y-%m-%d"),
@@ -272,7 +273,7 @@ class JSONResumeConverter:
         return yaml_data
 
     @staticmethod
-    def _convert_location(location: Optional[Dict[str, str]]) -> Optional[Dict[str, str]]:
+    def _convert_location(location: dict[str, str] | None) -> dict[str, str] | None:
         """Convert location format."""
         if not location:
             return None
@@ -285,7 +286,7 @@ class JSONResumeConverter:
         }
 
     @staticmethod
-    def _convert_profiles(urls: Optional[Dict[str, str]]) -> List[Dict[str, str]]:
+    def _convert_profiles(urls: dict[str, str] | None) -> list[dict[str, str]]:
         """Convert URLs to profiles format."""
         profiles = []
         if not urls:
@@ -311,7 +312,7 @@ class JSONResumeConverter:
         return profiles
 
     @staticmethod
-    def _convert_experience(experience: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _convert_experience(experience: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Convert experience entries to work format."""
         work = []
         for job in experience:
@@ -335,7 +336,7 @@ class JSONResumeConverter:
         return work
 
     @staticmethod
-    def _convert_bullets_to_highlights(bullets: List[Union[str, Dict]]) -> List[str]:
+    def _convert_bullets_to_highlights(bullets: list[str | dict]) -> list[str]:
         """Convert bullet points to highlights format."""
         highlights = []
         for bullet in bullets:
@@ -346,7 +347,7 @@ class JSONResumeConverter:
         return highlights
 
     @staticmethod
-    def _convert_education(education: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _convert_education(education: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Convert education entries."""
         edu = []
         for entry in education:
@@ -371,7 +372,7 @@ class JSONResumeConverter:
         return edu
 
     @staticmethod
-    def _convert_skills(skills: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _convert_skills(skills: dict[str, Any]) -> list[dict[str, Any]]:
         """Convert skills to JSON Resume format."""
         skill_list = []
         for category, skill_data in skills.items():
@@ -398,7 +399,7 @@ class JSONResumeConverter:
         return skill_list
 
     @staticmethod
-    def _convert_projects(projects: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _convert_projects(projects: dict[str, Any]) -> list[dict[str, Any]]:
         """Convert projects to JSON Resume format."""
         project_list = []
         for category, project_data in projects.items():
@@ -427,7 +428,7 @@ class JSONResumeConverter:
         return project_list
 
     @staticmethod
-    def _convert_publications(publications: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _convert_publications(publications: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Convert publications to JSON Resume format."""
         pub_list = []
         for pub in publications:
@@ -443,7 +444,7 @@ class JSONResumeConverter:
         return pub_list
 
     @staticmethod
-    def _convert_certifications(certifications: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _convert_certifications(certifications: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Convert certifications to JSON Resume format."""
         cert_list = []
         for cert in certifications:
@@ -460,7 +461,7 @@ class JSONResumeConverter:
         return cert_list
 
     @staticmethod
-    def _convert_affiliations(affiliations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _convert_affiliations(affiliations: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Convert affiliations to references format."""
         ref_list = []
         for aff in affiliations:
@@ -476,7 +477,7 @@ class JSONResumeConverter:
     # Methods for reverse conversion (JSON Resume -> YAML)
 
     @staticmethod
-    def _convert_work_to_experience(work: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _convert_work_to_experience(work: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Convert work entries to experience format."""
         experience = []
         for job in work:
@@ -502,7 +503,7 @@ class JSONResumeConverter:
         return experience
 
     @staticmethod
-    def _convert_education_to_yaml(education: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _convert_education_to_yaml(education: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Convert education entries to YAML format."""
         edu_list = []
         for edu in education:
@@ -526,7 +527,7 @@ class JSONResumeConverter:
         return edu_list
 
     @staticmethod
-    def _convert_skills_to_yaml(skills: List[Dict[str, Any]]) -> Dict[str, List[str]]:
+    def _convert_skills_to_yaml(skills: list[dict[str, Any]]) -> dict[str, list[str]]:
         """Convert skills to YAML format."""
         skill_dict = {}
         for skill in skills:
@@ -540,8 +541,8 @@ class JSONResumeConverter:
 
     @staticmethod
     def _convert_projects_to_yaml(
-        projects: List[Dict[str, Any]],
-    ) -> Dict[str, List[Dict[str, Any]]]:
+        projects: list[dict[str, Any]],
+    ) -> dict[str, list[dict[str, Any]]]:
         """Convert projects to YAML format."""
         project_dict = {}
         for project in projects:
@@ -563,7 +564,7 @@ class JSONResumeConverter:
         return project_dict
 
     @staticmethod
-    def _convert_publications_to_yaml(publications: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _convert_publications_to_yaml(publications: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Convert publications to YAML format."""
         pub_list = []
         for pub in publications:
@@ -582,7 +583,7 @@ class JSONResumeConverter:
         return pub_list
 
     @staticmethod
-    def _convert_certificates_to_yaml(certificates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _convert_certificates_to_yaml(certificates: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Convert certificates to YAML format."""
         cert_list = []
         for cert in certificates:
@@ -599,8 +600,8 @@ class JSONResumeConverter:
 
 
 def convert_yaml_to_json_resume(
-    yaml_path: Union[str, Path], output_path: Optional[Path] = None
-) -> Dict[str, Any]:
+    yaml_path: str | Path, output_path: Path | None = None
+) -> dict[str, Any]:
     """
     Convert resume-cli YAML file to JSON Resume format.
 
@@ -627,7 +628,7 @@ def convert_yaml_to_json_resume(
     return json_resume
 
 
-def convert_json_resume_to_yaml(json_data: Dict[str, Any], output_path: Path) -> None:
+def convert_json_resume_to_yaml(json_data: dict[str, Any], output_path: Path) -> None:
     """
     Convert JSON Resume format to resume-cli YAML file.
 

@@ -1,7 +1,8 @@
 """DOCX resume generator using python-docx."""
+from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from docx import Document
 from docx.shared import Inches, Pt
@@ -21,8 +22,8 @@ class DocxGenerator:
 
     def __init__(
         self,
-        yaml_path: Optional[Path] = None,
-        config: Optional[Config] = None,
+        yaml_path: Path | None = None,
+        config: Config | None = None,
     ):
         """
         Initialize DOCX generator.
@@ -37,8 +38,8 @@ class DocxGenerator:
     def generate(
         self,
         variant: str,
-        output_path: Optional[Path] = None,
-        enhanced_context: Optional[Dict[str, Any]] = None,
+        output_path: Path | None = None,
+        enhanced_context: dict[str, Any] | None = None,
     ) -> Document:
         """
         Generate resume as DOCX document.
@@ -140,7 +141,7 @@ class DocxGenerator:
 
         return doc
 
-    def _add_header(self, doc: Document, contact: Dict) -> None:
+    def _add_header(self, doc: Document, contact: dict) -> None:
         """Add contact information header."""
         # Name
         name = contact.get("name", "")
@@ -204,7 +205,7 @@ class DocxGenerator:
         para.paragraph_format.space_before = Pt(12)
         para.paragraph_format.space_after = Pt(6)
 
-    def _add_summary(self, doc: Document, summary: Optional[Dict]) -> None:
+    def _add_summary(self, doc: Document, summary: dict | None) -> None:
         """Add professional summary."""
         if not summary:
             return
@@ -216,7 +217,7 @@ class DocxGenerator:
             para = doc.add_paragraph(summary_text)
             para.paragraph_format.space_after = Pt(12)
 
-    def _add_projects(self, doc: Document, projects: Dict) -> None:
+    def _add_projects(self, doc: Document, projects: dict) -> None:
         """Add projects section."""
         if not projects:
             return
@@ -347,7 +348,7 @@ class DocxGenerator:
 
         doc.add_paragraph()
 
-    def _add_skills(self, doc: Document, skills: Dict) -> None:
+    def _add_skills(self, doc: Document, skills: dict) -> None:
         """Add skills section."""
         if not skills:
             return

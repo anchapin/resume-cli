@@ -124,7 +124,7 @@ class TestLogApplication:
         # Read CSV
         with open(csv_path, newline="") as f:
             reader = csv.DictReader(f)
-            entry = list(reader)[0]
+            entry = next(iter(reader))
 
         assert entry["source"] == "LinkedIn"
         assert entry["url"] == "https://example.com/job"

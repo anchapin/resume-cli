@@ -4,10 +4,10 @@ CLI command for converting between resume formats.
 This module provides the 'convert', 'import', and 'export' commands for
 bidirectional conversion between resume-cli YAML format and JSON Resume format.
 """
+from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
 
 import click
 
@@ -243,7 +243,7 @@ def export_json_resume(yaml_file: Path, output: Path):
     default=False,
     help="Don't add default variants configuration when importing to YAML",
 )
-def import_resume(input_file: Path, fmt: Optional[str], output: Optional[Path], no_variants: bool):
+def import_resume(input_file: Path, fmt: str | None, output: Path | None, no_variants: bool):
     """
     Import resume data from external formats.
 
@@ -349,7 +349,7 @@ def import_resume(input_file: Path, fmt: Optional[str], output: Optional[Path], 
     default=None,
     help="Output file path (default: resume.json for JSON, auto-named for YAML)",
 )
-def export_resume(input_file: Path, fmt: Optional[str], output: Optional[Path]):
+def export_resume(input_file: Path, fmt: str | None, output: Path | None):
     """
     Export resume data to external formats.
 

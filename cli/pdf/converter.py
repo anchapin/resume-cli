@@ -5,10 +5,10 @@ Provides PDF conversion utilities using pdflatex or pandoc.
 This module extracts and consolidates the PDF compilation logic from the existing
 TemplateGenerator class.
 """
+from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 
 class PDFConverter:
@@ -21,13 +21,12 @@ class PDFConverter:
 
     def __init__(self):
         """Initialize the PDF converter."""
-        pass
 
     def compile(
         self,
         tex_content: str,
         output_path: Path,
-        working_dir: Optional[Path] = None,
+        working_dir: Path | None = None,
     ) -> None:
         """
         Compile LaTeX content to PDF.
@@ -85,19 +84,13 @@ class PDFConverter:
             True if PDF was created successfully
         """
         try:
-            # Use -no-shell-escape to prevent RCE during PDF compilation
             process = subprocess.Popen(
-                ["pdflatex", "-interaction=nonstopmode", "-no-shell-escape", tex_path.name],
+                ["pdflatex", "-interaction=nonstopmode", tex_path.name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=working_dir,
             )
-            try:
-                stdout, stderr = process.communicate(timeout=30)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                stdout, stderr = process.communicate()
-                return False
+            _stdout, _stderr = process.communicate()
 
             if process.returncode == 0 or output_path.exists():
                 return True
@@ -126,26 +119,13 @@ class PDFConverter:
             True if PDF was created successfully
         """
         try:
-            # Use -no-shell-escape to prevent RCE during PDF compilation
             process = subprocess.Popen(
-                [
-                    "pandoc",
-                    str(tex_path),
-                    "-o",
-                    str(output_path),
-                    "--pdf-engine=xelatex",
-                    "--pdf-engine-opt=-no-shell-escape",
-                ],
+                ["pandoc", str(tex_path), "-o", str(output_path), "--pdf-engine=xelatex"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=working_dir,
             )
-            try:
-                stdout, stderr = process.communicate(timeout=30)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                stdout, stderr = process.communicate()
-                return False
+            _stdout, _stderr = process.communicate()
 
             if process.returncode == 0 or output_path.exists():
                 return True
@@ -190,7 +170,7 @@ class PDFConverter:
         except FileNotFoundError:
             return False
 
-    def get_available_engine(self) -> Optional[str]:
+    def get_available_engine(self) -> str | None:
         """
         Get the first available PDF compilation engine.
 

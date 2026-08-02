@@ -4,6 +4,7 @@ PDF Generator for resumes using LaTeX templates.
 This module provides a unified interface for generating PDF resumes
 from structured data using Jinja2 templates and LaTeX.
 """
+from __future__ import annotations
 
 import logging
 import re
@@ -11,7 +12,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
@@ -52,11 +53,11 @@ class PDFGenerator:
     """
 
     # Cache for Jinja2 environments
-    _env_cache: Dict[str, Environment] = {}
+    _env_cache: dict[str, Environment] = {}
 
     def __init__(
         self,
-        templates_dir: Optional[str] = None,
+        templates_dir: str | None = None,
         default_variant: str = "base",
         latex_compiler: str = "xelatex",
         compilation_timeout: int = 30,
@@ -128,9 +129,9 @@ class PDFGenerator:
 
     def generate_pdf(
         self,
-        resume_data: Dict[str, Any],
-        variant: Optional[str] = None,
-        output_path: Optional[str] = None,
+        resume_data: dict[str, Any],
+        variant: str | None = None,
+        output_path: str | None = None,
     ) -> bytes:
         """
         Generate a PDF resume from structured data.
@@ -223,7 +224,7 @@ class PDFGenerator:
                 logger.error(f"PDF generation error: {e}")
                 raise LaTeXCompilationError(f"PDF generation failed: {e}")
 
-    def _render_variant_template(self, variant: str, resume_data: Dict[str, Any]) -> str:
+    def _render_variant_template(self, variant: str, resume_data: dict[str, Any]) -> str:
         """Render a variant-style template (ResumeAI style)."""
         template_file = self.templates_dir / variant / "main.tex"
         if not template_file.exists():
@@ -234,7 +235,7 @@ class PDFGenerator:
         template = self.jinja_env.get_template(f"{variant}/main.tex")
         return template.render(resume=resume_data)
 
-    def _render_single_template(self, variant: str, resume_data: Dict[str, Any]) -> str:
+    def _render_single_template(self, variant: str, resume_data: dict[str, Any]) -> str:
         """Render a single-file template (resume-cli style)."""
         # For resume-cli style, the template expects individual variables
         # Convert from resume dict to individual context variables
@@ -250,7 +251,7 @@ class PDFGenerator:
 
         return template.render(**context)
 
-    def _prepare_template_context(self, resume_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _prepare_template_context(self, resume_data: dict[str, Any]) -> dict[str, Any]:
         """Prepare template context from resume data."""
         context = {}
 
@@ -273,7 +274,7 @@ class PDFGenerator:
 
         return context
 
-    def _normalize_resume_data(self, resume_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _normalize_resume_data(self, resume_data: dict[str, Any]) -> dict[str, Any]:
         """
         Normalize resume data to a consistent format.
 
@@ -407,7 +408,7 @@ class PDFGenerator:
 
         logger.info(f"Successfully compiled {tex_file.name}")
 
-    def list_variants(self) -> List[str]:
+    def list_variants(self) -> list[str]:
         """
         List available template variants.
 
@@ -431,7 +432,7 @@ class PDFGenerator:
 
     def generate_markdown(
         self,
-        resume_data: Dict[str, Any],
+        resume_data: dict[str, Any],
         variant: str = "base",
     ) -> str:
         """
@@ -573,10 +574,10 @@ def proper_title(text: str) -> str:
 
 
 # Default generator instance for convenience
-_default_generator: Optional[PDFGenerator] = None
+_default_generator: PDFGenerator | None = None
 
 
-def get_generator(templates_dir: Optional[str] = None) -> PDFGenerator:
+def get_generator(templates_dir: str | None = None) -> PDFGenerator:
     """
     Get or create a default PDFGenerator instance.
 

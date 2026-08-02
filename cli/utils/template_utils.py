@@ -1,8 +1,8 @@
 """Utility functions for Jinja2 template environment management."""
+from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Dict
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
@@ -10,7 +10,7 @@ from markupsafe import Markup
 from .template_filters import latex_escape, proper_title
 
 # Cache for Jinja2 environments to avoid expensive re-initialization
-_ENV_CACHE: Dict[str, Environment] = {}
+_ENV_CACHE: dict[str, Environment] = {}
 
 
 def get_jinja_env(template_dir: Path) -> Environment:

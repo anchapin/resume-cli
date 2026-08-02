@@ -1,10 +1,11 @@
 """AI-powered video resume script generator using Claude or OpenAI."""
+from __future__ import annotations
 
 import json
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.console import Console
 
@@ -50,7 +51,7 @@ class VideoResumeScript:
         self.visual_suggestions = []
         self.teleprompter_text = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "duration_seconds": self.duration_seconds,
             "introduction": self.introduction,
@@ -92,7 +93,7 @@ class VideoResumeGenerator:
         "call_to_action": 30,
     }
 
-    def __init__(self, yaml_path: Optional[Path] = None, config: Optional[Config] = None):
+    def __init__(self, yaml_path: Path | None = None, config: Config | None = None):
         """
         Initialize video resume generator.
 
@@ -205,9 +206,9 @@ class VideoResumeGenerator:
         self,
         job_description: str,
         resume_content: str,
-        experience: List[Dict[str, Any]],
-        skills: Dict[str, List[str]],
-        contact: Dict[str, Any],
+        experience: list[dict[str, Any]],
+        skills: dict[str, list[str]],
+        contact: dict[str, Any],
         summary: str,
         duration: int,
         company_name: str,
@@ -238,7 +239,7 @@ class VideoResumeGenerator:
             return script
 
         except Exception as e:
-            console.print(f"[yellow]Warning:[/yellow] AI generation failed: {str(e)}")
+            console.print(f"[yellow]Warning:[/yellow] AI generation failed: {e!s}")
             console.print("[dim]Falling back to template-based script...[/dim]")
             return self._generate_fallback_script(
                 contact=contact,
@@ -252,9 +253,9 @@ class VideoResumeGenerator:
         self,
         job_description: str,
         resume_content: str,
-        experience: List[Dict[str, Any]],
-        skills: Dict[str, List[str]],
-        contact: Dict[str, Any],
+        experience: list[dict[str, Any]],
+        skills: dict[str, list[str]],
+        contact: dict[str, Any],
         summary: str,
         duration: int,
         company_name: str,
@@ -430,9 +431,9 @@ Please generate the video resume script JSON:"""
 
     def _generate_fallback_script(
         self,
-        contact: Dict[str, Any],
-        experience: List[Dict[str, Any]],
-        skills: Dict[str, List[str]],
+        contact: dict[str, Any],
+        experience: list[dict[str, Any]],
+        skills: dict[str, list[str]],
         duration: int,
         company_name: str,
     ) -> VideoResumeScript:
@@ -694,8 +695,8 @@ Please generate the video resume script JSON:"""
 
 
 def generate_video_resume(
-    yaml_path: Optional[Path] = None,
-    config: Optional[Config] = None,
+    yaml_path: Path | None = None,
+    config: Config | None = None,
     job_description: str = "",
     variant: str = "base",
     duration: int = 60,

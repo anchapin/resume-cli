@@ -3,10 +3,10 @@
 Resume CLI System
 A unified command-line interface for generating and managing job-specific resumes.
 """
+from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Optional
 
 import click
 
@@ -157,11 +157,11 @@ def generate(
     variant: str,
     format: str,
     template: str,
-    template_path: Optional[str],
-    output: Optional[str],
+    template_path: str | None,
+    output: str | None,
     no_save: bool,
     ai: bool,
-    job_desc: Optional[str],
+    job_desc: str | None,
     language: str,
 ):
     """
@@ -326,10 +326,10 @@ def generate_package(
     variant: str,
     format: str,
     job_desc: str,
-    company: Optional[str],
+    company: str | None,
     non_interactive: bool,
     no_cover_letter: bool,
-    output_dir: Optional[str],
+    output_dir: str | None,
     include_github_projects: bool,
 ):
     """
@@ -508,7 +508,7 @@ def generate_package(
                     output_formats=config.cover_letter_formats,
                 )
             else:
-                cover_letter_outputs, job_details = cl_gen_temp.generate_interactive(
+                cover_letter_outputs, _job_details = cl_gen_temp.generate_interactive(
                     job_description=job_description,
                     company_name=company,
                     variant=variant,
@@ -573,7 +573,6 @@ def variants(ctx):
 @cli.group()
 def track():
     """Application tracking commands."""
-    pass
 
 
 @cli.command()
@@ -589,11 +588,11 @@ def apply(
     ctx,
     company: str,
     status: str,
-    role: Optional[str],
+    role: str | None,
     variant: str,
     source: str,
-    url: Optional[str],
-    notes: Optional[str],
+    url: str | None,
+    notes: str | None,
 ):
     """
     Log a job application.
@@ -913,7 +912,7 @@ def _print_status_breakdown(console, dashboard_data: dict):
 
     for status, count in sorted(by_status.items(), key=lambda x: x[1], reverse=True):
         percentage = (count / total * 100) if total > 0 else 0
-        icon, color = status_config.get(status, ("❓", "white"))
+        icon, _color = status_config.get(status, ("❓", "white"))
         table.add_row(icon, status.capitalize(), str(count), f"{percentage:.1f}%")
 
     console.print(table)
@@ -1102,7 +1101,7 @@ cli.add_command(preview)
 )
 @click.option("--output", type=click.Path(), help="Save report as JSON file")
 @click.pass_context
-def ats_check(ctx, variant: str, job_desc: str, output: Optional[str]):
+def ats_check(ctx, variant: str, job_desc: str, output: str | None):
     """
     Check ATS (Applicant Tracking System) compatibility score.
 
@@ -1159,7 +1158,7 @@ def ats_check(ctx, variant: str, job_desc: str, output: Optional[str]):
 @click.option("--all", "show_all", is_flag=True, help="Compare all variants")
 @click.option("-o", "--output", type=click.Path(), help="Save diff report to file")
 @click.pass_context
-def diff(ctx, variant1: str, variant2: Optional[str], show_all: bool, output: Optional[str]):
+def diff(ctx, variant1: str, variant2: str | None, show_all: bool, output: str | None):
     """
     Compare resume variants and show differences.
 
@@ -1268,7 +1267,7 @@ def diff(ctx, variant1: str, variant2: Optional[str], show_all: bool, output: Op
 )
 @click.option("--output", type=click.Path(), help="Save report as JSON file")
 @click.pass_context
-def keyword_analysis(ctx, variant: str, job_desc: str, output: Optional[str]):
+def keyword_analysis(ctx, variant: str, job_desc: str, output: str | None):
     """
     Analyze keyword density between resume and job description.
 
@@ -1342,10 +1341,10 @@ def keyword_analysis(ctx, variant: str, job_desc: str, output: Optional[str]):
 def video_script(
     ctx,
     variant: str,
-    job_desc: Optional[str],
-    company: Optional[str],
+    job_desc: str | None,
+    company: str | None,
     duration: str,
-    output: Optional[str],
+    output: str | None,
     format: str,
 ):
     """
@@ -1443,7 +1442,7 @@ def mock_interview(
     num_technical: int,
     num_behavioral: int,
     no_system_design: bool,
-    output: Optional[str],
+    output: str | None,
 ):
     """
     Start an interactive mock interview session with AI evaluation.
@@ -1543,7 +1542,7 @@ def mock_interview(
 @click.option("--url", type=str, help="URL to job posting")
 @click.option("-o", "--output", type=click.Path(), help="Save parsed data as JSON")
 @click.option("--no-cache", is_flag=True, help="Disable caching of parsed job postings")
-def job_parse(file_input: Optional[str], url: Optional[str], output: Optional[str], no_cache: bool):
+def job_parse(file_input: str | None, url: str | None, output: str | None, no_cache: bool):
     """
     Parse job posting from LinkedIn, Indeed, or other sources.
 
@@ -1649,7 +1648,7 @@ def find_connections(
     include_alumni: bool,
     include_previous: bool,
     draft_message: bool,
-    output: Optional[str],
+    output: str | None,
 ):
     """
     Find professional connections at target companies.
@@ -1733,7 +1732,7 @@ def find_connections(
     help="Experience level",
 )
 @click.option("-o", "--output", type=click.Path(), help="Save report as JSON file")
-def salary_research(title: str, location: str, company: str, level: str, output: Optional[str]):
+def salary_research(title: str, location: str, company: str, level: str, output: str | None):
     """
     Research salary data for a position.
 
@@ -1785,7 +1784,6 @@ def salary_research(title: str, location: str, company: str, level: str, output:
 @cli.group()
 def offer():
     """Offer comparison commands."""
-    pass
 
 
 @offer.command("add")
@@ -1842,7 +1840,7 @@ def offer_add(
 
 @offer.command("compare")
 @click.option("-o", "--output", type=click.Path(), help="Save report to file")
-def offer_compare(output: Optional[str]):
+def offer_compare(output: str | None):
     """
     Compare all stored offers and show weighted scores.
 

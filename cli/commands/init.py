@@ -1,16 +1,17 @@
 """Initialize resume.yaml from existing resume files."""
+from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 
 
 def init_from_existing(
-    base_resume_path: Optional[Path] = None,
-    revised_resume_path: Optional[Path] = None,
-    output_path: Optional[Path] = None,
+    base_resume_path: Path | None = None,
+    revised_resume_path: Path | None = None,
+    output_path: Path | None = None,
 ) -> Path:
     """
     Initialize resume.yaml by parsing existing resume files.
@@ -73,7 +74,7 @@ def init_from_existing(
     return output_path
 
 
-def _parse_base_resume(path: Path, data: Dict[str, Any]) -> None:
+def _parse_base_resume(path: Path, data: dict[str, Any]) -> None:
     """Parse base_resume.txt format."""
     content = path.read_text()
 
@@ -183,7 +184,7 @@ def _parse_base_resume(path: Path, data: Dict[str, Any]) -> None:
             )
 
 
-def _parse_revised_resume(path: Path, data: Dict[str, Any]) -> None:
+def _parse_revised_resume(path: Path, data: dict[str, Any]) -> None:
     """Parse REVISED.md for additional details."""
     content = path.read_text()
 
@@ -208,7 +209,7 @@ def _parse_revised_resume(path: Path, data: Dict[str, Any]) -> None:
         data["contact"]["urls"]["linkedin"] = f"https://linkedin.com/in/{linkedin_match.group(1)}"
 
 
-def _add_default_variants(data: Dict[str, Any]) -> None:
+def _add_default_variants(data: dict[str, Any]) -> None:
     """Add default variant configurations."""
     data["variants"] = {
         "v1.0.0-base": {

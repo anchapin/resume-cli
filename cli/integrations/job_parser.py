@@ -13,13 +13,14 @@ Parses job postings from HTML files or URLs and extracts structured data:
 
 Outputs structured JSON for use with AI resume tailoring.
 """
+from __future__ import annotations
 
 import hashlib
 import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from bs4 import BeautifulSoup, Tag
 
@@ -36,18 +37,18 @@ class JobDetails:
 
     company: str = ""
     position: str = ""
-    requirements: List[str] = field(default_factory=list)
-    responsibilities: List[str] = field(default_factory=list)
-    salary: Optional[str] = None
-    remote: Optional[bool] = None
-    location: Optional[str] = None
-    url: Optional[str] = None
-    job_type: Optional[str] = None
-    experience_level: Optional[str] = None
-    description: Optional[str] = None
-    benefits: List[str] = field(default_factory=list)
+    requirements: list[str] = field(default_factory=list)
+    responsibilities: list[str] = field(default_factory=list)
+    salary: str | None = None
+    remote: bool | None = None
+    location: str | None = None
+    url: str | None = None
+    job_type: str | None = None
+    experience_level: str | None = None
+    description: str | None = None
+    benefits: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
@@ -56,7 +57,7 @@ class JobDetails:
         return json.dumps(self.to_dict(), indent=indent, default=str)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "JobDetails":
+    def from_dict(cls, data: dict[str, Any]) -> JobDetails:
         """Create JobDetails from dictionary."""
         return cls(
             company=data.get("company", ""),
@@ -172,7 +173,7 @@ class JobParser:
         "remote available",
     ]
 
-    def __init__(self, cache_dir: Optional[Path] = None):
+    def __init__(self, cache_dir: Path | None = None):
         """
         Initialize job parser.
 
@@ -183,7 +184,7 @@ class JobParser:
         self.cache_dir = cache_dir or Path.home() / ".resume-cli" / "cache" / "jobs"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-    def parse_from_file(self, file_path: Path, url: Optional[str] = None) -> JobDetails:
+    def parse_from_file(self, file_path: Path, url: str | None = None) -> JobDetails:
         """
         Parse job posting from HTML file.
 
@@ -493,7 +494,7 @@ class JobParser:
             experience_level=experience_level,
         )
 
-    def _extract_by_selectors(self, soup: BeautifulSoup, selectors: List[str]) -> Optional[str]:
+    def _extract_by_selectors(self, soup: BeautifulSoup, selectors: list[str]) -> str | None:
         """
         Extract text using multiple CSS selectors.
 
@@ -512,7 +513,7 @@ class JobParser:
                     return text
         return None
 
-    def _find_by_selectors(self, soup: BeautifulSoup, selectors: List[str]) -> Optional[Tag]:
+    def _find_by_selectors(self, soup: BeautifulSoup, selectors: list[str]) -> Tag | None:
         """
         Find element using multiple CSS selectors.
 
@@ -529,7 +530,7 @@ class JobParser:
                 return elem
         return None
 
-    def _extract_text_by_pattern(self, text: str, pattern: str) -> Optional[str]:
+    def _extract_text_by_pattern(self, text: str, pattern: str) -> str | None:
         """
         Extract text using regex pattern.
 
@@ -545,7 +546,7 @@ class JobParser:
             return match.group(1).strip()
         return None
 
-    def _extract_salary_from_text(self, text: str) -> Optional[str]:
+    def _extract_salary_from_text(self, text: str) -> str | None:
         """
         Extract salary information from text.
 
@@ -576,7 +577,7 @@ class JobParser:
 
         return None
 
-    def _extract_sections_from_description(self, description: str) -> Tuple[List[str], List[str]]:
+    def _extract_sections_from_description(self, description: str) -> tuple[list[str], list[str]]:
         """
         Extract requirements and responsibilities from job description.
 
@@ -638,7 +639,7 @@ class JobParser:
 
         return requirements[:15], responsibilities[:15]
 
-    def _extract_items_from_text(self, text: str) -> List[str]:
+    def _extract_items_from_text(self, text: str) -> list[str]:
         """
         Extract list items from text.
 
@@ -695,7 +696,7 @@ class JobParser:
                 line_lower = line.lower()
                 # Skip lines that start with section header keywords
                 if any(
-                    line_lower.startswith(header) or line_lower.startswith(header + ":")
+                    line_lower.startswith((header, header + ":"))
                     for header in section_header_starts
                 ):
                     continue
@@ -711,7 +712,7 @@ class JobParser:
 
         return items[:15]
 
-    def _extract_list_items(self, element: Tag) -> List[str]:
+    def _extract_list_items(self, element: Tag) -> list[str]:
         """
         Extract list items from a BeautifulSoup element.
 
@@ -734,7 +735,7 @@ class JobParser:
 
         return [item for item in items if len(item) > 3][:15]
 
-    def _extract_list_by_keyword(self, html: str, keyword: str) -> List[str]:
+    def _extract_list_by_keyword(self, html: str, keyword: str) -> list[str]:
         """
         Extract list items near a keyword.
 
@@ -765,7 +766,7 @@ class JobParser:
 
         return []
 
-    def _detect_remote_status(self, text: str) -> Optional[bool]:
+    def _detect_remote_status(self, text: str) -> bool | None:
         """
         Detect if position is remote.
 
@@ -795,7 +796,7 @@ class JobParser:
 
         return None
 
-    def _extract_job_type(self, html: str) -> Optional[str]:
+    def _extract_job_type(self, html: str) -> str | None:
         """
         Extract job type (full-time, part-time, contract, etc.).
 
@@ -817,7 +818,7 @@ class JobParser:
 
         return None
 
-    def _extract_experience_level(self, html: str) -> Optional[str]:
+    def _extract_experience_level(self, html: str) -> str | None:
         """
         Extract experience level (entry, mid, senior, etc.).
 
@@ -852,7 +853,7 @@ class JobParser:
         # Note: MD5 is used for cache keys only, not for security purposes
         return hashlib.md5(url.encode()).hexdigest()  # nosec
 
-    def _get_from_cache(self, cache_key: str) -> Optional[JobDetails]:
+    def _get_from_cache(self, cache_key: str) -> JobDetails | None:
         """
         Get cached job details.
 
@@ -867,7 +868,7 @@ class JobParser:
             try:
                 data = json.loads(cache_file.read_text(encoding="utf-8"))
                 return JobDetails.from_dict(data)
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 return None
         return None
 
@@ -897,9 +898,9 @@ class JobParser:
 
 
 def parse_job_posting(
-    file_path: Optional[Path] = None,
-    url: Optional[str] = None,
-    output: Optional[Path] = None,
+    file_path: Path | None = None,
+    url: str | None = None,
+    output: Path | None = None,
     use_cache: bool = True,
 ) -> JobDetails:
     """

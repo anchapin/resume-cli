@@ -1,10 +1,11 @@
 """ATS (Applicant Tracking System) score checker."""
+from __future__ import annotations
 
 import json
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from rich.console import Console
 from rich.panel import Panel
@@ -45,8 +46,8 @@ class ATSCategoryScore:
     name: str
     points_earned: int
     points_possible: int
-    details: List[str]
-    suggestions: List[str]
+    details: list[str]
+    suggestions: list[str]
 
     @property
     def percentage(self) -> float:
@@ -62,9 +63,9 @@ class ATSReport:
 
     total_score: int
     total_possible: int
-    categories: Dict[str, ATSCategoryScore]
+    categories: dict[str, ATSCategoryScore]
     summary: str
-    recommendations: List[str]
+    recommendations: list[str]
 
     @property
     def overall_percentage(self) -> float:
@@ -79,9 +80,9 @@ class ATSGenerator:
 
     def __init__(
         self,
-        yaml_path: Optional[Path] = None,
-        config: Optional[Config] = None,
-        resume_data: Optional[Dict[str, Any]] = None,
+        yaml_path: Path | None = None,
+        config: Config | None = None,
+        resume_data: dict[str, Any] | None = None,
     ):
         """
         Initialize ATS generator.
@@ -146,7 +147,7 @@ class ATSGenerator:
         except Exception as e:
             console.print(f"[dim]AI initialization failed ({e}) - using fallback methods[/dim]")
 
-    def generate_report(self, job_description: str, variant: Optional[str] = None) -> ATSReport:
+    def generate_report(self, job_description: str, variant: str | None = None) -> ATSReport:
         """
         Generate comprehensive ATS report.
 
@@ -184,7 +185,7 @@ class ATSGenerator:
             recommendations=recommendations,
         )
 
-    def _get_resume_data(self, variant: Optional[str]) -> Dict[str, Any]:
+    def _get_resume_data(self, variant: str | None) -> dict[str, Any]:
         """Get resume data for variant."""
         return {
             "contact": self.yaml_handler.get_contact(),
@@ -195,7 +196,7 @@ class ATSGenerator:
             "projects": self.yaml_handler.get_projects(variant),
         }
 
-    def _check_format_parsing(self, resume_data: Dict[str, Any]) -> ATSCategoryScore:
+    def _check_format_parsing(self, resume_data: dict[str, Any]) -> ATSCategoryScore:
         """
         Check if resume format is ATS-friendly.
 
@@ -239,7 +240,7 @@ class ATSGenerator:
         )
 
     def _check_keywords(
-        self, resume_data: Dict[str, Any], job_description: str
+        self, resume_data: dict[str, Any], job_description: str
     ) -> ATSCategoryScore:
         """
         Check keyword matching between resume and job description.
@@ -293,7 +294,7 @@ class ATSGenerator:
             suggestions=suggestions,
         )
 
-    def _check_section_structure(self, resume_data: Dict[str, Any]) -> ATSCategoryScore:
+    def _check_section_structure(self, resume_data: dict[str, Any]) -> ATSCategoryScore:
         """
         Check if resume has standard ATS sections.
 
@@ -316,10 +317,9 @@ class ATSGenerator:
                     if section_data.strip():
                         points += 5
                         details.append(f"✓ {section_name.capitalize()} section present")
-                elif isinstance(section_data, (list, dict)):
-                    if section_data:
-                        points += 5
-                        details.append(f"✓ {section_name.capitalize()} section present")
+                elif isinstance(section_data, (list, dict)) and section_data:
+                    points += 5
+                    details.append(f"✓ {section_name.capitalize()} section present")
             else:
                 suggestions.append(f"Add {section_name.capitalize()} section")
 
@@ -335,7 +335,7 @@ class ATSGenerator:
             suggestions=suggestions,
         )
 
-    def _check_contact_info(self, resume_data: Dict[str, Any]) -> ATSCategoryScore:
+    def _check_contact_info(self, resume_data: dict[str, Any]) -> ATSCategoryScore:
         """
         Check contact information completeness.
 
@@ -381,7 +381,7 @@ class ATSGenerator:
             suggestions=suggestions,
         )
 
-    def _check_readability(self, resume_data: Dict[str, Any]) -> ATSCategoryScore:
+    def _check_readability(self, resume_data: dict[str, Any]) -> ATSCategoryScore:
         """
         Check resume readability and clarity.
 
@@ -451,7 +451,7 @@ class ATSGenerator:
             suggestions=suggestions,
         )
 
-    def _get_all_text(self, resume_data: Dict[str, Any]) -> str:
+    def _get_all_text(self, resume_data: dict[str, Any]) -> str:
         """Extract all text from resume data."""
         text_parts = []
 
@@ -468,7 +468,7 @@ class ATSGenerator:
         extract_value(resume_data)
         return " ".join(text_parts).lower()
 
-    def _extract_job_keywords(self, job_description: str) -> List[str]:
+    def _extract_job_keywords(self, job_description: str) -> list[str]:
         """
         Extract keywords from job description using AI or fallback methods.
 
@@ -512,12 +512,12 @@ Please extract the keywords:"""
                         return [str(k).lower().strip() for k in keywords if k][:20]
 
             except Exception as e:
-                console.print(f"[yellow]Warning:[/yellow] AI keyword extraction failed: {str(e)}")
+                console.print(f"[yellow]Warning:[/yellow] AI keyword extraction failed: {e!s}")
 
         # Fallback to simple keyword extraction
         return self._simple_keyword_extraction(job_description)
 
-    def _extract_resume_keywords(self, resume_data: Dict[str, Any]) -> List[str]:
+    def _extract_resume_keywords(self, resume_data: dict[str, Any]) -> list[str]:
         """
         Extract keywords from resume data.
 
@@ -531,7 +531,7 @@ Please extract the keywords:"""
 
         # Extract from skills
         skills = resume_data.get("skills", {})
-        for category, skill_list in skills.items():
+        for skill_list in skills.values():
             if isinstance(skill_list, list):
                 for skill in skill_list:
                     if isinstance(skill, str):
@@ -554,9 +554,9 @@ Please extract the keywords:"""
         if summary:
             keywords.extend(re.findall(r"\b[a-z]{2,}\b", summary.lower()))
 
-        return list(set(k.strip() for k in keywords if len(k) > 2))
+        return list({k.strip() for k in keywords if len(k) > 2})
 
-    def _simple_keyword_extraction(self, job_description: str) -> List[str]:
+    def _simple_keyword_extraction(self, job_description: str) -> list[str]:
         """
         Simple fallback keyword extraction without AI.
 
@@ -620,8 +620,8 @@ Please extract the keywords:"""
         return found
 
     def _generate_summary(
-        self, categories: Dict[str, ATSCategoryScore], total_score: int, total_possible: int
-    ) -> Tuple[str, List[str]]:
+        self, categories: dict[str, ATSCategoryScore], total_score: int, total_possible: int
+    ) -> tuple[str, list[str]]:
         """
         Generate summary and recommendations.
 
@@ -712,7 +712,7 @@ Please extract the keywords:"""
 
         # Category breakdown
         console.print("\n[bold]Category Breakdown:[/bold]")
-        for cat_name, category in report.categories.items():
+        for category in report.categories.values():
             # Determine checkmark or cross
             status = "✓" if category.points_earned == category.points_possible else "✗"
 

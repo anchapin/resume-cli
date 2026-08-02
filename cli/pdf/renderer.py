@@ -5,9 +5,10 @@ Provides LaTeX template rendering functionality for PDF generation.
 This module extracts and consolidates the rendering logic from the existing
 TemplateGenerator class.
 """
+from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -22,9 +23,9 @@ class PDFRenderer:
     to LaTeX format, which can then be converted to PDF.
     """
 
-    _ENV_CACHE: Dict[str, Environment] = {}
+    _ENV_CACHE: dict[str, Environment] = {}
 
-    def __init__(self, template_dir: Optional[Path] = None):
+    def __init__(self, template_dir: Path | None = None):
         """
         Initialize the PDF renderer.
 
@@ -59,7 +60,7 @@ class PDFRenderer:
     def render(
         self,
         template_name: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
     ) -> str:
         """
         Render a LaTeX template with the given context.
@@ -77,7 +78,7 @@ class PDFRenderer:
     def render_to_file(
         self,
         template_name: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         output_path: Path,
     ) -> None:
         """

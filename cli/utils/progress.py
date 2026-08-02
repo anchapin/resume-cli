@@ -1,6 +1,5 @@
 """Progress indicator utilities for long-running operations."""
-
-from typing import Optional
+from __future__ import annotations
 
 from rich.console import Console
 from rich.progress import (
@@ -27,10 +26,10 @@ class ProgressManager:
             disabled: If True, disable all progress indicators
         """
         self.disabled = disabled
-        self._progress: Optional[Progress] = None
+        self._progress: Progress | None = None
         self._task_id = None
 
-    def start_ai_generation(self, total: int = 3) -> "ProgressManager":
+    def start_ai_generation(self, total: int = 3) -> ProgressManager:
         """
         Start progress indicator for AI generation.
 
@@ -59,7 +58,7 @@ class ProgressManager:
 
         return self
 
-    def update_ai_generation(self, advance: int = 1) -> "ProgressManager":
+    def update_ai_generation(self, advance: int = 1) -> ProgressManager:
         """
         Update AI generation progress.
 
@@ -75,7 +74,7 @@ class ProgressManager:
         self._progress.update(self._task_id, advance=advance)
         return self
 
-    def stop_ai_generation(self) -> "ProgressManager":
+    def stop_ai_generation(self) -> ProgressManager:
         """
         Stop AI generation progress.
 
@@ -90,7 +89,7 @@ class ProgressManager:
         self._task_id = None
         return self
 
-    def start_github_sync(self, total: int = 100) -> "ProgressManager":
+    def start_github_sync(self, total: int = 100) -> ProgressManager:
         """
         Start progress indicator for GitHub sync.
 
@@ -119,7 +118,7 @@ class ProgressManager:
 
         return self
 
-    def update_github_sync(self, completed: int) -> "ProgressManager":
+    def update_github_sync(self, completed: int) -> ProgressManager:
         """
         Update GitHub sync progress.
 
@@ -135,7 +134,7 @@ class ProgressManager:
         self._progress.update(self._task_id, completed=completed)
         return self
 
-    def stop_github_sync(self) -> "ProgressManager":
+    def stop_github_sync(self) -> ProgressManager:
         """
         Stop GitHub sync progress.
 
@@ -150,7 +149,7 @@ class ProgressManager:
         self._task_id = None
         return self
 
-    def start_package_generation(self, steps: list = None) -> "ProgressManager":
+    def start_package_generation(self, steps: list | None = None) -> ProgressManager:
         """
         Start progress indicator for generate-package command.
 
@@ -187,7 +186,7 @@ class ProgressManager:
 
         return self
 
-    def next_package_step(self, step_name: Optional[str] = None) -> "ProgressManager":
+    def next_package_step(self, step_name: str | None = None) -> ProgressManager:
         """
         Move to the next package generation step.
 
@@ -213,7 +212,7 @@ class ProgressManager:
         self._progress.update(self._task_id, advance=1, description=description)
         return self
 
-    def stop_package_generation(self) -> "ProgressManager":
+    def stop_package_generation(self) -> ProgressManager:
         """
         Stop package generation progress.
 
@@ -228,7 +227,7 @@ class ProgressManager:
         self._task_id = None
         return self
 
-    def start_pdf_compilation(self) -> "ProgressManager":
+    def start_pdf_compilation(self) -> ProgressManager:
         """
         Start progress indicator for PDF compilation.
 
@@ -248,7 +247,7 @@ class ProgressManager:
 
         return self
 
-    def stop_pdf_compilation(self) -> "ProgressManager":
+    def stop_pdf_compilation(self) -> ProgressManager:
         """
         Stop PDF compilation progress.
 
@@ -265,7 +264,7 @@ class ProgressManager:
 
 
 # Global progress manager instance
-_progress_manager: Optional[ProgressManager] = None
+_progress_manager: ProgressManager | None = None
 
 
 def get_progress_manager(disabled: bool = False) -> ProgressManager:

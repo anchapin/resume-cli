@@ -1,10 +1,11 @@
 """Keyword density analysis for resumes."""
+from __future__ import annotations
 
 import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from rich.console import Console
 from rich.panel import Panel
@@ -46,7 +47,7 @@ class KeywordInfo:
     importance: str  # "high", "medium", "low"
     count: int
     is_present: bool
-    suggested_sections: List[str]
+    suggested_sections: list[str]
 
 
 @dataclass
@@ -55,17 +56,17 @@ class KeywordDensityReport:
 
     job_title: str
     company: str
-    top_keywords: List[KeywordInfo]
+    top_keywords: list[KeywordInfo]
     density_score: int  # 0-100
     present_count: int
     missing_count: int
-    suggestions: List[str]
+    suggestions: list[str]
 
 
 class KeywordDensityGenerator:
     """Generate keyword density analysis for resumes."""
 
-    def __init__(self, yaml_path: Optional[Path] = None, config: Optional[Config] = None):
+    def __init__(self, yaml_path: Path | None = None, config: Config | None = None):
         """
         Initialize keyword density generator.
 
@@ -129,7 +130,7 @@ class KeywordDensityGenerator:
             console.print(f"[dim]AI initialization failed ({e}) - using fallback methods[/dim]")
 
     def generate_report(
-        self, job_description: str, variant: Optional[str] = None
+        self, job_description: str, variant: str | None = None
     ) -> KeywordDensityReport:
         """
         Generate keyword density analysis report.
@@ -202,7 +203,7 @@ class KeywordDensityGenerator:
             suggestions=suggestions,
         )
 
-    def _extract_job_details(self, job_description: str) -> Tuple[str, str]:
+    def _extract_job_details(self, job_description: str) -> tuple[str, str]:
         """Extract job title and company from job description."""
         job_title = ""
         company = ""
@@ -234,7 +235,7 @@ class KeywordDensityGenerator:
 
         return job_title, company
 
-    def _extract_job_keywords(self, job_description: str) -> List[Tuple[str, str]]:
+    def _extract_job_keywords(self, job_description: str) -> list[tuple[str, str]]:
         """
         Extract keywords from job description with importance levels.
 
@@ -282,12 +283,12 @@ Please extract the keywords:"""
                         ][:20]
 
             except Exception as e:
-                console.print(f"[yellow]Warning:[/yellow] AI keyword extraction failed: {str(e)}")
+                console.print(f"[yellow]Warning:[/yellow] AI keyword extraction failed: {e!s}")
 
         # Fallback to simple extraction
         return self._simple_keyword_extraction(job_description)
 
-    def _simple_keyword_extraction(self, job_description: str) -> List[Tuple[str, str]]:
+    def _simple_keyword_extraction(self, job_description: str) -> list[tuple[str, str]]:
         """Simple fallback keyword extraction without AI."""
         common_keywords = [
             ("python", "high"),
@@ -345,7 +346,7 @@ Please extract the keywords:"""
 
         return found
 
-    def _get_resume_data(self, variant: Optional[str]) -> Dict[str, Any]:
+    def _get_resume_data(self, variant: str | None) -> dict[str, Any]:
         """Get resume data for variant."""
         return {
             "summary": self.yaml_handler.get_summary(variant),
@@ -356,8 +357,8 @@ Please extract the keywords:"""
         }
 
     def _count_keywords_in_resume(
-        self, keywords: List[Tuple[str, str]], resume_data: Dict[str, Any]
-    ) -> Dict[str, int]:
+        self, keywords: list[tuple[str, str]], resume_data: dict[str, Any]
+    ) -> dict[str, int]:
         """Count occurrences of keywords in resume."""
         counts = {}
 
@@ -371,7 +372,7 @@ Please extract the keywords:"""
 
         return counts
 
-    def _get_all_text(self, resume_data: Dict[str, Any]) -> str:
+    def _get_all_text(self, resume_data: dict[str, Any]) -> str:
         """Extract all text from resume data."""
         text_parts = []
 
@@ -389,8 +390,8 @@ Please extract the keywords:"""
         return " ".join(text_parts)
 
     def _suggest_sections_for_keyword(
-        self, keyword: str, resume_data: Dict[str, Any], is_present: bool
-    ) -> List[str]:
+        self, keyword: str, resume_data: dict[str, Any], is_present: bool
+    ) -> list[str]:
         """Suggest sections where a keyword could be added."""
         if is_present:
             return []
@@ -452,7 +453,7 @@ Please extract the keywords:"""
 
         return suggestions if suggestions else ["Skills or experience section"]
 
-    def _generate_suggestions(self, missing_keywords: List[KeywordInfo]) -> List[str]:
+    def _generate_suggestions(self, missing_keywords: list[KeywordInfo]) -> list[str]:
         """Generate actionable suggestions for missing keywords."""
         suggestions = []
 

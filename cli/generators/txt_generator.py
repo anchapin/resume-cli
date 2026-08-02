@@ -1,7 +1,8 @@
 """TXT resume generator for ATS-friendly plain text output."""
+from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..utils.config import Config
 from ..utils.yaml_parser import ResumeYAML
@@ -16,8 +17,8 @@ class TxtGenerator:
 
     def __init__(
         self,
-        yaml_path: Optional[Path] = None,
-        config: Optional[Config] = None,
+        yaml_path: Path | None = None,
+        config: Config | None = None,
     ):
         """
         Initialize TXT generator.
@@ -32,8 +33,8 @@ class TxtGenerator:
     def generate(
         self,
         variant: str,
-        output_path: Optional[Path] = None,
-        enhanced_context: Optional[Dict[str, Any]] = None,
+        output_path: Path | None = None,
+        enhanced_context: dict[str, Any] | None = None,
     ) -> str:
         """
         Generate resume as plain text.
@@ -147,7 +148,7 @@ class TxtGenerator:
 
         return content
 
-    def _build_header(self, contact: Dict) -> list:
+    def _build_header(self, contact: dict) -> list:
         """Build contact information header."""
         lines = []
 
@@ -205,7 +206,7 @@ class TxtGenerator:
         """Build a section heading."""
         return ["", title.upper(), ""]
 
-    def _build_summary(self, summary: Optional[Dict]) -> list:
+    def _build_summary(self, summary: dict | None) -> list:
         """Build professional summary section."""
         if not summary:
             return []
@@ -220,7 +221,7 @@ class TxtGenerator:
 
         return lines
 
-    def _build_projects(self, projects: Dict) -> list:
+    def _build_projects(self, projects: dict) -> list:
         """Build projects section."""
         if not projects:
             return []
@@ -344,7 +345,7 @@ class TxtGenerator:
 
         return lines
 
-    def _build_skills(self, skills: Dict) -> list:
+    def _build_skills(self, skills: dict) -> list:
         """Build skills section."""
         if not skills:
             return []
